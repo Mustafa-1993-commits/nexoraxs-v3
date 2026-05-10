@@ -1,23 +1,9 @@
-# dependencies
-node_modules/
-.pnpm-store/
-
-# next
-.next/
-out/
-
-# env
+node_modules
+.next
+.turbo
 .env
-.env.*
-!.env.example
-
-# logs
-*.log
-
-# system
+.env.local
+dist
+coverage
 .DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
+*:Zone.Identifier
