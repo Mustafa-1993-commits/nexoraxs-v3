@@ -7,3 +7,5 @@ dist
 coverage
 .DS_Store
 *:Zone.Identifier
+.next/
+node_modules/

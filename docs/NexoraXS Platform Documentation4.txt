@@ -1,0 +1,567 @@
+NexoraXS Platform Documentation
+
+Version: 4.0 Final Architecture
+Prepared For: NexoraXS SaaS Platform
+Prepared By: Mustafa Mohamed
+Official Domain: https://www.nexoraxs.com
+
+1. Platform Overview
+What is NexoraXS
+
+NexoraXS is a modular SaaS ecosystem designed to host multiple independent business applications under one scalable cloud platform.
+
+The platform provides:
+
+Authentication system
+Workspace management
+App launcher
+Subscription & billing system
+Shared SaaS infrastructure
+Independent business applications
+Shared UI & shared packages
+Multi-tenant architecture
+2. Core Philosophy
+NexoraXS is NOT a giant ERP monolith.
+
+NexoraXS is built as:
+
+Core Platform Shell
++
+Independent Domain Applications
++
+Shared Backend Infrastructure
++
+Shared Packages
+
+Goal:
+
+Scalable SaaS ecosystem
+Business operating system
+Cloud-native platform
+Future AI-ready architecture
+3. Final Platform Architecture
+NexoraXS
+│
+├── core-platform
+│   ├── Authentication
+│   ├── Workspace Management
+│   ├── App Launcher
+│   ├── Subscription & Billing
+│   ├── Notifications
+│   ├── Shared Permissions
+│   └── Shared SaaS Infrastructure
+│
+├── shops-app
+│   ├── Inventory
+│   ├── Sales
+│   ├── Customers
+│   ├── Purchases
+│   ├── Reports
+│   ├── POS
+│   ├── Online Store
+│   └── Commerce Features
+│
+├── clinics-app (future)
+├── maintenance-app (future)
+├── restaurants-app (future)
+├── crm-app (future)
+│
+├── shared-packages
+│   ├── UI System
+│   ├── SDK
+│   ├── Types
+│   ├── Auth Clients
+│   └── Shared Utilities
+│
+└── backend API
+4. Final Domain Structure
+Public Domains
+nexoraxs.com
+www.nexoraxs.com
+
+Purpose:
+
+Landing page
+Marketing
+Pricing
+Contact
+Documentation
+Core Platform Domains
+app.nexoraxs.com
+admin.nexoraxs.com
+api.nexoraxs.com
+Business Application Domains
+shops.nexoraxs.com
+clinics.nexoraxs.com
+maintenance.nexoraxs.com
+restaurants.nexoraxs.com
+crm.nexoraxs.com
+5. Domain Responsibilities
+app.nexoraxs.com
+
+Core Platform Dashboard.
+
+Responsibilities:
+
+Login/Register
+Workspace management
+App launcher
+Billing
+Subscriptions
+Team management
+Shared settings
+User dashboard
+admin.nexoraxs.com
+
+Internal platform administration panel.
+
+Responsibilities:
+
+Users management
+Plans management
+Workspace monitoring
+Payments
+Platform analytics
+Feature flags
+Support system
+System monitoring
+api.nexoraxs.com
+
+Laravel Backend API.
+
+Responsibilities:
+
+Authentication
+API layer
+Shared backend services
+Billing APIs
+Permissions
+Notifications
+Shared infrastructure
+shops.nexoraxs.com
+
+Independent commerce application.
+
+Responsibilities:
+
+Products
+Inventory
+POS
+Sales
+Purchases
+Customers
+Reports
+Online store
+Orders
+Shipping
+clinics.nexoraxs.com
+
+Future clinics management application.
+
+maintenance.nexoraxs.com
+
+Future maintenance centers application.
+
+6. Platform Flow
+User Journey
+Register/Login
+    ↓
+app.nexoraxs.com
+    ↓
+Create Workspace
+    ↓
+Open App Launcher
+    ↓
+Enable Shops App
+    ↓
+Redirect to shops.nexoraxs.com
+    ↓
+Complete Shops Setup
+    ↓
+Open Shops Dashboard
+7. Workspace System
+Workspace Concept
+
+Every business operates inside a Workspace.
+
+Workspace contains:
+
+Users
+Permissions
+Subscriptions
+Apps
+Business data
+
+Example:
+
+Mustafa Store Workspace
+8. Multi-Tenancy Strategy
+Current Strategy
+
+Shared Database + workspace_id isolation.
+
+Example:
+
+products
+- id
+- workspace_id
+- name
+- price
+
+Advantages:
+
+Faster MVP development
+Easier deployment
+Lower infrastructure cost
+Easier scaling initially
+9. Core Platform Responsibilities
+Allowed Responsibilities
+Authentication
+Sessions
+Workspaces
+App launcher
+Billing
+Permissions
+Notifications
+Shared platform services
+Forbidden Responsibilities
+
+Core platform MUST NOT contain:
+
+Products
+Inventory
+Orders
+Sales
+Customers
+Commerce business logic
+Clinics logic
+Maintenance logic
+
+Business logic belongs inside apps.
+
+10. Shops App Responsibilities
+Commerce Features
+Products
+Categories
+Inventory
+Customers
+Suppliers
+Sales
+Purchases
+Expenses
+Reports
+Employees
+Branches
+E-Commerce Features
+Storefront
+Product catalog
+Checkout
+Shipping
+Promotions
+Payments
+Online orders
+11. Monorepo Structure
+nexoraxs-v2/
+│
+├── apps/
+│   ├── core-platform/
+│   ├── shops-app/
+│   ├── clinics-app/ (future)
+│   ├── maintenance-app/ (future)
+│   └── restaurants-app/ (future)
+│
+├── backend/
+│
+├── packages/
+│   ├── ui/
+│   ├── sdk/
+│   ├── auth/
+│   ├── types/
+│   └── shared/
+│
+├── infra/
+├── docs/
+├── backups/
+└── docker-compose.local.yml
+12. Technology Stack
+Frontend
+Next.js
+
+Used for:
+
+Core platform
+Shops app
+Future applications
+React
+
+Frontend framework.
+
+TailwindCSS
+
+Styling system.
+
+ShadCN UI
+
+Reusable component system.
+
+Backend
+Laravel API
+
+Responsibilities:
+
+Authentication
+API layer
+Shared infrastructure
+Billing
+Permissions
+Shared services
+Laravel Sanctum
+
+Authentication/session management.
+
+Database
+PostgreSQL
+
+Reasons:
+
+Stability
+Strong relational support
+Multi-tenant friendly
+SaaS scalability
+Cache & Queue
+Redis
+
+Used for:
+
+Cache
+Queues
+Sessions
+Realtime events
+13. Infrastructure
+Docker
+
+Current Services:
+
+backend
+postgres
+redis
+
+Future Services:
+
+queue-worker
+scheduler
+mailpit
+minio
+nginx
+14. Development Environment
+Main Development Machine
+Windows 11 Pro
+├── WSL2 Ubuntu 24.04
+├── Docker Desktop
+├── VS Code
+├── Codex CLI
+├── Cloud Code
+└── VMware Ubuntu VM
+Project Path
+/home/mustafa/projects/nexoraxs-v2
+Current Local Development URLs
+Core Platform:
+http://localhost:3000
+
+Shops App:
+http://localhost:3001
+
+Backend API:
+http://localhost:8080
+15. Shared Packages
+packages/ui
+
+Contains:
+
+Buttons
+Inputs
+Tables
+Cards
+Dashboard layouts
+Forms
+Modals
+packages/sdk
+
+Contains:
+
+API clients
+Shared fetch logic
+Auth helpers
+Shared services
+16. Backend Architecture Direction
+Recommended Backend Structure
+backend/
+├── app/
+├── domains/
+│   ├── auth/
+│   ├── workspaces/
+│   ├── billing/
+│   ├── notifications/
+│   └── shared/
+
+Goal:
+
+Modular backend architecture
+Domain separation
+Scalable APIs
+Maintainable business logic
+17. Shared Authentication Across Subdomains
+Important Configuration
+
+Because applications use independent subdomains:
+
+shops.nexoraxs.com
+clinics.nexoraxs.com
+app.nexoraxs.com
+
+authentication must be shared across subdomains.
+
+Required Session Configuration
+
+Laravel:
+
+SESSION_DOMAIN=.nexoraxs.com
+Sanctum Configuration
+SANCTUM_STATEFUL_DOMAINS=
+app.nexoraxs.com,
+shops.nexoraxs.com,
+clinics.nexoraxs.com,
+maintenance.nexoraxs.com,
+admin.nexoraxs.com
+CORS Configuration
+ALLOWED_ORIGINS=
+https://app.nexoraxs.com,
+https://shops.nexoraxs.com,
+https://clinics.nexoraxs.com,
+https://maintenance.nexoraxs.com,
+https://admin.nexoraxs.com
+18. Event Architecture (Future)
+
+Planned events:
+
+WorkspaceCreated
+SubscriptionActivated
+AppEnabled
+SaleCreated
+OrderCompleted
+
+Used for:
+
+Notifications
+Analytics
+Audit logs
+AI workflows
+Automation systems
+19. UI/UX Direction
+Design Goals
+Modern SaaS UI
+Minimal clutter
+Professional dashboards
+Responsive
+Accessible
+Shared design language
+20. Git Workflow
+Branches
+main
+develop
+feature/*
+hotfix/*
+21. Current Constraints
+
+IMPORTANT
+
+Do NOT:
+
+Break Docker setup
+Break auth/session flow
+Move business logic into core-platform
+Over-engineer infrastructure
+Start microservices too early
+Add huge commerce systems too early
+22. Recommended MVP
+Build ONLY
+Core Platform
++
+Shops App MVP
+Shops MVP Scope
+Inventory
+POS
+Sales
+Customers
+Purchases
+Reports
+23. Recommended Deployment
+Production Stack
+Ubuntu 24.04 VPS
+Docker Compose
+Nginx / Traefik
+Cloudflare
+PostgreSQL
+Redis
+24. Future Applications
+
+Planned:
+
+clinics-app
+maintenance-app
+restaurants-app
+crm-app
+ai-modules
+25. Long-Term Vision
+
+NexoraXS aims to become:
+
+Business Operating System Platform
+
+Supporting:
+
+Multi-business operations
+Modular SaaS applications
+Cloud-native infrastructure
+AI-powered workflows
+Enterprise scalability
+26. Final Architecture Direction
+Final Recommended Architecture
+Core Platform Shell
++
+Independent Subdomain Applications
++
+Shared Backend Infrastructure
++
+Shared Packages
+
+NOT:
+
+Huge ERP Monolith
+27. Final Recommendation
+Current Best Strategy
+
+Stay on:
+
+Modular Monolith Architecture
+
+Do NOT move to:
+
+Microservices
+Kubernetes
+Complex distributed systems
+
+until the platform grows significantly.
+
+28. Conclusion
+
+NexoraXS is designed as a scalable modular SaaS ecosystem focused on:
+
+Shared SaaS infrastructure
+Independent business applications
+Multi-tenant cloud architecture
+Subscription business model
+Shared authentication
+Future AI integrations
+
+The current architecture direction is scalable, maintainable, and aligned with long-term SaaS platform growth.
