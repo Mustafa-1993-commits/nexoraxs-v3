@@ -21,7 +21,7 @@ description: "Task list for NexoraXS Landing Website"
 
 **Purpose**: Confirm environment is ready before any file is touched.
 
-- [ ] T001 Verify `pnpm install` completes without errors from monorepo root, then confirm `pnpm --filter landing dev` starts on port 3000 — read-only check, no files changed
+- [x] T001 Verify `pnpm install` completes without errors from monorepo root, then confirm `pnpm --filter landing dev` starts on port 3000 — read-only check, no files changed
 
 **Checkpoint**: Dev server running at http://localhost:3000 — proceed to Foundation.
 
@@ -33,8 +33,8 @@ description: "Task list for NexoraXS Landing Website"
 
 ⚠️ **CRITICAL**: All section work depends on this phase completing first.
 
-- [ ] T002 [P] Update `apps/landing/src/app/globals.css` — replace the entire file: set `html { scroll-behavior: smooth; }`, set body background to `#0a0a0f` (remove the `prefers-color-scheme` media query and CSS variable approach; hardcode the dark theme since the site is dark-only), keep the `@import "tailwindcss"` line and font variables
-- [ ] T003 [P] Update `apps/landing/src/app/layout.tsx` — change `metadata.title` to `"NexoraXS — Business Operating System"` and `metadata.description` to `"Modular SaaS platform powering modern businesses with shared auth, workspaces, and cloud-native apps."`, add `className="scroll-smooth"` to the `<html>` element
+- [x] T002 [P] Update `apps/landing/src/app/globals.css` — replace the entire file: set `html { scroll-behavior: smooth; }`, set body background to `#0a0a0f` (remove the `prefers-color-scheme` media query and CSS variable approach; hardcode the dark theme since the site is dark-only), keep the `@import "tailwindcss"` line and font variables
+- [x] T003 [P] Update `apps/landing/src/app/layout.tsx` — change `metadata.title` to `"NexoraXS — Business Operating System"` and `metadata.description` to `"Modular SaaS platform powering modern businesses with shared auth, workspaces, and cloud-native apps."`, add `className="scroll-smooth"` to the `<html>` element
 
 **Checkpoint**: Foundation ready — section work can begin in parallel.
 
@@ -45,8 +45,8 @@ description: "Task list for NexoraXS Landing Website"
 **Goal**: Navbar and Hero deliver the above-the-fold experience.
 **Independent Test**: Open http://localhost:3000 — without scrolling, a visitor sees the logo, 4 nav links, "Get Started" CTA, headline, subheadline, and Splash.png. Mobile menu opens and closes on tap.
 
-- [ ] T004 [P] [US1] Rewrite `apps/landing/src/sections/navbar/navbar.tsx` — add `"use client"` at top; import `useState` and `Image` from `next/image`; add `const [menuOpen, setMenuOpen] = useState(false)`; render: sticky header with `position: sticky top-0 z-50 backdrop-blur bg-[#0a0a0f]/80 border-b border-white/10`; logo using `<Image src="/branding/logo-top.png" alt="NexoraXS" width={160} height={44} priority />`; desktop nav links (`hidden md:flex gap-8 text-sm text-white/70`) with `href="#features"`, `href="#apps"`, `href="#pricing"`, `href="#faq"` and labels Features, Apps, Pricing, FAQ; "Get Started" button (`bg-blue-600 hover:bg-blue-500 rounded-xl px-4 py-2 text-sm font-medium`); mobile hamburger button (`md:hidden`) toggling `menuOpen`; mobile slide-down menu (`md:hidden` block when `menuOpen` is true) showing the same 4 links stacked vertically plus "Get Started" button
-- [ ] T005 [P] [US1] Update `apps/landing/src/sections/hero/hero.tsx` — add `id="hero"` to the `<section>`; keep existing 2-column grid layout and Splash.png; update primary CTA button label from "Start Free" to "Get Started"; keep secondary "Live Demo" button; wrap the headline text "Business Operating" + "System" in a gradient span: `className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"` on the word "System"; no other changes needed
+- [x] T004 [P] [US1] Rewrite `apps/landing/src/sections/navbar/navbar.tsx` — add `"use client"` at top; import `useState` and `Image` from `next/image`; add `const [menuOpen, setMenuOpen] = useState(false)`; render: sticky header with `position: sticky top-0 z-50 backdrop-blur bg-[#0a0a0f]/80 border-b border-white/10`; logo using `<Image src="/branding/logo-top.png" alt="NexoraXS" width={160} height={44} priority />`; desktop nav links (`hidden md:flex gap-8 text-sm text-white/70`) with `href="#features"`, `href="#apps"`, `href="#pricing"`, `href="#faq"` and labels Features, Apps, Pricing, FAQ; "Get Started" button (`bg-blue-600 hover:bg-blue-500 rounded-xl px-4 py-2 text-sm font-medium`); mobile hamburger button (`md:hidden`) toggling `menuOpen`; mobile slide-down menu (`md:hidden` block when `menuOpen` is true) showing the same 4 links stacked vertically plus "Get Started" button
+- [x] T005 [P] [US1] Update `apps/landing/src/sections/hero/hero.tsx` — add `id="hero"` to the `<section>`; keep existing 2-column grid layout and Splash.png; update primary CTA button label from "Start Free" to "Get Started"; keep secondary "Live Demo" button; wrap the headline text "Business Operating" + "System" in a gradient span: `className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"` on the word "System"; no other changes needed
 
 **Checkpoint**: Navbar and hero independently testable — US1 complete.
 
@@ -57,7 +57,7 @@ description: "Task list for NexoraXS Landing Website"
 **Goal**: Features and Apps sections prove platform value.
 **Independent Test**: Scroll to features — 6 cards each with an icon, title, one-sentence description. Scroll to apps — 5 app cards with names and descriptions; 4 show a "Coming Soon" badge.
 
-- [ ] T006 [P] [US2] Rebuild `apps/landing/src/sections/features/features.tsx` — define a local `FeatureCard` interface `{ icon: string; title: string; description: string }`; replace the string array with a typed `const features: FeatureCard[]` containing exactly these 6 entries (icon can be a simple SVG string or a Unicode symbol placed in a styled `<span>`):
+- [x] T006 [P] [US2] Rebuild `apps/landing/src/sections/features/features.tsx` — define a local `FeatureCard` interface `{ icon: string; title: string; description: string }`; replace the string array with a typed `const features: FeatureCard[]` containing exactly these 6 entries (icon can be a simple SVG string or a Unicode symbol placed in a styled `<span>`):
   1. icon `⚡`, title `"Modular Architecture"`, description `"Launch and manage independent business apps under one unified platform."`
   2. icon `🔐`, title `"Shared Authentication"`, description `"One login, every app — your session works seamlessly across all NexoraXS tools."`
   3. icon `🏢`, title `"Workspace Management"`, description `"Organise teams, roles, and permissions in dedicated business workspaces."`
@@ -67,7 +67,7 @@ description: "Task list for NexoraXS Landing Website"
   
   Add `id="features"` to the `<section>`; render each card as `<div className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:border-blue-500/40 transition-colors">`; icon in a `<div className="text-3xl mb-4">`; title as `<h3 className="text-lg font-semibold mb-2">`; description as `<p className="text-sm text-white/60 leading-relaxed">`; grid: `grid gap-6 sm:grid-cols-2 lg:grid-cols-3`
 
-- [ ] T007 [P] [US2] Create `apps/landing/src/sections/apps/apps.tsx` — define local `AppCard` interface `{ name: string; tagline: string; description: string; badge?: string }`; define `const apps: AppCard[]` with these 5 entries:
+- [x] T007 [P] [US2] Create `apps/landing/src/sections/apps/apps.tsx` — define local `AppCard` interface `{ name: string; tagline: string; description: string; badge?: string }`; define `const apps: AppCard[]` with these 5 entries:
   1. `{ name: "Shops", tagline: "Commerce & POS", description: "Manage products, inventory, sales, and customers in one place.", badge: undefined }`
   2. `{ name: "Clinics", tagline: "Healthcare Management", description: "Appointments, patient records, and billing for modern clinics.", badge: "Coming Soon" }`
   3. `{ name: "Maintenance", tagline: "Field Service", description: "Schedule jobs, track assets, and manage technicians on the go.", badge: "Coming Soon" }`
@@ -85,9 +85,9 @@ description: "Task list for NexoraXS Landing Website"
 **Goal**: Pricing placeholder and collapsible FAQ handle final objections.
 **Independent Test**: Scroll to pricing — "Coming Soon" message visible. Scroll to FAQ — 6 questions shown; clicking each expands/collapses the answer natively.
 
-- [ ] T008 [P] [US3] Create `apps/landing/src/sections/pricing/pricing.tsx` — section with `id="pricing"` and `className="mx-auto max-w-7xl px-6 py-20 md:py-28"`; centered heading `"Pricing"`; subheading `"Simple, transparent pricing — coming soon."`; a single card `<div className="mx-auto mt-12 max-w-md rounded-3xl border border-white/10 bg-white/5 p-10 text-center">` containing a cyan-tinted clock or sparkle emoji `text-5xl mb-6`, a bold `"Coming Soon"` heading, and a paragraph `"We're finalising our pricing plans. Get started for free while we prepare."` followed by a "Get Started Free" button `<a href="#" className="mt-6 inline-block rounded-xl bg-blue-600 hover:bg-blue-500 px-6 py-3 font-semibold transition-colors">`
+- [x] T008 [P] [US3] Create `apps/landing/src/sections/pricing/pricing.tsx` — section with `id="pricing"` and `className="mx-auto max-w-7xl px-6 py-20 md:py-28"`; centered heading `"Pricing"`; subheading `"Simple, transparent pricing — coming soon."`; a single card `<div className="mx-auto mt-12 max-w-md rounded-3xl border border-white/10 bg-white/5 p-10 text-center">` containing a cyan-tinted clock or sparkle emoji `text-5xl mb-6`, a bold `"Coming Soon"` heading, and a paragraph `"We're finalising our pricing plans. Get started for free while we prepare."` followed by a "Get Started Free" button `<a href="#" className="mt-6 inline-block rounded-xl bg-blue-600 hover:bg-blue-500 px-6 py-3 font-semibold transition-colors">`
 
-- [ ] T009 [P] [US3] Create `apps/landing/src/sections/faq/faq.tsx` — define local `FAQItem` interface `{ question: string; answer: string }`; define `const faqs: FAQItem[]` with these 6 entries:
+- [x] T009 [P] [US3] Create `apps/landing/src/sections/faq/faq.tsx` — define local `FAQItem` interface `{ question: string; answer: string }`; define `const faqs: FAQItem[]` with these 6 entries:
   1. Q: `"What is NexoraXS?"` A: `"NexoraXS is a modular Business Operating System — one platform where you can run multiple business apps (Shops, Clinics, Maintenance, and more) under a single login and workspace."`
   2. Q: `"Can I use multiple apps under one account?"` A: `"Yes. Once you create a workspace you can enable any available NexoraXS app for that workspace. All apps share the same authentication and billing."`
   3. Q: `"Is my business data kept separate from other users?"` A: `"Absolutely. NexoraXS uses strict workspace-level data isolation. Your data is never visible to other workspaces or businesses on the platform."`
@@ -106,7 +106,7 @@ description: "Task list for NexoraXS Landing Website"
 **Goal**: Footer provides logo, grouped links, and copyright.
 **Independent Test**: Scroll to page bottom — logo visible, three link groups readable, copyright line present. On mobile, groups stack vertically.
 
-- [ ] T010 [US4] Rewrite `apps/landing/src/sections/footer/footer.tsx` — import `Image` from `next/image`; add `id="footer"`; structure: `<footer className="border-t border-white/10 bg-[#0a0a0f] py-12 md:py-16">`; inner div `max-w-7xl mx-auto px-6`; top row: logo on left using `<Image src="/branding/logo-bottom.png" alt="NexoraXS" width={140} height={38} />`, three link-group columns on right (`grid grid-cols-2 gap-8 sm:grid-cols-3`); group 1 heading `"Product"` links: Features, Apps, Pricing; group 2 heading `"Company"` links: About (`href="#"`), Contact (`href="#"`); group 3 heading `"Legal"` links: Privacy (`href="#"`), Terms (`href="#"`); bottom row (border-top `mt-10 pt-8 border-white/10`): copyright `"© 2026 NexoraXS. All rights reserved."` in `text-sm text-white/40`; all headings styled `text-xs font-semibold uppercase tracking-wider text-white/40 mb-3`; all links styled `text-sm text-white/60 hover:text-white transition-colors block mb-2`
+- [x] T010 [US4] Rewrite `apps/landing/src/sections/footer/footer.tsx` — import `Image` from `next/image`; add `id="footer"`; structure: `<footer className="border-t border-white/10 bg-[#0a0a0f] py-12 md:py-16">`; inner div `max-w-7xl mx-auto px-6`; top row: logo on left using `<Image src="/branding/logo-bottom.png" alt="NexoraXS" width={140} height={38} />`, three link-group columns on right (`grid grid-cols-2 gap-8 sm:grid-cols-3`); group 1 heading `"Product"` links: Features, Apps, Pricing; group 2 heading `"Company"` links: About (`href="#"`), Contact (`href="#"`); group 3 heading `"Legal"` links: Privacy (`href="#"`), Terms (`href="#"`); bottom row (border-top `mt-10 pt-8 border-white/10`): copyright `"© 2026 NexoraXS. All rights reserved."` in `text-sm text-white/40`; all headings styled `text-xs font-semibold uppercase tracking-wider text-white/40 mb-3`; all links styled `text-sm text-white/60 hover:text-white transition-colors block mb-2`
 
 **Checkpoint**: Footer independently testable — US4 complete.
 
@@ -118,7 +118,7 @@ description: "Task list for NexoraXS Landing Website"
 
 ⚠️ **Depends on**: All previous phases complete (T002–T010).
 
-- [ ] T011 Update `apps/landing/src/app/page.tsx` — replace the entire file content; import all 7 section components in order (Navbar, Hero, Features, Apps, Pricing, FAQ, Footer) from their respective paths in `../sections/`; the `Home` component renders `<main className="min-h-screen bg-[#0a0a0f] text-white">` with all 7 sections composed inside in this order: `<Navbar />`, `<Hero />`, `<Features />`, `<Apps />`, `<Pricing />`, `<FAQ />`, `<Footer />`; no logic inside — composition only
+- [x] T011 Update `apps/landing/src/app/page.tsx` — replace the entire file content; import all 7 section components in order (Navbar, Hero, Features, Apps, Pricing, FAQ, Footer) from their respective paths in `../sections/`; the `Home` component renders `<main className="min-h-screen bg-[#0a0a0f] text-white">` with all 7 sections composed inside in this order: `<Navbar />`, `<Hero />`, `<Features />`, `<Apps />`, `<Pricing />`, `<FAQ />`, `<Footer />`; no logic inside — composition only
 
 **Checkpoint**: Full page renders with all 7 sections.
 
@@ -128,8 +128,8 @@ description: "Task list for NexoraXS Landing Website"
 
 **Purpose**: Confirm the complete page meets all success criteria.
 
-- [ ] T012 Run `pnpm --filter landing dev` and open http://localhost:3000 — verify all 7 sections are visible on desktop (1440px); click each navbar link and confirm smooth scroll to the correct section; expand and collapse each FAQ item; resize to 375px and verify mobile menu works, all sections are readable without horizontal scroll
-- [ ] T013 [P] Run `pnpm --filter landing build` from monorepo root — confirm build exits with code 0, zero TypeScript errors, zero ESLint errors; fix any issues found before marking complete
+- [x] T012 Run `pnpm --filter landing dev` and open http://localhost:3000 — verify all 7 sections are visible on desktop (1440px); click each navbar link and confirm smooth scroll to the correct section; expand and collapse each FAQ item; resize to 375px and verify mobile menu works, all sections are readable without horizontal scroll
+- [x] T013 [P] Run `pnpm --filter landing build` from monorepo root — confirm build exits with code 0, zero TypeScript errors, zero ESLint errors; fix any issues found before marking complete
 
 ---
 
