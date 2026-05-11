@@ -438,3 +438,14 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ---
 
 *Last updated: May 2026 | Maintained by Mustafa Mohamed*
+
+---
+
+## 20. Active Feature Plan
+
+<!-- SPECKIT START -->
+**Current feature**: `001-landing-website`
+**Plan**: `specs/001-landing-website/plan.md`
+**Spec**: `specs/001-landing-website/spec.md`
+**Branch**: `001-landing-website`
+<!-- SPECKIT END -->
