@@ -444,8 +444,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `002-mobile-polish`
-**Plan**: `specs/002-mobile-polish/plan.md`
-**Spec**: `specs/002-mobile-polish/spec.md`
-**Branch**: `002-mobile-polish`
+**Current feature**: `003-seo-metadata`
+**Plan**: `specs/003-seo-metadata/plan.md`
+**Spec**: `specs/003-seo-metadata/spec.md`
+**Branch**: `003-seo-metadata`
 <!-- SPECKIT END -->

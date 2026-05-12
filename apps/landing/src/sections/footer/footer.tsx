@@ -13,7 +13,6 @@ const linkGroups = [
     heading: "Company",
     links: [
       { label: "About", href: "#" },
-      { label: "Contact", href: "#" },
     ],
   },
   {
@@ -21,6 +20,14 @@ const linkGroups = [
     links: [
       { label: "Privacy", href: "#" },
       { label: "Terms", href: "#" },
+    ],
+  },
+  {
+    heading: "Contact Us",
+    links: [
+      { label: "info@nexoraxs.com", href: "mailto:info@nexoraxs.com" },
+      { label: "support@nexoraxs.com", href: "mailto:support@nexoraxs.com" },
+      { label: "billing@nexoraxs.com", href: "mailto:billing@nexoraxs.com" },
     ],
   },
 ];
@@ -39,7 +46,7 @@ export default function Footer() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
             {linkGroups.map((group) => (
               <div key={group.heading}>
                 <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/40">

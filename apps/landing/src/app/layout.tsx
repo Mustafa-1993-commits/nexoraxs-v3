@@ -13,9 +13,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.nexoraxs.com"),
   title: "NexoraXS — Business Operating System",
   description:
     "Modular SaaS platform powering modern businesses with shared auth, workspaces, and cloud-native apps.",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    url: "https://www.nexoraxs.com",
+    title: "NexoraXS — Business Operating System",
+    description:
+      "Modular SaaS platform powering modern businesses with shared auth, workspaces, and cloud-native apps.",
+    images: [
+      {
+        url: "/branding/Splash.png",
+        width: 1200,
+        height: 630,
+        alt: "NexoraXS — Business Operating System",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NexoraXS — Business Operating System",
+    description:
+      "Modular SaaS platform powering modern businesses with shared auth, workspaces, and cloud-native apps.",
+    images: ["/branding/Splash.png"],
+  },
 };
 
 export default function RootLayout({
