@@ -28,7 +28,7 @@ const linkGroups = [
 export default function Footer() {
   return (
     <footer id="footer" className="border-t border-white/10 bg-[#0a0a0f]">
-      <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-16">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="flex-shrink-0">
             <Image
@@ -49,7 +49,7 @@ export default function Footer() {
                   <a
                     key={link.label}
                     href={link.href}
-                    className="mb-2 block text-sm text-white/60 transition-colors hover:text-white"
+                    className="block py-1.5 text-sm text-white/60 transition-colors hover:text-white"
                   >
                     {link.label}
                   </a>

@@ -45,9 +45,9 @@ const features: FeatureCard[] = [
 
 export default function Features() {
   return (
-    <section id="features" className="mx-auto max-w-7xl px-6 py-20 md:py-28">
+    <section id="features" className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-28">
       <div className="mb-12 text-center">
-        <h2 className="text-4xl font-bold">Everything Your Business Needs</h2>
+        <h2 className="text-3xl font-bold md:text-4xl">Everything Your Business Needs</h2>
         <p className="mt-4 text-white/60">
           Build, manage, and scale your business with one unified platform.
         </p>

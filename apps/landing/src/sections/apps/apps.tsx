@@ -44,9 +44,9 @@ const apps: AppCard[] = [
 
 export default function Apps() {
   return (
-    <section id="apps" className="mx-auto max-w-7xl px-6 py-20 md:py-28">
+    <section id="apps" className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-28">
       <div className="mb-12 text-center">
-        <h2 className="text-4xl font-bold">Our Apps</h2>
+        <h2 className="text-3xl font-bold md:text-4xl">Our Apps</h2>
         <p className="mt-4 text-white/60">
           One platform. Multiple business tools. All under one login.
         </p>
@@ -63,7 +63,7 @@ export default function Apps() {
                 {app.badge}
               </span>
             )}
-            <h3 className="text-xl font-semibold">{app.name}</h3>
+            <h3 className="pr-20 text-xl font-semibold">{app.name}</h3>
             <p className="mt-1 text-sm text-purple-400">{app.tagline}</p>
             <p className="mt-3 text-sm leading-relaxed text-white/60">
               {app.description}

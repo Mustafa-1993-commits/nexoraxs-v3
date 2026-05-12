@@ -22,6 +22,7 @@ export default function Navbar() {
           width={160}
           height={44}
           priority
+          className="h-8 w-auto md:h-11"
         />
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -43,7 +44,7 @@ export default function Navbar() {
         </nav>
 
         <button
-          className="flex flex-col gap-1.5 md:hidden"
+          className="flex flex-col gap-1.5 p-2 md:hidden"
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-label="Toggle menu"
         >
@@ -67,14 +68,14 @@ export default function Navbar() {
                 key={link.label}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="text-sm text-white/70 transition-colors hover:text-white"
+                className="py-3 text-sm text-white/70 transition-colors hover:text-white"
               >
                 {link.label}
               </a>
             ))}
             <a
               href="#"
-              className="mt-2 rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-medium transition-colors hover:bg-blue-500"
+              className="mt-2 block w-full rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-medium transition-colors hover:bg-blue-500"
             >
               Get Started
             </a>

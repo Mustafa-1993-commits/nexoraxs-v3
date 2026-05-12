@@ -12,14 +12,14 @@ export default function Hero() {
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
       <section
         id="hero"
-        className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-20 md:grid-cols-2 md:py-28"
+        className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:px-6 md:py-20 lg:py-28"
       >
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: splashDone ? 1 : 0, x: splashDone ? 0 : -20 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-5xl font-bold leading-tight md:text-6xl">
+          <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
             Business{" "}
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
               Operating System
@@ -30,7 +30,7 @@ export default function Hero() {
             businesses with scalable applications, shared infrastructure, and
             cloud-native architecture.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
             <a
               href="#"
               className="rounded-2xl bg-blue-600 px-6 py-3 font-semibold transition-colors hover:bg-blue-500"
@@ -50,7 +50,7 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: splashDone ? 1 : 0, scale: splashDone ? 1 : 0.95 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex justify-center lg:justify-end"
+          className="hidden md:flex md:justify-center lg:justify-end"
         >
           <CoreIllustration />
         </motion.div>

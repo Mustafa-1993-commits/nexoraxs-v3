@@ -38,9 +38,9 @@ const faqs: FAQItem[] = [
 
 export default function FAQ() {
   return (
-    <section id="faq" className="mx-auto max-w-3xl px-6 py-20 md:py-28">
+    <section id="faq" className="mx-auto max-w-3xl px-4 py-16 md:px-6 md:py-20 lg:py-28">
       <div className="mb-12 text-center">
-        <h2 className="text-4xl font-bold">Frequently Asked Questions</h2>
+        <h2 className="text-3xl font-bold md:text-4xl">Frequently Asked Questions</h2>
         <p className="mt-4 text-white/60">
           Everything you need to know about NexoraXS.
         </p>
@@ -49,7 +49,7 @@ export default function FAQ() {
       <div className="divide-y divide-white/10">
         {faqs.map((item) => (
           <details key={item.question} className="group py-4">
-            <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-white/90 hover:text-white">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between font-medium text-white/90 hover:text-white">
               {item.question}
               <span className="ml-4 flex-shrink-0 text-white/40 transition-transform duration-200 group-open:rotate-180">
                 ▾
