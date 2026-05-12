@@ -1,11 +1,6 @@
-export type IconName =
-  | "dashboard"
-  | "apps"
-  | "settings"
-  | "users"
-  | "menu"
-  | "x"
-  | "chevron-right";
+import type { IconName } from "@/lib/types";
+
+export type { IconName };
 
 export interface NavItem {
   label: string;
@@ -14,7 +9,8 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "dashboard" },
-  { label: "Apps", href: "/dashboard/apps", icon: "apps" },
-  { label: "Settings", href: "/dashboard/settings", icon: "settings" },
+  { label: "Dashboard", href: "/dashboard",         icon: "dashboard"   },
+  { label: "Apps",      href: "/dashboard/apps",    icon: "apps"        },
+  { label: "Billing",   href: "/dashboard/billing", icon: "credit-card" },
+  { label: "Settings",  href: "/dashboard/settings",icon: "settings"    },
 ];
