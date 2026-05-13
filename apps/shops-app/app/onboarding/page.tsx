@@ -4,28 +4,52 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ModeCard } from "@/components/onboarding/ModeCard";
 import { setMode, type ShopsMode } from "@/lib/mode";
+import type { IconName } from "@/components/ui/Icon";
 
-const modes: { mode: ShopsMode; title: string; description: string; icon: string }[] = [
+const modes: {
+  mode: ShopsMode;
+  title: string;
+  description: string;
+  icon: IconName;
+  features: string[];
+  recommended?: boolean;
+}[] = [
   {
     mode: "business",
     title: "Business Management",
-    icon: "🏢",
+    icon: "chart-bar",
     description:
       "Manage internal operations — inventory, staff, and reporting for a physical or hybrid business.",
+    features: [
+      "Inventory & staff management",
+      "Daily sales reports",
+      "Multi-branch support",
+    ],
   },
   {
     mode: "store",
-    title: "Online Store",
-    icon: "🛒",
+    title: "Storefront",
+    icon: "shopping-bag",
     description:
       "Run a customer-facing storefront — product listings, cart, and orders for e-commerce.",
+    features: [
+      "Product catalogue & listings",
+      "Customer orders tracking",
+      "Cart & checkout flow",
+    ],
   },
   {
     mode: "both",
     title: "Both",
-    icon: "✦",
+    icon: "dashboard",
     description:
-      "Access all Business Management and Online Store features in one unified workspace.",
+      "Access all Business Management and Storefront features in one unified workspace.",
+    features: [
+      "All Business Management features",
+      "All Storefront features",
+      "Unified workspace",
+    ],
+    recommended: true,
   },
 ];
 
@@ -81,6 +105,8 @@ export default function OnboardingPage() {
               title={m.title}
               description={m.description}
               icon={m.icon}
+              features={m.features}
+              recommended={m.recommended}
               selected={selected === m.mode}
               onSelect={setSelected}
             />
@@ -99,7 +125,7 @@ export default function OnboardingPage() {
                 : "cursor-not-allowed border border-white/10 bg-white/5 text-white/30"
             }`}
           >
-            Continue →
+            Continue to Setup
           </button>
         </div>
 

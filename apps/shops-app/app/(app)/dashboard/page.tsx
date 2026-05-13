@@ -4,6 +4,9 @@ import { useState } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Badge } from "@/components/dashboard/Badge";
 import { Icon } from "@/components/ui/Icon";
+import { NextSteps } from "@/components/dashboard/NextSteps";
+import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
+import { StoreProfile } from "@/components/dashboard/StoreProfile";
 
 // ── Mock data ─────────────────────────────────────────────────
 
@@ -160,6 +163,17 @@ export default function DashboardPage() {
         {stats.map((s) => (
           <StatCard key={s.label} {...s} />
         ))}
+      </div>
+
+      {/* ── Next steps ───────────────────────────────── */}
+      <div className="mt-5">
+        <NextSteps />
+      </div>
+
+      {/* ── Setup checklist + Store profile ──────────── */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <SetupChecklist />
+        <StoreProfile />
       </div>
 
       {/* ── Quick actions ─────────────────────────────── */}
