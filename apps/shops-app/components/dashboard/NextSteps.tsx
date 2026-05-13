@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { getMode, type ShopsMode } from "@/lib/mode";
 
@@ -29,9 +29,26 @@ const steps: Record<ShopsMode, Step[]> = {
 };
 
 export function NextSteps() {
-  const [mode] = useState<ShopsMode | null>(
-    () => typeof window === "undefined" ? null : getMode()
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
   );
+  const mode = mounted ? getMode() : null;
+
+  if (!mounted) {
+    return (
+      <div className="card p-5">
+        <p className="chip mb-1 text-gray-500">{"// next steps"}</p>
+        <div className="h-4 w-32 rounded bg-white/5" />
+        <div className="mt-4 flex gap-3">
+          <div className="h-24 flex-1 rounded-xl bg-white/[0.02]" />
+          <div className="h-24 flex-1 rounded-xl bg-white/[0.02]" />
+          <div className="h-24 flex-1 rounded-xl bg-white/[0.02]" />
+        </div>
+      </div>
+    );
+  }
 
   const activeSteps = steps[mode ?? "both"];
 

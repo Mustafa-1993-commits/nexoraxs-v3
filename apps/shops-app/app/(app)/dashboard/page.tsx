@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Badge } from "@/components/dashboard/Badge";
 import { Icon } from "@/components/ui/Icon";
 import { NextSteps } from "@/components/dashboard/NextSteps";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { StoreProfile } from "@/components/dashboard/StoreProfile";
+import { getMode, isOnboardingComplete } from "@/lib/mode";
 
 // ── Mock data ─────────────────────────────────────────────────
 
@@ -103,15 +104,57 @@ const quickActions = [
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState("Today");
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const mode = mounted ? getMode() : null;
+  const onboardingDone = mounted ? isOnboardingComplete() : false;
+
+  if (!mounted || mode === null) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="card max-w-md p-8 text-center">
+          <p className="chip mb-3 text-white/30">{"// getting started"}</p>
+          <h2 className="text-2xl font-bold text-white">
+            Complete your setup to get started
+          </h2>
+          <p className="mt-3 text-sm text-white/50">
+            Select your shop mode and finish the setup flow to unlock your
+            dashboard.
+          </p>
+          <a
+            href="/onboarding"
+            className="btn-primary mt-6 inline-block rounded-xl px-6 py-3 text-sm font-semibold text-white"
+          >
+            Start setup →
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
+      {!onboardingDone && (
+        <div className="mb-4 rounded-xl border border-amber-500/15 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-400/80">
+          Setup not complete ·{" "}
+          <a
+            href="/onboarding"
+            className="underline transition-colors hover:text-amber-300"
+          >
+            Finish setup
+          </a>
+        </div>
+      )}
+
       {/* ── Header ───────────────────────────────────── */}
       <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
           {/* Breadcrumb */}
           <div className="mb-2 flex items-center gap-1.5 font-mono text-xs text-gray-500">
-            <a href="#" className="transition-colors hover:text-gray-300">Platform</a>
+            <a href="/dashboard" className="transition-colors hover:text-gray-300">Platform</a>
             <Icon name="chevron-right" className="h-3 w-3" />
             <span className="text-gray-300">Shops</span>
             <Icon name="chevron-right" className="h-3 w-3" />
@@ -208,7 +251,7 @@ export default function DashboardPage() {
               <h3 className="text-base font-semibold text-white">Today&apos;s transactions</h3>
             </div>
             <a
-              href="#"
+              href="/reports"
               className="inline-flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-white"
             >
               View all <Icon name="arrow-up-right" className="h-3.5 w-3.5" />
