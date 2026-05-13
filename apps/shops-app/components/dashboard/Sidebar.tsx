@@ -3,19 +3,32 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { Badge } from "@/components/dashboard/Badge";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
 
-const operations: { label: string; href: string; icon: IconName }[] = [
-  { label: "Dashboard", href: "/dashboard",  icon: "dashboard"  },
-  { label: "Products",  href: "/products",   icon: "package"    },
-  { label: "Orders",    href: "/orders",     icon: "receipt"    },
-  { label: "Customers", href: "/customers",  icon: "users"      },
-  { label: "Reports",   href: "/reports",    icon: "chart-bar"  },
+type NavItem = {
+  label: string;
+  href: string;
+  icon: IconName;
+  badge?: { label: string; color: "gray" | "amber" | "cyan" };
+  disabled?: boolean;
+};
+
+const operations: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: "dashboard" },
+  { label: "Products", href: "/products", icon: "package", badge: { label: "412", color: "gray" } },
+  { label: "Inventory", href: "#", icon: "boxes", badge: { label: "7", color: "amber" }, disabled: true },
+  { label: "Customers", href: "/customers", icon: "users" },
+  { label: "Sales", href: "#", icon: "receipt", disabled: true },
+  { label: "POS", href: "#", icon: "scan-line", badge: { label: "F8", color: "cyan" }, disabled: true },
+  { label: "Reports", href: "/reports", icon: "chart-bar" },
 ];
 
-const configure: { label: string; href: string; icon: IconName }[] = [
-  { label: "Settings",  href: "/settings",   icon: "settings"   },
+const configure: NavItem[] = [
+  { label: "Discounts", href: "#", icon: "tag", disabled: true },
+  { label: "Taxes", href: "#", icon: "percent", disabled: true },
+  { label: "Settings", href: "/settings", icon: "settings" },
 ];
 
 export function Sidebar() {
@@ -74,20 +87,50 @@ export function Sidebar() {
           <p className="chip mb-2 px-3 text-gray-600">Operations</p>
           <nav className="mb-7 space-y-0.5">
             {operations.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = item.href !== "#" && pathname === item.href;
+              const commonClasses = `nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm ${
+                isActive
+                  ? "nav-item-active"
+                  : item.disabled
+                    ? "cursor-default text-gray-500"
+                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+              }`;
+
+              const content = (
+                <>
+                  <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <Badge color={item.badge.color}>{item.badge.label}</Badge>
+                  )}
+                </>
+              );
+
+              if (item.href === "#") {
+                return (
+                  <a
+                    key={item.label}
+                    href="#"
+                    aria-disabled="true"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setIsOpen(false);
+                    }}
+                    className={commonClasses}
+                  >
+                    {content}
+                  </a>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className={`nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                    isActive
-                      ? "nav-item-active"
-                      : "text-gray-400 hover:bg-white/5 hover:text-white"
-                  }`}
+                  className={commonClasses}
                 >
-                  <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
-                  <span>{item.label}</span>
+                  {content}
                 </Link>
               );
             })}
@@ -97,20 +140,47 @@ export function Sidebar() {
           <p className="chip mb-2 px-3 text-gray-600">Configure</p>
           <nav className="space-y-0.5">
             {configure.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = item.href !== "#" && pathname === item.href;
+              const commonClasses = `nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm ${
+                isActive
+                  ? "nav-item-active"
+                  : item.disabled
+                    ? "cursor-default text-gray-500"
+                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+              }`;
+
+              const content = (
+                <>
+                  <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
+                  <span>{item.label}</span>
+                </>
+              );
+
+              if (item.href === "#") {
+                return (
+                  <a
+                    key={item.label}
+                    href="#"
+                    aria-disabled="true"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setIsOpen(false);
+                    }}
+                    className={commonClasses}
+                  >
+                    {content}
+                  </a>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className={`nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                    isActive
-                      ? "nav-item-active"
-                      : "text-gray-400 hover:bg-white/5 hover:text-white"
-                  }`}
+                  className={commonClasses}
                 >
-                  <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
-                  <span>{item.label}</span>
+                  {content}
                 </Link>
               );
             })}

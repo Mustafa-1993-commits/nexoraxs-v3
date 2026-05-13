@@ -5,7 +5,8 @@ export type IconName =
   | "map-pin" | "arrow-up-right" | "credit-card" | "banknote"
   | "plus" | "download" | "package-plus" | "receipt"
   | "user-plus" | "package-search" | "file-text"
-  | "alert-triangle" | "trending-up" | "menu" | "x";
+  | "alert-triangle" | "trending-up" | "menu" | "x"
+  | "boxes" | "tag" | "percent";
 
 interface IconProps {
   name: IconName;
@@ -18,6 +19,8 @@ const paths: Record<IconName, string> = {
     "M3 3h7v9H3V3zm0 13h7v5H3v-5zm11-13h7v5h-7V3zm0 9h7v9h-7v-9z",
   "package":
     "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01 20.73 6.96M12 22.08V12",
+  "boxes":
+    "M3 7.5 12 3l9 4.5-9 4.5-9-4.5ZM3 7.5V16.5L12 21l9-4.5V7.5M12 12v9",
   "users":
     "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm8 2a4 4 0 0 1 0 8M23 21v-2a4 4 0 0 0-3-3.87",
   "chart-bar":
@@ -70,6 +73,10 @@ const paths: Record<IconName, string> = {
     "M3 12h18M3 6h18M3 18h18",
   "x":
     "M18 6 6 18M6 6l12 12",
+  "tag":
+    "M20.59 13.41 11 23l-9-9V5a2 2 0 0 1 2-2h9l7.59 7.41a2 2 0 0 1 0 2zM7 7h.01",
+  "percent":
+    "M19 5 5 19M7 7h.01M17 17h.01",
 };
 
 export function Icon({ name, className = "w-4 h-4", strokeWidth = 2 }: IconProps) {
