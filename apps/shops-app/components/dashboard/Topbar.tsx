@@ -1,8 +1,17 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { getBranch } from "@/lib/mode";
 
 export function Topbar() {
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const branch = mounted ? getBranch() ?? "Maadi Main" : "Maadi Main";
+
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-white/5 bg-[#0a0a0f]/85 backdrop-blur-xl">
       <div className="flex h-full items-center gap-3 pl-16 pr-4 md:pl-6 lg:px-8">
@@ -30,7 +39,7 @@ export function Topbar() {
           <Icon name="map-pin" className="h-3.5 w-3.5 text-gray-400" />
           <div className="text-left leading-tight">
             <div className="font-mono text-[11px] text-gray-500">Branch</div>
-            <div className="text-xs font-medium text-white">Maadi Main</div>
+            <div className="text-xs font-medium text-white">{branch}</div>
           </div>
           <Icon name="chevrons-up-down" className="ml-1 h-3.5 w-3.5 text-gray-500" />
         </button>

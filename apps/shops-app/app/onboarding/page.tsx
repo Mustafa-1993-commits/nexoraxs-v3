@@ -168,16 +168,36 @@ function StepFlow({
   handleBack: () => void;
   handleFinish: () => void;
 }) {
+  const stepContent: Record<
+    OnboardingStep,
+    { heading: string; subtitle: string }
+  > = {
+    1: {
+      heading: "Choose your shop mode",
+      subtitle:
+        "Select how you want to use NexoraXS Shops. You can change this later in Settings.",
+    },
+    2: {
+      heading: "Set up your store",
+      subtitle:
+        "Choose a branch and default currency. You can update these later in Settings.",
+    },
+    3: {
+      heading: "Review your setup",
+      subtitle:
+        "Confirm the details below before entering your dashboard.",
+    },
+  };
+
   return (
     <main className="mx-auto max-w-xl px-4 pb-16 pt-14">
       <div className="mb-10 text-center">
         <p className="chip mb-3 text-white/30">{"// onboarding"}</p>
         <h1 className="text-3xl font-bold tracking-tight text-white">
-          Choose your shop mode
+          {stepContent[currentStep].heading}
         </h1>
         <p className="mt-3 text-sm text-white/50">
-          Select how you want to use NexoraXS Shops. You can change this later
-          in Settings.
+          {stepContent[currentStep].subtitle}
         </p>
       </div>
 
