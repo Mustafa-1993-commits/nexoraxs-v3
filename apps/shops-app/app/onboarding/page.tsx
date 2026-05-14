@@ -13,8 +13,6 @@ import {
   completeOnboarding,
   getBusinessType,
   getBranch,
-  getCountry,
-  getCurrency,
   getMode,
   getStoreName,
   isOnboardingComplete,
@@ -27,6 +25,20 @@ import {
   type BusinessType,
   type ShopsMode,
 } from "@/lib/mode";
+
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  "Egypt":                 "EGP",
+  "Saudi Arabia":          "SAR",
+  "United Arab Emirates":  "AED",
+  "Kuwait":                "KWD",
+  "Qatar":                 "QAR",
+};
+const DEFAULT_WORKSPACE_COUNTRY = "Egypt";
+const DEFAULT_WORKSPACE_CURRENCY = "EGP";
+
+function getCurrencyForCountry(c: string): string {
+  return COUNTRY_CURRENCY_MAP[c] ?? DEFAULT_WORKSPACE_CURRENCY;
+}
 
 type OnboardingStep = 1 | 2 | 3 | 4;
 
@@ -126,8 +138,12 @@ export default function OnboardingPage() {
   const persistedSalesModel = useSessionValue(getMode, () => null);
   const persistedStoreName = useSessionValue(getStoreName, () => "");
   const persistedBranch = useSessionValue(getBranch, () => "");
-  const persistedCurrency = useSessionValue(getCurrency, () => "EGP");
-  const persistedCountry = useSessionValue(getCountry, () => "Egypt");
+  const workspaceCountry =
+    useSessionValue(
+      () => (typeof window !== "undefined" ? sessionStorage.getItem("core_workspace_country") : null),
+      () => DEFAULT_WORKSPACE_COUNTRY,
+    ) ?? DEFAULT_WORKSPACE_COUNTRY;
+  const workspaceCurrency = getCurrencyForCountry(workspaceCountry);
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
   const [businessType, setBusinessType] = useState<BusinessType | null>(
     persistedBusinessType,
@@ -138,8 +154,6 @@ export default function OnboardingPage() {
   const [storeSetup, setStoreSetup] = useState<StoreSetupData>({
     storeName: persistedStoreName ?? "",
     branch: persistedBranch ?? "",
-    currency: persistedCurrency ?? "EGP",
-    country: persistedCountry ?? "Egypt",
   });
 
   const isComplete = mounted ? isOnboardingComplete() : false;
@@ -180,8 +194,8 @@ export default function OnboardingPage() {
 
       setStoreName(storeSetup.storeName.trim());
       setBranch(storeSetup.branch.trim());
-      setCurrency(storeSetup.currency);
-      setCountry(storeSetup.country);
+      setCurrency(workspaceCurrency);
+      setCountry(workspaceCountry);
       setCurrentStep(4);
     }
   };
@@ -209,8 +223,8 @@ export default function OnboardingPage() {
 
     setStoreName(storeSetup.storeName.trim());
     setBranch(storeSetup.branch.trim());
-    setCurrency(storeSetup.currency);
-    setCountry(storeSetup.country);
+    setCurrency(workspaceCurrency);
+    setCountry(workspaceCountry);
     completeOnboarding();
     router.push("/dashboard");
   };
@@ -302,6 +316,8 @@ export default function OnboardingPage() {
             businessType={businessType}
             salesModel={salesModel}
             onGoToStep={(step) => setCurrentStep(step as OnboardingStep)}
+            workspaceCountry={workspaceCountry}
+            workspaceCurrency={workspaceCurrency}
           />
         )}
 
@@ -310,6 +326,8 @@ export default function OnboardingPage() {
             businessType={businessType}
             salesModel={salesModel}
             setup={storeSetup}
+            workspaceCountry={workspaceCountry}
+            workspaceCurrency={workspaceCurrency}
           />
         )}
       </main>

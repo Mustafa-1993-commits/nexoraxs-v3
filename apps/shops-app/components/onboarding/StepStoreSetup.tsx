@@ -7,8 +7,6 @@ import { type BusinessType, type ShopsMode } from "@/lib/mode";
 export interface StoreSetupData {
   storeName: string;
   branch: string;
-  currency: string;
-  country: string;
 }
 
 interface StepStoreSetupProps {
@@ -17,10 +15,9 @@ interface StepStoreSetupProps {
   businessType: BusinessType | null;
   salesModel: ShopsMode | null;
   onGoToStep: (step: 1 | 2 | 3 | 4) => void;
+  workspaceCountry: string;
+  workspaceCurrency: string;
 }
-
-const currencyOptions = ["EGP", "USD", "SAR", "AED", "EUR"] as const;
-const countryOptions = ["Egypt", "Saudi Arabia", "UAE", "USA"] as const;
 
 const businessTypeLabel: Record<BusinessType, string> = {
   mobile: "Mobile Store",
@@ -53,6 +50,8 @@ export function StepStoreSetup({
   businessType,
   salesModel,
   onGoToStep,
+  workspaceCountry,
+  workspaceCurrency,
 }: StepStoreSetupProps) {
   return (
     <section className="grid grid-cols-1 gap-8 lg:grid-cols-5">
@@ -75,6 +74,9 @@ export function StepStoreSetup({
               </span>
               <div>
                 <div className="text-sm font-medium text-white">Workspace: Mustafa&apos;s Co.</div>
+                <div className="text-xs text-white/40">
+                  {workspaceCountry} · {workspaceCurrency}
+                </div>
                 <div className="text-xs text-white/40">(Read-only)</div>
               </div>
             </div>
@@ -145,38 +147,6 @@ export function StepStoreSetup({
                 className="w-full rounded-xl border border-white/10 bg-[#0a0a0f] px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-gray-600 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
               />
             </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-white">Currency</span>
-                <select
-                  value={data.currency}
-                  onChange={(event) => onChange({ ...data, currency: event.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-[#0a0a0f] px-4 py-3 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
-                >
-                  {currencyOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-white">Country</span>
-                <select
-                  value={data.country}
-                  onChange={(event) => onChange({ ...data, country: event.target.value })}
-                  className="w-full rounded-xl border border-white/10 bg-[#0a0a0f] px-4 py-3 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
-                >
-                  {countryOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
           </div>
         </div>
       </div>
@@ -201,11 +171,11 @@ export function StepStoreSetup({
           <div className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-wider text-white/40">Currency</span>
-              <Badge color="blue">{data.currency}</Badge>
+              <Badge color="blue">{workspaceCurrency}</Badge>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs uppercase tracking-wider text-white/40">Country</span>
-              <span className="text-sm text-white">{data.country}</span>
+              <span className="text-xs uppercase tracking-wider text-white/40">Workspace country</span>
+              <span className="text-sm text-white">{workspaceCountry}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-wider text-white/40">Workspace</span>

@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 import {
   completeWorkspaceOnboarding,
   isWorkspaceOnboardingComplete,
+  saveWorkspaceCountry,
   saveWorkspaceSetup,
 } from "@/lib/session";
 
@@ -20,12 +21,12 @@ const regionOptions = [
   { value: "ap-southeast", label: "Asia Pacific (SE)" },
 ] as const;
 
-const currencyOptions = [
-  { value: "EGP", label: "EGP" },
-  { value: "USD", label: "USD" },
-  { value: "SAR", label: "SAR" },
-  { value: "AED", label: "AED" },
-  { value: "EUR", label: "EUR" },
+const countryOptions = [
+  { value: "Egypt",                label: "Egypt"                },
+  { value: "Saudi Arabia",         label: "Saudi Arabia"         },
+  { value: "United Arab Emirates", label: "United Arab Emirates" },
+  { value: "Kuwait",               label: "Kuwait"               },
+  { value: "Qatar",                label: "Qatar"                },
 ] as const;
 
 const appCards = [
@@ -68,7 +69,7 @@ const appCards = [
 
 type Step = 1 | 2 | 3;
 type RegionValue = (typeof regionOptions)[number]["value"];
-type CurrencyValue = (typeof currencyOptions)[number]["value"];
+type CountryValue = (typeof countryOptions)[number]["value"];
 
 function toSlug(name: string): string {
   return name
@@ -169,7 +170,7 @@ export default function OnboardingPage() {
   const [slug, setSlug] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [region, setRegion] = useState<RegionValue>("me-central");
-  const [currency, setCurrency] = useState<CurrencyValue>("EGP");
+  const [country, setCountry] = useState<CountryValue>("Egypt");
   const [shopsEnabled, setShopsEnabled] = useState(true);
 
   const canProceed =
@@ -201,9 +202,10 @@ export default function OnboardingPage() {
         workspaceName,
         slug,
         region,
-        currency,
+        country,
         shopsEnabled,
       });
+      saveWorkspaceCountry(country);
       completeWorkspaceOnboarding();
       router.push("/dashboard/apps");
       return;
@@ -351,17 +353,17 @@ export default function OnboardingPage() {
 
                       <label>
                         <span className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/45">
-                          <Icon name="trending-up" className="h-3.5 w-3.5" />
-                          Currency
+                          <Icon name="globe" className="h-3.5 w-3.5" />
+                          Country
                         </span>
                         <select
-                          value={currency}
+                          value={country}
                           onChange={(event) =>
-                            setCurrency(event.target.value as CurrencyValue)
+                            setCountry(event.target.value as CountryValue)
                           }
                           className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-blue-500/50"
                         >
-                          {currencyOptions.map((option) => (
+                          {countryOptions.map((option) => (
                             <option
                               key={option.value}
                               value={option.value}
@@ -376,8 +378,8 @@ export default function OnboardingPage() {
 
                     <p className="rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-xs leading-relaxed text-blue-100/85">
                       Workspace name and slug identify your account. Region sets
-                      the default data residency. Currency is the workspace
-                      billing default.
+                      the default data residency. Country sets your
+                      workspace&apos;s primary operating region.
                     </p>
                   </div>
                 )}
@@ -522,9 +524,9 @@ export default function OnboardingPage() {
                         }
                       />
                       <SummaryCard
-                        icon="trending-up"
-                        label="Currency"
-                        value={currency}
+                        icon="globe"
+                        label="Country"
+                        value={country}
                       />
                       <SummaryCard
                         icon="users"

@@ -2,7 +2,7 @@ export interface WorkspaceSetup {
   workspaceName: string;
   slug: string;
   region: string;
-  currency: string;
+  country: string;
   shopsEnabled: boolean;
 }
 
@@ -22,4 +22,9 @@ export function isWorkspaceOnboardingComplete(): boolean {
 export function saveWorkspaceSetup(data: WorkspaceSetup): void {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(SETUP_KEY, JSON.stringify(data));
+}
+
+export function saveWorkspaceCountry(country: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem("core_workspace_country", country);
 }

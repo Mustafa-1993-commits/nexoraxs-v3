@@ -52,31 +52,17 @@ function buildSummary(
   businessType: BusinessType | null,
   salesModel: ShopsMode | null,
   setup: StoreSetupData,
+  workspaceCountry: string,
+  workspaceCurrency: string,
 ): SummaryItem[] {
   return [
-    { label: "Workspace", value: "Mustafa's Co.", icon: "dashboard" },
-    {
-      label: "Business Type",
-      value: businessType ? businessTypeLabel[businessType] : "Unselected",
-      icon: "package",
-    },
-    {
-      label: "Sales Model",
-      value: salesModel ? salesModelLabel[salesModel] : "Unselected",
-      icon: "shopping-bag",
-    },
-    {
-      label: "Store Name",
-      value: setup.storeName || "—",
-      icon: "file-text",
-    },
-    {
-      label: "Main Branch",
-      value: setup.branch || "—",
-      icon: "map-pin",
-    },
-    { label: "Currency", value: setup.currency || "—", icon: "banknote" },
-    { label: "Country", value: setup.country || "—", icon: "map-pin" },
+    { label: "Workspace",         value: "Mustafa's Co.",                                            icon: "dashboard"    },
+    { label: "Workspace country", value: workspaceCountry,                                           icon: "map-pin"      },
+    { label: "Business Type",     value: businessType ? businessTypeLabel[businessType] : "Unselected", icon: "package"  },
+    { label: "Sales Model",       value: salesModel ? salesModelLabel[salesModel] : "Unselected",    icon: "shopping-bag" },
+    { label: "Store Name",        value: setup.storeName || "—",                                     icon: "file-text"    },
+    { label: "Main Branch",       value: setup.branch    || "—",                                     icon: "map-pin"      },
+    { label: "Currency",          value: workspaceCurrency,                                          icon: "banknote"     },
   ];
 }
 
@@ -98,14 +84,18 @@ export interface StepReviewProps {
   businessType: BusinessType | null;
   salesModel: ShopsMode | null;
   setup: StoreSetupData;
+  workspaceCountry: string;
+  workspaceCurrency: string;
 }
 
 export function StepReview({
   businessType,
   salesModel,
   setup,
+  workspaceCountry,
+  workspaceCurrency,
 }: StepReviewProps) {
-  const summary = buildSummary(businessType, salesModel, setup);
+  const summary = buildSummary(businessType, salesModel, setup, workspaceCountry, workspaceCurrency);
   const modules = buildModules(salesModel);
 
   return (
