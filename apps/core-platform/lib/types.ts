@@ -10,4 +10,8 @@ export type IconName =
   | "search"
   | "bell"
   | "chevron-down"
-  | "trending-up";
+  | "trending-up"
+  | "check"
+  | "building"
+  | "globe"
+  | "zap";

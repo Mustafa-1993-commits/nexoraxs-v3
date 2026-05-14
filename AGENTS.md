@@ -444,8 +444,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `019-shops-onboarding-business-type-flow`
-**Plan**: [specs/019-shops-onboarding-business-type-flow/plan.md](specs/019-shops-onboarding-business-type-flow/plan.md)
-**Spec**: [specs/019-shops-onboarding-business-type-flow/spec.md](specs/019-shops-onboarding-business-type-flow/spec.md)
-**Branch**: `019-shops-onboarding-business-type-flow`
+**Current feature**: `020-core-workspace-onboarding-flow`
+**Plan**: [specs/020-core-workspace-onboarding-flow/plan.md](specs/020-core-workspace-onboarding-flow/plan.md)
+**Spec**: [specs/020-core-workspace-onboarding-flow/spec.md](specs/020-core-workspace-onboarding-flow/spec.md)
+**Branch**: `020-core-workspace-onboarding-flow`
 <!-- SPECKIT END -->
