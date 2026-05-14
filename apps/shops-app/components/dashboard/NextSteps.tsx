@@ -11,12 +11,12 @@ interface Step {
 }
 
 const steps: Record<ShopsMode, Step[]> = {
-  business: [
+  physical: [
     { label: "Review reports",        icon: "chart-bar",  description: "See today's sales summary" },
     { label: "Invite team member",    icon: "users",       description: "Add staff to your workspace" },
     { label: "Configure tax settings",icon: "settings",    description: "Set up VAT and tax rules" },
   ],
-  store: [
+  online: [
     { label: "Add first product", icon: "package",        description: "Start building your catalogue" },
     { label: "Configure POS",     icon: "scan-line",      description: "Set up point of sale" },
     { label: "Set up inventory",  icon: "package-search", description: "Track stock levels" },

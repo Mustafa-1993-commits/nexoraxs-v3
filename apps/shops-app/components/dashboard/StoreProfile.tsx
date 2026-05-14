@@ -5,8 +5,8 @@ import { Icon } from "@/components/ui/Icon";
 import { getBranch, getCurrency, getMode, type ShopsMode } from "@/lib/mode";
 
 const modeLabel: Record<ShopsMode, string> = {
-  business: "Business Management",
-  store: "Storefront",
+  physical: "Physical Store",
+  online: "Online Store",
   both: "Both",
 };
 
