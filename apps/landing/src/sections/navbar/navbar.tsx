@@ -77,7 +77,7 @@ export default function Navbar() {
               </a>
             ))}
             <a
-              href="#"
+              href={CORE_LOGIN_URL}
               className="btn-primary mt-2 w-full rounded-xl px-4 py-3 text-center text-sm font-medium text-white"
             >
               Get Started

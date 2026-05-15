@@ -1,5 +1,8 @@
 import { Check } from "lucide-react";
 
+const CORE_LOGIN_URL =
+  (process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001") + "/login";
+
 const betaFeatures = [
   "Free during beta",
   "Core platform access",
@@ -52,7 +55,7 @@ export default function Pricing() {
               ))}
             </ul>
             <a
-              href="#"
+              href={CORE_LOGIN_URL}
               className="btn-primary mt-8 w-full rounded-xl px-6 py-3 font-semibold text-white"
             >
               Join Beta

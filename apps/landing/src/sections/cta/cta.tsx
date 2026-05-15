@@ -1,3 +1,6 @@
+const CORE_LOGIN_URL =
+  (process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001") + "/login";
+
 export default function CTA() {
   return (
     <section className="relative overflow-hidden border-t border-white/5 px-4 py-16 md:px-6 md:py-20">
@@ -22,7 +25,7 @@ export default function CTA() {
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <a
-            href="#pricing"
+            href={CORE_LOGIN_URL}
             className="btn-primary rounded-2xl px-6 py-3 font-semibold text-white"
           >
             Get Started
