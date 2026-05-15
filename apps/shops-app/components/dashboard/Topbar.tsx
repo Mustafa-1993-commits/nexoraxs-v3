@@ -56,7 +56,7 @@ export function Topbar() {
             className="flex-1 bg-transparent text-sm text-gray-300 outline-none placeholder:text-gray-600"
             placeholder="Search products, orders…"
             disabled
-            aria-label="Mock search — not functional"
+            aria-label="Search (preview only)"
           />
           <span className="chip rounded border border-white/10 px-1 text-gray-500">⌘K</span>
         </div>

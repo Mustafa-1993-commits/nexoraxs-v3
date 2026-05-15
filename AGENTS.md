@@ -444,8 +444,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `027-full-mock-user-journey-qa`
-**Plan**: [specs/027-full-mock-user-journey-qa/plan.md](specs/027-full-mock-user-journey-qa/plan.md)
-**Spec**: [specs/027-full-mock-user-journey-qa/spec.md](specs/027-full-mock-user-journey-qa/spec.md)
-**Branch**: `028-mock-journey-qa`
+**Current feature**: `028-full-mock-data-language-qa`
+**Plan**: [specs/028-full-mock-data-language-qa/plan.md](specs/028-full-mock-data-language-qa/plan.md)
+**Spec**: [specs/028-full-mock-data-language-qa/spec.md](specs/028-full-mock-data-language-qa/spec.md)
+**Branch**: `029-mock-data-language-qa`
 <!-- SPECKIT END -->

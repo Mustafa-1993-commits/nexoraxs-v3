@@ -40,7 +40,7 @@ export default function CustomersPage() {
         <h1 className="text-3xl font-bold tracking-tight text-white">Customers</h1>
         <p className="mt-2 text-sm text-gray-400">
           View and manage your customer base.{" "}
-          <span className="font-mono text-[11px] text-amber-400/80">mock data</span>
+          <span className="font-mono text-[11px] text-amber-400/80">Sample data</span>
         </p>
       </div>
 

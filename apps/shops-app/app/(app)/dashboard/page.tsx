@@ -156,7 +156,7 @@ export default function DashboardPage() {
               Shops Dashboard
             </h1>
             <span className="chip rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-gray-400">
-              mock foundation
+              Local preview
             </span>
           </div>
           <p className="mt-2 text-sm text-gray-400">

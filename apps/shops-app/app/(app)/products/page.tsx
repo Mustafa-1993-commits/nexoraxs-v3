@@ -42,7 +42,7 @@ export default function ProductsPage() {
             disabled
             className="bg-transparent text-sm text-gray-400 outline-none placeholder:text-gray-600"
             placeholder="Search products…"
-            aria-label="Mock search — not functional"
+            aria-label="Search (preview only)"
           />
         </div>
         <button
@@ -91,7 +91,7 @@ export default function ProductsPage() {
       </div>
 
       <p className="mt-4 text-center font-mono text-[11px] text-amber-400/80">
-        mock data · foundation
+        Sample data
       </p>
     </div>
   );

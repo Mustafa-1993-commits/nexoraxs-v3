@@ -164,7 +164,7 @@ function SecurityTab() {
 
 function ApiKeysTab() {
   const keys = [
-    { name: "Production", key: "nxs_live_••••••••••••4f2a", created: "May 1, 2026" },
+    { name: "Sample",     key: "nxs_sample_••••••••4f2a",   created: "May 1, 2026" },
     { name: "Sandbox",    key: "nxs_test_••••••••••••91c3", created: "Apr 20, 2026" },
   ];
   return (

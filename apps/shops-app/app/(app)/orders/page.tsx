@@ -39,7 +39,7 @@ export default function OrdersPage() {
         <h1 className="text-3xl font-bold tracking-tight text-white">Orders</h1>
         <p className="mt-2 text-sm text-gray-400">
           Track and manage customer orders.{" "}
-          <span className="font-mono text-[11px] text-amber-400/80">mock data</span>
+          <span className="font-mono text-[11px] text-amber-400/80">Sample data</span>
         </p>
       </div>
 
@@ -127,7 +127,7 @@ export default function OrdersPage() {
           </div>
 
           <p className="mt-4 font-mono text-[10px] text-gray-500">
-            mock order · foundation
+            Sample order
           </p>
         </div>
       </div>
