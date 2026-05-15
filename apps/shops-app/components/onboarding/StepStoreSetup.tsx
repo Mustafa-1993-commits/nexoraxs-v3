@@ -7,6 +7,8 @@ import { type BusinessType, type ShopsMode } from "@/lib/mode";
 export interface StoreSetupData {
   storeName: string;
   branch: string;
+  branchCountry: string;
+  branchCurrency: string;
 }
 
 interface StepStoreSetupProps {
@@ -15,9 +17,18 @@ interface StepStoreSetupProps {
   businessType: BusinessType | null;
   salesModel: ShopsMode | null;
   onGoToStep: (step: 1 | 2 | 3 | 4) => void;
-  workspaceCountry: string;
-  workspaceCurrency: string;
 }
+
+const BRANCH_COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  "Egypt":                "EGP",
+  "Saudi Arabia":         "SAR",
+  "United Arab Emirates": "AED",
+  "Kuwait":               "KWD",
+  "Qatar":                "QAR",
+};
+
+const countryOptions = ["Egypt", "Saudi Arabia", "United Arab Emirates", "Kuwait", "Qatar"] as const;
+const currencyOptions = ["EGP", "SAR", "AED", "KWD", "QAR", "USD", "EUR"] as const;
 
 const businessTypeLabel: Record<BusinessType, string> = {
   mobile: "Mobile Store",
@@ -50,9 +61,15 @@ export function StepStoreSetup({
   businessType,
   salesModel,
   onGoToStep,
-  workspaceCountry,
-  workspaceCurrency,
 }: StepStoreSetupProps) {
+  const handleCountryChange = (newCountry: string) => {
+    onChange({
+      ...data,
+      branchCountry: newCountry,
+      branchCurrency: BRANCH_COUNTRY_CURRENCY_MAP[newCountry] ?? "EGP",
+    });
+  };
+
   return (
     <section className="grid grid-cols-1 gap-8 lg:grid-cols-5">
       <div className="space-y-5 lg:col-span-3">
@@ -74,9 +91,6 @@ export function StepStoreSetup({
               </span>
               <div>
                 <div className="text-sm font-medium text-white">Workspace: Mustafa&apos;s Co.</div>
-                <div className="text-xs text-white/40">
-                  {workspaceCountry} · {workspaceCurrency}
-                </div>
                 <div className="text-xs text-white/40">(Read-only)</div>
               </div>
             </div>
@@ -147,6 +161,39 @@ export function StepStoreSetup({
                 className="w-full rounded-xl border border-white/10 bg-[#0a0a0f] px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-gray-600 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
               />
             </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-white">Branch country</span>
+                <select
+                  value={data.branchCountry}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-[#0a0a0f] px-4 py-3 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
+                >
+                  {countryOptions.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-white">Branch currency</span>
+                <select
+                  value={data.branchCurrency}
+                  onChange={(e) => onChange({ ...data, branchCurrency: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-[#0a0a0f] px-4 py-3 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
+                >
+                  {currencyOptions.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <p className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-xs leading-relaxed text-white/50">
+              Branch country and currency apply to your first branch. You can add more branches from{" "}
+              <span className="text-white/70">Shops Settings → Branches</span>.
+            </p>
           </div>
         </div>
       </div>
@@ -170,12 +217,12 @@ export function StepStoreSetup({
 
           <div className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs uppercase tracking-wider text-white/40">Currency</span>
-              <Badge color="blue">{workspaceCurrency}</Badge>
+              <span className="text-xs uppercase tracking-wider text-white/40">Branch currency</span>
+              <Badge color="blue">{data.branchCurrency}</Badge>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs uppercase tracking-wider text-white/40">Workspace country</span>
-              <span className="text-sm text-white">{workspaceCountry}</span>
+              <span className="text-xs uppercase tracking-wider text-white/40">Branch country</span>
+              <span className="text-sm text-white">{data.branchCountry}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-wider text-white/40">Workspace</span>
