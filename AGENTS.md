@@ -4,6 +4,13 @@
 > working on the NexoraXS platform. Read this fully before writing any code.
 
 ---
+## Project Documentation
+
+| Document | Path | Purpose |
+|----------|------|---------|
+| Master Plan | `docs/NexoraXS-Master-Plan.docx` | Full roadmap — Phases 0–5 |
+| UX Master Plan | `docs/NexoraXS-UX-Master-Plan.docx` | All screens, flows, states |
+
 
 ## 1. Project Identity
 
@@ -444,8 +451,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `028-full-mock-data-language-qa`
-**Plan**: [specs/028-full-mock-data-language-qa/plan.md](specs/028-full-mock-data-language-qa/plan.md)
-**Spec**: [specs/028-full-mock-data-language-qa/spec.md](specs/028-full-mock-data-language-qa/spec.md)
-**Branch**: `029-mock-data-language-qa`
+**Current feature**: `030-app-launcher-card-states`
+**Plan**: [specs/030-app-launcher-card-states/plan.md](specs/030-app-launcher-card-states/plan.md)
+**Spec**: [specs/030-app-launcher-card-states/spec.md](specs/030-app-launcher-card-states/spec.md)
+**Branch**: `030-app-launcher-card-states`
 <!-- SPECKIT END -->

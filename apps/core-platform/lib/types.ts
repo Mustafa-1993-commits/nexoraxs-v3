@@ -1,3 +1,5 @@
+export type AppStatus = "active" | "enable" | "upgrade" | "coming-soon";
+
 export type IconName =
   | "dashboard"
   | "apps"
