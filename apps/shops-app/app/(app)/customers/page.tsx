@@ -1,12 +1,12 @@
-import { Badge } from "@/components/dashboard/Badge";
+import { Badge } from "@nexoraxs/ui";
 
 type CustomerSegment = "VIP" | "Regular" | "New";
-type SegmentColor = "purple" | "blue" | "emerald";
+type SegmentColor = "purple" | "info" | "success";
 
 const segmentColor: Record<CustomerSegment, SegmentColor> = {
   VIP: "purple",
-  Regular: "blue",
-  New: "emerald",
+  Regular: "info",
+  New: "success",
 };
 
 const customers: {
@@ -76,7 +76,7 @@ export default function CustomersPage() {
 
             <div className="flex flex-wrap justify-end gap-2">
               {customer.segments.map((segment) => (
-                <Badge key={segment} color={segmentColor[segment]}>
+                <Badge key={segment} variant={segmentColor[segment]}>
                   {segment}
                 </Badge>
               ))}

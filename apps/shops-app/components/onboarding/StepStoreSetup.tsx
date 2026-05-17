@@ -1,7 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon } from "@/components/ui/Icon";
+import { Badge, Icon } from "@nexoraxs/ui";
 import { type BusinessType, type ShopsMode } from "@/lib/mode";
 
 export interface StoreSetupData {
@@ -218,7 +217,7 @@ export function StepStoreSetup({
           <div className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-wider text-white/40">Branch currency</span>
-              <Badge color="blue">{data.branchCurrency}</Badge>
+              <Badge variant="info">{data.branchCurrency}</Badge>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-wider text-white/40">Branch country</span>

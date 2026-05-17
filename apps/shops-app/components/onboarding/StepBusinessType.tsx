@@ -1,7 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Badge, Icon, type IconName } from "@nexoraxs/ui";
 import { type BusinessType } from "@/lib/mode";
 
 export interface BusinessTypeOption {
@@ -127,7 +126,7 @@ export function StepBusinessType({
             >
               {isSelected && (
                 <div className="absolute right-5 top-5">
-                  <Badge color="blue">Selected</Badge>
+                  <Badge variant="info">Selected</Badge>
                 </div>
               )}
 

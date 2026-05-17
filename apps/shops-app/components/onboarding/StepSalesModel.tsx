@@ -1,7 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Badge, Icon, type IconName } from "@nexoraxs/ui";
 import { type ShopsMode } from "@/lib/mode";
 
 interface SalesModelOption {
@@ -103,7 +102,7 @@ export function StepSalesModel({
                         {model.title}
                       </h3>
                       {model.recommended && (
-                        <Badge color="emerald">Recommended</Badge>
+                        <Badge variant="success">Recommended</Badge>
                       )}
                     </div>
                     <p className="mt-1 text-sm text-white/50">{model.desc}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type RefObject } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import { CategoryTabs } from "@/components/pos/CategoryTabs";
 import { ProductCard } from "@/components/pos/ProductCard";
 import { MOCK_CATEGORIES } from "@/lib/mock-data/products";

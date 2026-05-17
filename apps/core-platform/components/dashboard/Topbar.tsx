@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import { getMockUserName } from "@/lib/session";
 
 const subscribeToNothing = () => () => {};

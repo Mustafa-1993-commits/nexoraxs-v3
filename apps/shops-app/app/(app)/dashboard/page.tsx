@@ -1,9 +1,8 @@
 "use client";
 
+import { Badge, Icon } from "@nexoraxs/ui";
 import { useState, useSyncExternalStore } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon } from "@/components/ui/Icon";
 import { getMode, isOnboardingComplete } from "@/lib/mode";
 
 type OrderStatus = "Paid" | "Refund" | "Pending";
@@ -72,10 +71,10 @@ const orders: {
   { id: "#ORD-10423", customer: "Hany M.", items: 5, total: "EGP 2,150", method: "Visa", time: "11:42", status: "Pending" },
 ];
 
-const statusColor: Record<OrderStatus, "emerald" | "rose" | "amber"> = {
-  Paid: "emerald",
-  Refund: "rose",
-  Pending: "amber",
+const statusColor: Record<OrderStatus, "success" | "error" | "warning"> = {
+  Paid: "success",
+  Refund: "error",
+  Pending: "warning",
 };
 
 const lowStock = [
@@ -96,7 +95,7 @@ const topProducts = [
 const hourlyData = [18, 22, 14, 10, 8, 12, 28, 42, 68, 76, 90, 82, 74, 65, 52, 45, 38, 52, 68, 84, 72, 55, 38, 22];
 
 function StatusBadge({ status }: { status: OrderStatus }) {
-  return <Badge color={statusColor[status]}>{status}</Badge>;
+  return <Badge variant={statusColor[status]}>{status}</Badge>;
 }
 
 export default function DashboardPage() {
@@ -299,7 +298,7 @@ export default function DashboardPage() {
               <div className="chip mb-1 text-amber-400">{"// low stock alert"}</div>
               <h2 className="text-base font-semibold text-white">Low stock panel</h2>
             </div>
-            <Badge color="amber">7</Badge>
+            <Badge variant="warning">7</Badge>
           </div>
           <div className="divide-y divide-white/5">
             {lowStock.map((item) => {

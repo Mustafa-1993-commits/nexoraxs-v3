@@ -1,4 +1,7 @@
 export type IconName =
+  // Core-platform exclusive icons
+  | "apps" | "check" | "building" | "globe" | "zap"
+  // Shared + shops-app icons
   | "dashboard" | "package" | "users" | "chart-bar" | "settings"
   | "shopping-bag" | "scan-line" | "bell" | "search"
   | "chevron-down" | "chevron-left" | "chevron-right" | "chevrons-up-down"
@@ -10,35 +13,29 @@ export type IconName =
   | "shopping-cart" | "cpu" | "sparkles" | "store-front" | "layers"
   | "minus" | "wallet" | "check-circle";
 
-interface IconProps {
+export interface IconProps {
   name: IconName;
   className?: string;
   strokeWidth?: number;
 }
 
 const paths: Record<IconName, string> = {
+  // Core-platform exclusive (stroke equivalents)
+  "apps":
+    "M3 3h7v7H3V3zm11 0h7v7h-7V3zm-11 11h7v7H3v-7zm11 0h7v7h-7v-7z",
+  "check":
+    "M20 6 9 17l-5-5",
+  "building":
+    "M3 22V8l9-5 9 5v14M7 22v-9h4v9M13 22v-9h4v9",
+  "globe":
+    "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
+  "zap":
+    "M13 2 3 14h9l-1 8 10-12h-9l1-8z",
+  // Shared icons
   "dashboard":
     "M3 3h7v9H3V3zm0 13h7v5H3v-5zm11-13h7v5h-7V3zm0 9h7v9h-7v-9z",
   "package":
     "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01 20.73 6.96M12 22.08V12",
-  "boxes":
-    "M3 7.5 12 3l9 4.5-9 4.5-9-4.5ZM3 7.5V16.5L12 21l9-4.5V7.5M12 12v9",
-  "smartphone":
-    "M17 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-5 17a1 1 0 1 1 0-2 1 1 0 0 1 0 2z",
-  "watch":
-    "M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2zm0 3v2.5l1.5 1M9 2h6M9 22h6",
-  "shirt":
-    "M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z",
-  "shopping-cart":
-    "M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6M17 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
-  "cpu":
-    "M18 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2M10 10h4v4h-4z",
-  "sparkles":
-    "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5zM5.5 15l.75 2.25L8.5 18l-2.25.75L5.5 21l-.75-2.25L2.5 18l2.25-.75zm13 0l.75 2.25L21.5 18l-2.25.75L18.5 21l-.75-2.25L15.5 18l2.25-.75z",
-  "store-front":
-    "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10M2 9h20",
-  "layers":
-    "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
   "users":
     "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm8 2a4 4 0 0 1 0 8M23 21v-2a4 4 0 0 0-3-3.87",
   "chart-bar":
@@ -91,10 +88,28 @@ const paths: Record<IconName, string> = {
     "M3 12h18M3 6h18M3 18h18",
   "x":
     "M18 6 6 18M6 6l12 12",
+  "boxes":
+    "M3 7.5 12 3l9 4.5-9 4.5-9-4.5ZM3 7.5V16.5L12 21l9-4.5V7.5M12 12v9",
   "tag":
     "M20.59 13.41 11 23l-9-9V5a2 2 0 0 1 2-2h9l7.59 7.41a2 2 0 0 1 0 2zM7 7h.01",
   "percent":
     "M19 5 5 19M7 7h.01M17 17h.01",
+  "smartphone":
+    "M17 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-5 17a1 1 0 1 1 0-2 1 1 0 0 1 0 2z",
+  "watch":
+    "M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2zm0 3v2.5l1.5 1M9 2h6M9 22h6",
+  "shirt":
+    "M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z",
+  "shopping-cart":
+    "M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6M17 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
+  "cpu":
+    "M18 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2M10 10h4v4h-4z",
+  "sparkles":
+    "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5zM5.5 15l.75 2.25L8.5 18l-2.25.75L5.5 21l-.75-2.25L2.5 18l2.25-.75zm13 0l.75 2.25L21.5 18l-2.25.75L18.5 21l-.75-2.25L15.5 18l2.25-.75z",
+  "store-front":
+    "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10M2 9h20",
+  "layers":
+    "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
   "minus":
     "M5 12h14",
   "wallet":

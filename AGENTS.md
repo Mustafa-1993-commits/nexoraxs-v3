@@ -142,7 +142,12 @@ nexoraxs-v3/
 - ❌ Any maintenance logic
 
 ### Shared Packages Rules:
-- `packages/ui` → UI components ONLY, no business logic
+- `packages/ui` (`@nexoraxs/ui`) → UI components ONLY, no business logic, no API calls, no domain data
+  - Exports: `Button`, `Input`, `Badge`, `Card`, `Icon`, `Logo` + their prop types
+  - `Icon` contains 48 SVG icons (stroke style); add new icons here, NOT in apps
+  - `Badge` uses semantic variants: `default | success | warning | error | info | purple`
+  - `Logo` uses `app` prop: `"core"` (NexoraXS wordmark) | `"shops"` (Shops brandmark)
+  - Consuming apps must add `"@nexoraxs/ui": "workspace:*"` and `transpilePackages: ["@nexoraxs/ui"]`
 - `packages/sdk` → API clients and fetch helpers ONLY
 - `packages/types` → TypeScript interfaces/types ONLY
 - `packages/auth` → Auth helpers ONLY
@@ -451,8 +456,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `031-pos-screen-full-ui`
-**Plan**: [specs/031-pos-screen-full-ui/plan.md](specs/031-pos-screen-full-ui/plan.md)
-**Spec**: [specs/031-pos-screen-full-ui/spec.md](specs/031-pos-screen-full-ui/spec.md)
-**Branch**: `031-pos-screen-full-ui`
+**Current feature**: `032-shared-ui-library` ✅ IMPLEMENTED
+**Plan**: [specs/032-shared-ui-library/plan.md](specs/032-shared-ui-library/plan.md)
+**Spec**: [specs/032-shared-ui-library/spec.md](specs/032-shared-ui-library/spec.md)
+**Branch**: `032-shared-ui-library`
 <!-- SPECKIT END -->

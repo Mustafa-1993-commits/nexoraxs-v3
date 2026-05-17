@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import { getBranch, getStoreName } from "@/lib/mode";
 
 const FALLBACK_STORE = "Mustafa's Co.";

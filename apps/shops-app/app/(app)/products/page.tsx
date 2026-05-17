@@ -1,12 +1,10 @@
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon } from "@/components/ui/Icon";
-
 type ProductStatus = "Active" | "Low Stock" | "Draft";
+import { Badge, Icon } from "@nexoraxs/ui";
 
-const statusColor: Record<ProductStatus, "emerald" | "amber" | "gray"> = {
-  Active: "emerald",
-  "Low Stock": "amber",
-  Draft: "gray",
+const statusColor: Record<ProductStatus, "success" | "warning" | "default"> = {
+  Active: "success",
+  "Low Stock": "warning",
+  Draft: "default",
 };
 
 const products: {
@@ -74,10 +72,10 @@ export default function ProductsPage() {
                     {product.name}
                   </td>
                   <td className="px-5 py-4">
-                    <Badge color="gray">{product.category}</Badge>
+                    <Badge variant="default">{product.category}</Badge>
                   </td>
                   <td className="px-5 py-4">
-                    <Badge color={statusColor[product.status]}>{product.status}</Badge>
+                    <Badge variant={statusColor[product.status]}>{product.status}</Badge>
                   </td>
                   <td className="px-5 py-4 font-mono text-xs text-gray-400">
                     {product.stock}

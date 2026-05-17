@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import { CartItemRow } from "@/components/pos/CartItemRow";
 import { PaymentSection } from "@/components/pos/PaymentSection";
 import type { CartItem, Discount, PaymentMethod } from "@/lib/pos-types";

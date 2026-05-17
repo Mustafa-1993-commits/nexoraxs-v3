@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import { getBranch, getCurrency, getMode, getStoreName, type ShopsMode } from "@/lib/mode";
 
 const modeLabel: Record<ShopsMode, string> = {

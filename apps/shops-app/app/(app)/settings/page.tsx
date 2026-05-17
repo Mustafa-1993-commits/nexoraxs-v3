@@ -1,8 +1,7 @@
 "use client";
 
+import { Badge, Icon } from "@nexoraxs/ui";
 import { useSyncExternalStore } from "react";
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon } from "@/components/ui/Icon";
 import { getBranch, getCurrency, getMode, type ShopsMode } from "@/lib/mode";
 
 const modeLabel: Record<ShopsMode, string> = {
@@ -114,14 +113,14 @@ export default function SettingsPage() {
                 <div className="text-sm text-white">Mustafa Mohamed</div>
                 <div className="text-xs text-gray-500">Owner</div>
               </div>
-              <Badge color="emerald">Active</Badge>
+              <Badge variant="success">Active</Badge>
             </div>
             <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5">
               <div>
                 <div className="text-sm text-white">Placeholder Staff</div>
                 <div className="text-xs text-gray-500">Cashier</div>
               </div>
-              <Badge color="gray">Active</Badge>
+              <Badge variant="default">Active</Badge>
             </div>
           </div>
           <button

@@ -1,12 +1,10 @@
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon } from "@/components/ui/Icon";
-
 type OrderStatus = "Paid" | "Refund" | "Pending";
+import { Badge, Icon } from "@nexoraxs/ui";
 
-const statusColor: Record<OrderStatus, "emerald" | "rose" | "amber"> = {
-  Paid: "emerald",
-  Refund: "rose",
-  Pending: "amber",
+const statusColor: Record<OrderStatus, "success" | "error" | "warning"> = {
+  Paid: "success",
+  Refund: "error",
+  Pending: "warning",
 };
 
 const orders: {
@@ -78,7 +76,7 @@ export default function OrdersPage() {
                     <td className="px-5 py-4 text-sm text-white">{order.total}</td>
                     <td className="px-5 py-4 text-sm text-gray-300">{order.method}</td>
                     <td className="px-5 py-4">
-                      <Badge color={statusColor[order.status]}>{order.status}</Badge>
+                      <Badge variant={statusColor[order.status]}>{order.status}</Badge>
                     </td>
                     <td className="px-5 py-4 font-mono text-xs text-gray-400">
                       {order.time}
@@ -118,7 +116,7 @@ export default function OrdersPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-400">Status</span>
-              <Badge color="emerald">Paid</Badge>
+              <Badge variant="success">Paid</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-400">Time</span>

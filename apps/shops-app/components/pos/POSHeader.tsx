@@ -1,9 +1,8 @@
 "use client";
 
+import { Logo, Icon } from "@nexoraxs/ui";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
-import { Logo } from "@/components/ui/Logo";
-import { Icon } from "@/components/ui/Icon";
 import { getBranch, getStoreName } from "@/lib/mode";
 
 const FALLBACK_STORE = "My Store";
@@ -21,7 +20,7 @@ export function POSHeader() {
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-4 border-b border-white/5 bg-[#0a0a0f]/90 px-4 backdrop-blur-xl">
-      <Logo size="sm" />
+      <Logo app="shops" size="sm" />
 
       <div className="flex items-center gap-2 text-sm">
         <span className="font-medium text-white">{storeName}</span>

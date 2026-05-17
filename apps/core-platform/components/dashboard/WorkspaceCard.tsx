@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { Workspace } from "@/lib/mock-data/workspaces";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 
 interface WorkspaceCardProps {
   workspace: Workspace;

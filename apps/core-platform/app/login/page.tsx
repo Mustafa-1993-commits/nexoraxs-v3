@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Button, Input } from "@nexoraxs/ui";
 import { initMockUserFallback, isWorkspaceOnboardingComplete } from "@/lib/session";
 
 export default function LoginPage() {

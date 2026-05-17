@@ -1,7 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Badge, Icon, type IconName } from "@nexoraxs/ui";
 import { type BusinessType, type ShopsMode } from "@/lib/mode";
 import { type StoreSetupData } from "@/components/onboarding/StepStoreSetup";
 
@@ -145,7 +144,7 @@ export function StepReview({
               <p className="chip mb-1 text-gray-500">{"// enabled modules"}</p>
               <h3 className="text-base font-semibold text-white">Modules turned on</h3>
             </div>
-            <Badge color="cyan">{modules.length}</Badge>
+            <Badge variant="info">{modules.length}</Badge>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

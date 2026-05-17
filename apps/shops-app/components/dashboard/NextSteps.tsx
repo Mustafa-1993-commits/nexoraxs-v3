@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Icon, type IconName } from "@nexoraxs/ui";
 import { getMode, type ShopsMode } from "@/lib/mode";
 
 interface Step {

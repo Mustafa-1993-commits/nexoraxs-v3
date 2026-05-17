@@ -1,10 +1,9 @@
 "use client";
 
+import { Logo, Icon } from "@nexoraxs/ui";
 import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Logo } from "@/components/ui/Logo";
-import { Icon } from "@/components/ui/Icon";
 import { mockWorkspaces } from "@/lib/mock-data/workspaces";
 import { getMockUserEmail, getMockUserName } from "@/lib/session";
 

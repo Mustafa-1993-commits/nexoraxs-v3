@@ -1,5 +1,5 @@
 import type { Metric } from "@/lib/mock-data/metrics";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 
 export function MetricCard({ label, value, trend, accent, icon, color }: Metric) {
   return (

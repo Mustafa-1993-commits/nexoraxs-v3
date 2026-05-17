@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import type { SaleReceipt } from "@/lib/pos-types";
 
 interface SaleSuccessModalProps {

@@ -1,12 +1,9 @@
 "use client";
 
+import { Badge, Icon, type IconName, Logo } from "@nexoraxs/ui";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { Logo } from "@/components/ui/Logo";
-
 const CORE_PLATFORM_URL =
   process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001";
 
@@ -14,17 +11,17 @@ type NavItem = {
   label: string;
   href: string;
   icon: IconName;
-  badge?: { label: string; color: "gray" | "amber" | "cyan" };
+  badge?: { label: string; variant: "default" | "warning" | "info" };
   disabled?: boolean;
 };
 
 const operations: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "dashboard" },
-  { label: "Products", href: "/products", icon: "package", badge: { label: "412", color: "gray" } },
-  { label: "Inventory", href: "#", icon: "boxes", badge: { label: "7", color: "amber" }, disabled: true },
+  { label: "Products", href: "/products", icon: "package", badge: { label: "412", variant: "default" } },
+  { label: "Inventory", href: "#", icon: "boxes", badge: { label: "7", variant: "warning" }, disabled: true },
   { label: "Customers", href: "/customers", icon: "users" },
   { label: "Sales", href: "#", icon: "receipt", disabled: true },
-  { label: "POS", href: "/pos", icon: "scan-line", badge: { label: "F8", color: "cyan" } },
+  { label: "POS", href: "/pos", icon: "scan-line", badge: { label: "F8", variant: "info" } },
   { label: "Reports", href: "/reports", icon: "chart-bar" },
 ];
 
@@ -73,7 +70,7 @@ export function Sidebar() {
             <Icon name="chevron-left" className="h-4 w-4 flex-shrink-0" />
             <span className="text-xs">Back to Platform</span>
           </a>
-          <Logo />
+          <Logo app="shops" />
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -104,7 +101,7 @@ export function Sidebar() {
                   <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
                   <span>{item.label}</span>
                   {item.badge && (
-                    <Badge color={item.badge.color}>{item.badge.label}</Badge>
+                    <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
                   )}
                 </>
               );
