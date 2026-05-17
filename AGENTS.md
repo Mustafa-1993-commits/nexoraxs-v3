@@ -462,8 +462,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `034-landing-page-polish`
-**Plan**: [specs/034-landing-page-polish/plan.md](specs/034-landing-page-polish/plan.md)
-**Spec**: [specs/034-landing-page-polish/spec.md](specs/034-landing-page-polish/spec.md)
-**Branch**: `034-landing-page-polish`
+**Current feature**: `035-shops-onboarding-redesign`
+**Plan**: [specs/035-shops-onboarding-redesign/plan.md](specs/035-shops-onboarding-redesign/plan.md)
+**Spec**: [specs/035-shops-onboarding-redesign/spec.md](specs/035-shops-onboarding-redesign/spec.md)
+**Branch**: `035-shops-onboarding-redesign`
 <!-- SPECKIT END -->
