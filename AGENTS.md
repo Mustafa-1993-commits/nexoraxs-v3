@@ -153,6 +153,12 @@ nexoraxs-v3/
 - `packages/auth` → Auth helpers ONLY
 - Each app imports from packages, never from another app directly
 
+### Approved Third-Party Packages:
+- `framer-motion` → approved for `apps/landing` only
+  - Import: `import { motion, AnimatePresence } from "framer-motion"`
+  - Presets: `import { fadeInUp, fadeIn, staggerContainer, slideInLeft, slideInRight } from "@/lib/animations"` (landing only)
+  - Adding to `apps/core-platform` or `apps/shops-app` requires a separate MINOR constitution amendment
+
 ### Multi-Tenancy Rule:
 - Every database table that holds business data MUST have `workspace_id`
 - Always filter queries by `workspace_id` — never expose cross-tenant data
@@ -456,8 +462,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `032-shared-ui-library` ✅ IMPLEMENTED
-**Plan**: [specs/032-shared-ui-library/plan.md](specs/032-shared-ui-library/plan.md)
-**Spec**: [specs/032-shared-ui-library/spec.md](specs/032-shared-ui-library/spec.md)
-**Branch**: `032-shared-ui-library`
+**Current feature**: `033-framer-motion-animation`
+**Plan**: [specs/033-framer-motion-animation/plan.md](specs/033-framer-motion-animation/plan.md)
+**Spec**: [specs/033-framer-motion-animation/spec.md](specs/033-framer-motion-animation/spec.md)
+**Branch**: `033-framer-motion-animation`
 <!-- SPECKIT END -->
