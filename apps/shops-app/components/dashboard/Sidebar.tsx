@@ -24,7 +24,7 @@ const operations: NavItem[] = [
   { label: "Inventory", href: "#", icon: "boxes", badge: { label: "7", color: "amber" }, disabled: true },
   { label: "Customers", href: "/customers", icon: "users" },
   { label: "Sales", href: "#", icon: "receipt", disabled: true },
-  { label: "POS", href: "#", icon: "scan-line", badge: { label: "F8", color: "cyan" }, disabled: true },
+  { label: "POS", href: "/pos", icon: "scan-line", badge: { label: "F8", color: "cyan" } },
   { label: "Reports", href: "/reports", icon: "chart-bar" },
 ];
 

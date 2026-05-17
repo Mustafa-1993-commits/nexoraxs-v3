@@ -451,8 +451,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `030-app-launcher-card-states`
-**Plan**: [specs/030-app-launcher-card-states/plan.md](specs/030-app-launcher-card-states/plan.md)
-**Spec**: [specs/030-app-launcher-card-states/spec.md](specs/030-app-launcher-card-states/spec.md)
-**Branch**: `030-app-launcher-card-states`
+**Current feature**: `031-pos-screen-full-ui`
+**Plan**: [specs/031-pos-screen-full-ui/plan.md](specs/031-pos-screen-full-ui/plan.md)
+**Spec**: [specs/031-pos-screen-full-ui/spec.md](specs/031-pos-screen-full-ui/spec.md)
+**Branch**: `031-pos-screen-full-ui`
 <!-- SPECKIT END -->

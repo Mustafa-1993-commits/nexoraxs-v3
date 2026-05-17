@@ -7,7 +7,8 @@ export type IconName =
   | "user-plus" | "package-search" | "file-text"
   | "alert-triangle" | "trending-up" | "menu" | "x"
   | "boxes" | "tag" | "percent" | "smartphone" | "watch" | "shirt"
-  | "shopping-cart" | "cpu" | "sparkles" | "store-front" | "layers";
+  | "shopping-cart" | "cpu" | "sparkles" | "store-front" | "layers"
+  | "minus" | "wallet" | "check-circle";
 
 interface IconProps {
   name: IconName;
@@ -94,6 +95,12 @@ const paths: Record<IconName, string> = {
     "M20.59 13.41 11 23l-9-9V5a2 2 0 0 1 2-2h9l7.59 7.41a2 2 0 0 1 0 2zM7 7h.01",
   "percent":
     "M19 5 5 19M7 7h.01M17 17h.01",
+  "minus":
+    "M5 12h14",
+  "wallet":
+    "M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5H5a2 2 0 0 1 0-4h16",
+  "check-circle":
+    "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3",
 };
 
 export function Icon({ name, className = "w-4 h-4", strokeWidth = 2 }: IconProps) {

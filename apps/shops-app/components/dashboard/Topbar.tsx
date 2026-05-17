@@ -61,14 +61,14 @@ export function Topbar() {
           <span className="chip rounded border border-white/10 px-1 text-gray-500">⌘K</span>
         </div>
 
-        {/* Open POS — visual only */}
-        <button
-          type="button"
+        {/* Open POS */}
+        <a
+          href="/pos"
           className="btn-pos inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold text-white"
         >
           <Icon name="scan-line" className="h-4 w-4" strokeWidth={2.2} />
           <span className="hidden sm:inline">Open POS</span>
-        </button>
+        </a>
 
         {/* Bell */}
         <button
