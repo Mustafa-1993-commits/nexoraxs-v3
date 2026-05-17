@@ -1,3 +1,7 @@
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView, type Variants } from "framer-motion";
 import {
   ShoppingBag,
   Stethoscope,
@@ -6,6 +10,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 interface AppCard {
   name: string;
@@ -17,6 +22,15 @@ interface AppCard {
   iconBg: string;
   glow: string;
 }
+
+const scaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
 
 const apps: AppCard[] = [
   {
@@ -76,12 +90,19 @@ const apps: AppCard[] = [
 ];
 
 export default function Apps() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
+
   return (
-    <section
+    <motion.section
       id="apps"
+      ref={ref}
+      variants={staggerContainer}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
       className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-28"
     >
-      <div className="mb-12 text-center">
+      <motion.div variants={fadeInUp} className="mb-12 text-center">
         <span className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-purple-200">
           {"// app launcher"}
         </span>
@@ -89,41 +110,74 @@ export default function Apps() {
         <p className="mx-auto mt-4 max-w-2xl text-white/60">
           One platform. Multiple business tools. All under one login.
         </p>
-      </div>
+      </motion.div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.div
+        variants={staggerContainer}
+        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      >
         {apps.map((app) => {
           const Icon = app.icon;
+          const isComingSoon = Boolean(app.badge);
 
           return (
-            <div
+            <motion.div
               key={app.name}
-              className="glass-card glass-card-hover relative overflow-hidden p-6"
+              variants={scaleIn}
+              className={[
+                "glass-card relative overflow-hidden p-6 transition-all duration-300",
+                isComingSoon
+                  ? "opacity-75"
+                  : "hover:scale-[1.03]",
+              ].join(" ")}
+              style={
+                !isComingSoon
+                  ? { ["--app-glow" as string]: app.glow }
+                  : undefined
+              }
+              whileHover={
+                !isComingSoon
+                  ? {
+                      boxShadow: `0 8px 40px ${app.glow}`,
+                    }
+                  : undefined
+              }
             >
+              {/* Background glow accent */}
               <div
                 className="absolute -right-12 -top-12 h-32 w-32 rounded-full blur-3xl"
                 style={{ background: app.glow }}
                 aria-hidden="true"
               />
+
+              {/* Coming-soon blur overlay */}
+              {isComingSoon && (
+                <div
+                  className="absolute inset-0 z-10 rounded-[20px] backdrop-blur-[1px]"
+                  aria-hidden="true"
+                />
+              )}
+
               {app.badge && (
-                <span className="mono-chip absolute right-4 top-4 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-gray-400">
+                <span className="mono-chip absolute right-4 top-4 z-20 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-gray-400">
                   {app.badge}
                 </span>
               )}
+
               <div
-                className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${app.iconBg}`}
+                className={`relative z-[1] mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${app.iconBg}`}
               >
                 <Icon className={`h-5 w-5 ${app.accent}`} aria-hidden="true" />
               </div>
-              <h3 className="pr-24 text-xl font-semibold">{app.name}</h3>
-              <p className={`mt-1 text-sm ${app.accent}`}>{app.tagline}</p>
-              <p className="mt-3 text-sm leading-relaxed text-white/60">
+              <h3 className="relative z-[1] pr-24 text-xl font-semibold">{app.name}</h3>
+              <p className={`relative z-[1] mt-1 text-sm ${app.accent}`}>{app.tagline}</p>
+              <p className="relative z-[1] mt-3 text-sm leading-relaxed text-white/60">
                 {app.description}
               </p>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }

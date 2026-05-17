@@ -1,11 +1,22 @@
 "use client";
-import { useState } from "react";
 
-const CORE_LOGIN_URL =
-  (process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001") + "/login";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { SplashScreen } from "./SplashScreen";
 import { CoreIllustration } from "./CoreIllustration";
+import { staggerContainer, fadeInUp, fadeIn } from "@/lib/animations";
+
+const CORE_LOGIN_URL =
+  (process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001") + "/login";
+
+const headline = "Business operations, connected by one modular core";
+const headlineWords = headline.split(" ");
+
+const featurePills = [
+  "Modular SaaS architecture",
+  "Workspace-based platform",
+  "Built for future apps",
+];
 
 export default function Hero() {
   const [splashDone, setSplashDone] = useState(false);
@@ -17,63 +28,102 @@ export default function Hero() {
         id="hero"
         className="relative overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:min-h-[calc(100vh-76px)] lg:py-28"
       >
+        {/* Animated gradient orbs */}
         <div
-          className="glow-blob -left-28 top-8 h-72 w-72 bg-blue-500"
+          className="animate-orb-slow pointer-events-none absolute -left-40 -top-20 h-[400px] w-[400px] rounded-full bg-purple-600/30 blur-[120px]"
           aria-hidden="true"
         />
         <div
-          className="glow-blob -bottom-24 right-0 h-80 w-80 bg-purple-500"
+          className="animate-orb-medium pointer-events-none absolute -bottom-32 -right-20 h-[320px] w-[320px] rounded-full bg-blue-500/25 blur-[120px]"
+          aria-hidden="true"
+        />
+        <div
+          className="animate-orb-fast pointer-events-none absolute left-1/2 top-1/2 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/20 blur-[120px]"
           aria-hidden="true"
         />
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2">
+          {/* Left column — animated content */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: splashDone ? 1 : 0, x: splashDone ? 0 : -20 }}
-            transition={{ duration: 0.6 }}
+            variants={staggerContainer}
+            initial="hidden"
+            animate={splashDone ? "visible" : "hidden"}
           >
-            <span className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-cyan-200">
+            <motion.span
+              variants={fadeInUp}
+              className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-cyan-200"
+            >
               {"// platform"}
-            </span>
-            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
-              Business operations, connected by one{" "}
-              <span className="gradient-text">modular core</span>.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-white/65">
+            </motion.span>
+
+            {/* Word-by-word headline */}
+            <motion.h1
+              variants={staggerContainer}
+              className="mt-5 max-w-3xl text-4xl font-bold leading-tight md:text-5xl lg:text-6xl"
+            >
+              {headlineWords.map((word, i) => {
+                const isGradient = i >= headlineWords.indexOf("modular");
+                return (
+                  <motion.span
+                    key={i}
+                    variants={fadeInUp}
+                    className={[
+                      "mr-[0.25em] inline-block",
+                      isGradient ? "gradient-text" : "",
+                    ].join(" ")}
+                  >
+                    {word}
+                  </motion.span>
+                );
+              })}
+            </motion.h1>
+
+            <motion.p
+              variants={fadeIn}
+              className="mt-6 max-w-xl text-lg leading-8 text-white/65"
+            >
               NexoraXS is an MVP-stage modular SaaS platform for workspaces,
               shared authentication, app launching, and future business apps
               built around a single platform shell.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
-              <a
+            </motion.p>
+
+            <motion.div
+              variants={staggerContainer}
+              className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4"
+            >
+              <motion.a
+                variants={fadeInUp}
                 href={CORE_LOGIN_URL}
                 className="btn-primary rounded-2xl px-6 py-3 font-semibold text-white"
               >
                 Get Started
-              </a>
-              <a
+              </motion.a>
+              <motion.a
+                variants={fadeInUp}
                 href="#features"
                 className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-6 py-3 font-semibold text-white/85 transition-colors hover:border-white/25 hover:bg-white/8 hover:text-white"
               >
                 See Features
-              </a>
-            </div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              {[
-                "Modular SaaS architecture",
-                "Workspace-based platform",
-                "Built for future apps",
-              ].map((pill) => (
-                <span
+              </motion.a>
+            </motion.div>
+
+            <motion.div
+              variants={staggerContainer}
+              className="mt-7 flex flex-wrap gap-3"
+            >
+              {featurePills.map((pill) => (
+                <motion.span
                   key={pill}
+                  variants={fadeInUp}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/65"
                 >
                   {pill}
-                </span>
+                </motion.span>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
 
+          {/* Right column — floating illustration */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{
@@ -81,7 +131,7 @@ export default function Hero() {
               scale: splashDone ? 1 : 0.95,
             }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="hidden md:flex md:justify-center lg:justify-end"
+            className="animate-float hidden md:flex md:justify-center lg:justify-end"
           >
             <CoreIllustration />
           </motion.div>

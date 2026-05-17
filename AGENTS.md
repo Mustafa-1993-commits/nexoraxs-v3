@@ -462,8 +462,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `033-framer-motion-animation`
-**Plan**: [specs/033-framer-motion-animation/plan.md](specs/033-framer-motion-animation/plan.md)
-**Spec**: [specs/033-framer-motion-animation/spec.md](specs/033-framer-motion-animation/spec.md)
-**Branch**: `033-framer-motion-animation`
+**Current feature**: `034-landing-page-polish`
+**Plan**: [specs/034-landing-page-polish/plan.md](specs/034-landing-page-polish/plan.md)
+**Spec**: [specs/034-landing-page-polish/spec.md](specs/034-landing-page-polish/spec.md)
+**Branch**: `034-landing-page-polish`
 <!-- SPECKIT END -->

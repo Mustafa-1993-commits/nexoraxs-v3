@@ -1,3 +1,7 @@
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import {
   ArrowRight,
   CreditCard,
@@ -5,6 +9,7 @@ import {
   LayoutGrid,
   Users,
 } from "lucide-react";
+import { fadeInUp, slideInLeft, slideInRight } from "@/lib/animations";
 
 const coreItems = [
   { label: "Auth", icon: KeyRound },
@@ -16,15 +21,23 @@ const coreItems = [
 const appTiles = ["Shops", "Clinics", "Maintenance", "Restaurants", "CRM"];
 
 export default function Platform() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
+
   return (
-    <section className="relative overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:py-28">
+    <section ref={ref} className="relative overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:py-28">
       <div
         className="glow-blob left-1/2 top-12 h-64 w-64 -translate-x-1/2 bg-cyan-500 opacity-20"
         aria-hidden="true"
       />
 
       <div className="relative z-10 mx-auto max-w-7xl">
-        <div className="mb-12 max-w-3xl">
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          className="mb-12 max-w-3xl"
+        >
           <span className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-blue-200">
             {"// platform model"}
           </span>
@@ -36,10 +49,15 @@ export default function Platform() {
             apps, so workspaces, authentication, billing, and app access stay in
             one core while each app can serve its own domain.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_96px_1.35fr]">
-          <div className="glass-card p-6 md:p-8">
+          <motion.div
+            variants={slideInLeft}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            className="glass-card p-6 md:p-8"
+          >
             <p className="mono-chip text-purple-200">Core Platform</p>
             <h3 className="mt-3 text-2xl font-semibold text-white">
               Shared foundation
@@ -61,7 +79,7 @@ export default function Platform() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
           <div className="hidden items-center justify-center lg:flex">
             <div className="relative h-px w-full bg-gradient-to-r from-blue-400/20 via-white/30 to-purple-400/20">
@@ -72,7 +90,12 @@ export default function Platform() {
             </div>
           </div>
 
-          <div className="glass-card p-6 md:p-8">
+          <motion.div
+            variants={slideInRight}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            className="glass-card p-6 md:p-8"
+          >
             <p className="mono-chip text-cyan-200">App Satellites</p>
             <h3 className="mt-3 text-2xl font-semibold text-white">
               Domain modules
@@ -87,7 +110,7 @@ export default function Platform() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

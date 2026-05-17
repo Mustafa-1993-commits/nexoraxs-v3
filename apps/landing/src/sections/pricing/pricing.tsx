@@ -1,4 +1,9 @@
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { Check } from "lucide-react";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 const CORE_LOGIN_URL =
   (process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001") + "/login";
@@ -11,12 +16,19 @@ const betaFeatures = [
 ];
 
 export default function Pricing() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
+
   return (
-    <section
+    <motion.section
       id="pricing"
+      ref={ref}
+      variants={staggerContainer}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
       className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-28"
     >
-      <div className="mb-12 text-center">
+      <motion.div variants={fadeInUp} className="mb-12 text-center">
         <span className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-blue-200">
           {"// beta pricing"}
         </span>
@@ -24,19 +36,34 @@ export default function Pricing() {
         <p className="mx-auto mt-4 max-w-2xl text-white/60">
           Early pricing stays simple while the MVP is being built and tested.
         </p>
-      </div>
+      </motion.div>
 
       <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-        <div className="glass-card relative overflow-hidden p-6 ring-1 ring-purple-500/30 md:p-8">
+        <motion.div
+          variants={fadeInUp}
+          className="glass-card relative overflow-hidden p-6 shadow-[0_0_40px_rgba(124,58,237,0.12)] ring-1 ring-purple-500/40 md:p-8"
+        >
+          {/* Enhanced glow */}
           <div
-            className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/25 blur-3xl"
+            className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-purple-500/40 blur-3xl"
             aria-hidden="true"
           />
+          <div
+            className="absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl"
+            aria-hidden="true"
+          />
+
           <div className="relative">
-            <p className="mono-chip text-purple-200">Beta Early-Bird</p>
+            <div className="flex items-center gap-3">
+              <p className="mono-chip text-purple-200">Early Access</p>
+              <span className="rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-300">
+                Free
+              </span>
+            </div>
             <h3 className="gradient-text mt-4 text-3xl font-bold">
-              Free during beta
+              Free
             </h3>
+            <p className="mt-1 text-sm text-white/50">during beta</p>
             <p className="mt-4 text-sm leading-7 text-white/60">
               Access the MVP as it evolves, with the core platform and first
               app experience shaped around early workspace feedback.
@@ -56,14 +83,17 @@ export default function Pricing() {
             </ul>
             <a
               href={CORE_LOGIN_URL}
-              className="btn-primary mt-8 w-full rounded-xl px-6 py-3 font-semibold text-white"
+              className="btn-primary mt-8 block w-full rounded-xl px-6 py-3 text-center font-semibold text-white"
             >
               Join Beta
             </a>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="glass-card p-6 opacity-85 md:p-8">
+        <motion.div
+          variants={fadeInUp}
+          className="glass-card p-6 opacity-85 md:p-8"
+        >
           <p className="mono-chip text-cyan-200">Future Plans</p>
           <h3 className="mt-4 text-3xl font-bold text-white">Coming later</h3>
           <p className="mt-4 text-sm leading-7 text-white/60">
@@ -80,8 +110,8 @@ export default function Pricing() {
           >
             Read FAQ
           </a>
-        </div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 }
