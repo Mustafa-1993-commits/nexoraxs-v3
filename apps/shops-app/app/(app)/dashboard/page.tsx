@@ -1,14 +1,13 @@
 "use client";
 
+import { Badge, Icon } from "@nexoraxs/ui";
 import { useState, useSyncExternalStore } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon } from "@/components/ui/Icon";
-import { getMode, isOnboardingComplete } from "@/lib/mode";
+import { getMode, isOnboardingComplete, type ShopsMode } from "@/lib/mode";
 
 type OrderStatus = "Paid" | "Refund" | "Pending";
 
-const stats = [
+const physicalStats = [
   {
     label: "Sales today",
     value: "EGP 24,180",
@@ -47,12 +46,61 @@ const stats = [
   },
 ];
 
-const quickActions = [
-  { label: "Add product", icon: "package-plus" as const, color: "#3b82f6" },
-  { label: "New sale", icon: "receipt" as const, color: "#06b6d4" },
-  { label: "Add customer", icon: "user-plus" as const, color: "#8b5cf6" },
-  { label: "Stock adjustment", icon: "package-search" as const, color: "#f97316" },
-  { label: "Daily Z-report", icon: "file-text" as const, color: "#10b981" },
+const onlineStats = [
+  {
+    label: "Online orders",
+    value: "128",
+    sub: "Today · 12 pending",
+    icon: "receipt" as const,
+    color: "#3b82f6",
+    trend: "+18%",
+    spark: "M0,22 L10,20 L20,18 L30,16 L40,13 L50,12 L60,10 L70,8 L80,6 L90,5 L100,3",
+  },
+  {
+    label: "Revenue",
+    value: "EGP 31,450",
+    sub: "This week",
+    icon: "trending-up" as const,
+    color: "#10b981",
+    trend: "+9%",
+    spark: "M0,20 L10,18 L20,15 L30,14 L40,12 L50,11 L60,9 L70,8 L80,6 L90,5 L100,3",
+  },
+  {
+    label: "Products",
+    value: "412",
+    sub: "38 categories",
+    icon: "package" as const,
+    color: "#8b5cf6",
+    trend: "+4",
+    spark: "M0,20 L10,19 L20,18 L30,17 L40,16 L50,15 L60,15 L70,14 L80,13 L90,12 L100,11",
+  },
+  {
+    label: "Customers",
+    value: "1,284",
+    sub: "+86 this month",
+    icon: "users" as const,
+    color: "#06b6d4",
+    trend: "+7%",
+    spark: "M0,22 L10,21 L20,19 L30,20 L40,17 L50,18 L60,14 L70,15 L80,11 L90,12 L100,8",
+  },
+];
+
+const bothStats = physicalStats;
+
+const physicalQuickActions = [
+  { label: "Add product",       icon: "package-plus"   as const, color: "#3b82f6" },
+  { label: "New sale",          icon: "receipt"         as const, color: "#06b6d4" },
+  { label: "Add customer",      icon: "user-plus"       as const, color: "#8b5cf6" },
+  { label: "Stock adjustment",  icon: "package-search"  as const, color: "#f97316" },
+  { label: "Daily Z-report",    icon: "file-text"       as const, color: "#10b981" },
+];
+
+const onlineQuickActions = [
+  { label: "Add product",       icon: "package-plus"   as const, color: "#3b82f6" },
+  { label: "View orders",       icon: "receipt"         as const, color: "#06b6d4" },
+  { label: "Add customer",      icon: "user-plus"       as const, color: "#8b5cf6" },
+  { label: "Manage storefront", icon: "shopping-bag"    as const, color: "#8b5cf6" },
+  { label: "Reports",           icon: "chart-bar"       as const, color: "#10b981" },
 ];
 
 const orders: {
@@ -64,39 +112,114 @@ const orders: {
   time: string;
   status: OrderStatus;
 }[] = [
-  { id: "#ORD-10428", customer: "Aya Hassan", items: 4, total: "EGP 1,240", method: "Visa", time: "12:42", status: "Paid" },
-  { id: "#ORD-10427", customer: "Walk-in", items: 1, total: "EGP 95", method: "Cash", time: "12:38", status: "Paid" },
-  { id: "#ORD-10426", customer: "Omar Khaled", items: 7, total: "EGP 3,610", method: "Visa", time: "12:21", status: "Refund" },
-  { id: "#ORD-10425", customer: "Layla N.", items: 2, total: "EGP 540", method: "Mada", time: "12:11", status: "Paid" },
-  { id: "#ORD-10424", customer: "Walk-in", items: 3, total: "EGP 870", method: "Cash", time: "11:58", status: "Paid" },
-  { id: "#ORD-10423", customer: "Hany M.", items: 5, total: "EGP 2,150", method: "Visa", time: "11:42", status: "Pending" },
+  { id: "#ORD-10428", customer: "Aya Hassan",   items: 4, total: "EGP 1,240", method: "Visa",  time: "12:42", status: "Paid"    },
+  { id: "#ORD-10427", customer: "Walk-in",       items: 1, total: "EGP 95",   method: "Cash",  time: "12:38", status: "Paid"    },
+  { id: "#ORD-10426", customer: "Omar Khaled",   items: 7, total: "EGP 3,610",method: "Visa",  time: "12:21", status: "Refund"  },
+  { id: "#ORD-10425", customer: "Layla N.",       items: 2, total: "EGP 540",  method: "Mada",  time: "12:11", status: "Paid"    },
+  { id: "#ORD-10424", customer: "Walk-in",       items: 3, total: "EGP 870",  method: "Cash",  time: "11:58", status: "Paid"    },
+  { id: "#ORD-10423", customer: "Hany M.",        items: 5, total: "EGP 2,150",method: "Visa",  time: "11:42", status: "Pending" },
 ];
 
-const statusColor: Record<OrderStatus, "emerald" | "rose" | "amber"> = {
-  Paid: "emerald",
-  Refund: "rose",
-  Pending: "amber",
+const statusColor: Record<OrderStatus, "success" | "error" | "warning"> = {
+  Paid: "success",
+  Refund: "error",
+  Pending: "warning",
 };
 
 const lowStock = [
-  { name: "Espresso Beans 1kg", sku: "BV-COF-001", stock: 3, threshold: 10, color: "#f97316" },
-  { name: "Oat Milk Carton", sku: "BV-DRY-014", stock: 5, threshold: 20, color: "#8b5cf6" },
-  { name: "Paper Cups 12oz", sku: "PK-CUP-12", stock: 12, threshold: 50, color: "#06b6d4" },
-  { name: "Caramel Syrup", sku: "SY-CRM-04", stock: 2, threshold: 8, color: "#ec4899" },
+  { name: "Espresso Beans 1kg",  sku: "BV-COF-001", stock: 3,  threshold: 10, color: "#f97316" },
+  { name: "Oat Milk Carton",     sku: "BV-DRY-014", stock: 5,  threshold: 20, color: "#8b5cf6" },
+  { name: "Paper Cups 12oz",     sku: "PK-CUP-12",  stock: 12, threshold: 50, color: "#06b6d4" },
+  { name: "Caramel Syrup",       sku: "SY-CRM-04",  stock: 2,  threshold: 8,  color: "#ec4899" },
 ];
 
 const topProducts = [
-  { name: "Iced Latte", cat: "Beverages", units: 482, revenue: "EGP 18,540", pct: 92, color: "#3b82f6" },
-  { name: "Chicken Sandwich", cat: "Food", units: 311, revenue: "EGP 14,920", pct: 74, color: "#8b5cf6" },
-  { name: "Croissant", cat: "Bakery", units: 268, revenue: "EGP 6,432", pct: 64, color: "#06b6d4" },
-  { name: "Cold Brew", cat: "Beverages", units: 224, revenue: "EGP 9,856", pct: 53, color: "#ec4899" },
-  { name: "Avocado Toast", cat: "Food", units: 180, revenue: "EGP 10,800", pct: 43, color: "#10b981" },
+  { name: "Iced Latte",       cat: "Beverages", units: 482, revenue: "EGP 18,540", pct: 92, color: "#3b82f6" },
+  { name: "Chicken Sandwich", cat: "Food",      units: 311, revenue: "EGP 14,920", pct: 74, color: "#8b5cf6" },
+  { name: "Croissant",        cat: "Bakery",    units: 268, revenue: "EGP 6,432",  pct: 64, color: "#06b6d4" },
+  { name: "Cold Brew",        cat: "Beverages", units: 224, revenue: "EGP 9,856",  pct: 53, color: "#ec4899" },
+  { name: "Avocado Toast",    cat: "Food",      units: 180, revenue: "EGP 10,800", pct: 43, color: "#10b981" },
 ];
 
-const hourlyData = [18, 22, 14, 10, 8, 12, 28, 42, 68, 76, 90, 82, 74, 65, 52, 45, 38, 52, 68, 84, 72, 55, 38, 22];
+const hourlyData = [18,22,14,10,8,12,28,42,68,76,90,82,74,65,52,45,38,52,68,84,72,55,38,22];
 
 function StatusBadge({ status }: { status: OrderStatus }) {
-  return <Badge color={statusColor[status]}>{status}</Badge>;
+  return <Badge variant={statusColor[status]}>{status}</Badge>;
+}
+
+interface ModeBadgeProps { mode: ShopsMode }
+function ModeBadge({ mode }: ModeBadgeProps) {
+  if (mode === "physical") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
+        🏪 In-Store
+      </span>
+    );
+  }
+  if (mode === "online") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-300">
+        🌐 Online
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 text-xs font-medium text-purple-300">
+      ⚡ Unified
+    </span>
+  );
+}
+
+interface CtaBannerProps { mode: ShopsMode }
+function CtaBanner({ mode }: CtaBannerProps) {
+  if (mode === "physical") {
+    return (
+      <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-cyan-500/[0.07] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Icon name="scan-line" className="h-4 w-4 text-cyan-300" />
+          <span className="text-sm font-medium text-white">Point of Sale ready</span>
+        </div>
+        <a href="/pos" className="rounded-lg border border-cyan-500/30 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/25">
+          Open POS →
+        </a>
+      </div>
+    );
+  }
+  if (mode === "online") {
+    return (
+      <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/[0.07] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Icon name="shopping-bag" className="h-4 w-4 text-blue-300" />
+          <span className="text-sm font-medium text-white">Your storefront is ready</span>
+        </div>
+        <a href="#" onClick={(e) => e.preventDefault()} className="rounded-lg border border-blue-500/30 bg-blue-500/15 px-3 py-1.5 text-xs font-semibold text-blue-300 transition-colors hover:bg-blue-500/25">
+          Visit Storefront →
+        </a>
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-cyan-500/[0.07] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Icon name="scan-line" className="h-4 w-4 text-cyan-300" />
+          <span className="text-sm font-medium text-white">POS</span>
+        </div>
+        <a href="/pos" className="rounded-lg border border-cyan-500/30 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/25">
+          Open →
+        </a>
+      </div>
+      <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/[0.07] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Icon name="shopping-bag" className="h-4 w-4 text-blue-300" />
+          <span className="text-sm font-medium text-white">Storefront</span>
+        </div>
+        <a href="#" onClick={(e) => e.preventDefault()} className="rounded-lg border border-blue-500/30 bg-blue-500/15 px-3 py-1.5 text-xs font-semibold text-blue-300 transition-colors hover:bg-blue-500/25">
+          Visit →
+        </a>
+      </div>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -129,6 +252,9 @@ export default function DashboardPage() {
     );
   }
 
+  const stats = mode === "online" ? onlineStats : mode === "physical" ? physicalStats : bothStats;
+  const quickActions = mode === "online" ? onlineQuickActions : physicalQuickActions;
+
   return (
     <div className="space-y-5">
       {!onboardingDone && (
@@ -143,9 +269,7 @@ export default function DashboardPage() {
       <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-1.5 font-mono text-xs text-gray-500">
-            <a href="/dashboard" className="transition-colors hover:text-gray-300">
-              Platform
-            </a>
+            <a href="/dashboard" className="transition-colors hover:text-gray-300">Platform</a>
             <Icon name="chevron-right" className="h-3 w-3" />
             <span className="text-gray-300">Shops</span>
             <Icon name="chevron-right" className="h-3 w-3" />
@@ -155,16 +279,10 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Shops Dashboard
             </h1>
-            <span className="chip rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-gray-400">
-              mock foundation
-            </span>
+            <ModeBadge mode={mode} />
           </div>
           <p className="mt-2 text-sm text-gray-400">
-            {new Date().toLocaleDateString("en-GB", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
+            {new Date().toLocaleDateString("en-GB", { weekday: "long", month: "long", day: "numeric" })}
             {" · Maadi branch"}
           </p>
         </div>
@@ -201,12 +319,17 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Mode CTA banner */}
+      <CtaBanner mode={mode} />
+
+      {/* Stats */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
           <StatCard key={item.label} {...item} />
         ))}
       </section>
 
+      {/* Quick actions */}
       <section className="card p-4 md:p-5">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div>
@@ -234,6 +357,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Recent orders + Low stock */}
       <section className="grid gap-5 lg:grid-cols-[1.35fr_0.95fr]">
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between border-b border-white/5 p-5">
@@ -242,8 +366,7 @@ export default function DashboardPage() {
               <h2 className="text-base font-semibold text-white">Recent sales and orders</h2>
             </div>
             <a href="/reports" className="inline-flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-white">
-              View report
-              <Icon name="arrow-up-right" className="h-3.5 w-3.5" />
+              View report <Icon name="arrow-up-right" className="h-3.5 w-3.5" />
             </a>
           </div>
           <div className="overflow-x-auto">
@@ -266,7 +389,7 @@ export default function DashboardPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500/50 to-purple-500/50 text-[10px] font-semibold text-white">
-                          {order.customer.split(" ").map((part) => part[0]).slice(0, 2).join("")}
+                          {order.customer.split(" ").map((p) => p[0]).slice(0, 2).join("")}
                         </div>
                         <span className="text-gray-200">{order.customer}</span>
                       </div>
@@ -275,16 +398,11 @@ export default function DashboardPage() {
                     <td className="px-5 py-3.5 font-semibold text-white">{order.total}</td>
                     <td className="hidden px-5 py-3.5 md:table-cell">
                       <span className="inline-flex items-center gap-1.5 text-gray-300">
-                        <Icon
-                          name={order.method === "Cash" ? "banknote" : "credit-card"}
-                          className="h-3.5 w-3.5 text-gray-500"
-                        />
+                        <Icon name={order.method === "Cash" ? "banknote" : "credit-card"} className="h-3.5 w-3.5 text-gray-500" />
                         {order.method}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5">
-                      <StatusBadge status={order.status} />
-                    </td>
+                    <td className="px-5 py-3.5"><StatusBadge status={order.status} /></td>
                     <td className="px-5 py-3.5 text-right font-mono text-xs text-gray-500">{order.time}</td>
                   </tr>
                 ))}
@@ -299,12 +417,11 @@ export default function DashboardPage() {
               <div className="chip mb-1 text-amber-400">{"// low stock alert"}</div>
               <h2 className="text-base font-semibold text-white">Low stock panel</h2>
             </div>
-            <Badge color="amber">7</Badge>
+            <Badge variant="warning">7</Badge>
           </div>
           <div className="divide-y divide-white/5">
             {lowStock.map((item) => {
               const pct = Math.min(100, Math.round((item.stock / item.threshold) * 100));
-
               return (
                 <div key={item.sku} className="flex items-center gap-3 p-4">
                   <div
@@ -317,13 +434,7 @@ export default function DashboardPage() {
                     <div className="truncate text-sm font-medium text-white">{item.name}</div>
                     <div className="font-mono text-[11px] text-gray-500">{item.sku}</div>
                     <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/5">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${pct}%`,
-                          background: pct < 30 ? "#ef4444" : "#f59e0b",
-                        }}
-                      />
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct < 30 ? "#ef4444" : "#f59e0b" }} />
                     </div>
                   </div>
                   <div className="flex-shrink-0 text-right">
@@ -335,10 +446,7 @@ export default function DashboardPage() {
             })}
           </div>
           <div className="border-t border-white/5 p-4">
-            <button
-              type="button"
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.02] py-2 text-xs font-medium text-gray-200 transition-colors hover:bg-white/5"
-            >
+            <button type="button" className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.02] py-2 text-xs font-medium text-gray-200 transition-colors hover:bg-white/5">
               <Icon name="package-plus" className="h-3.5 w-3.5" />
               Create reorder draft
             </button>
@@ -346,6 +454,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Top products + Sales chart */}
       <section className="grid gap-5 lg:grid-cols-2">
         <div className="card p-5">
           <div className="mb-5 flex items-center justify-between">
@@ -353,9 +462,7 @@ export default function DashboardPage() {
               <div className="chip mb-1 text-gray-500">{"// top products"}</div>
               <h2 className="text-base font-semibold text-white">Best sellers this week</h2>
             </div>
-            <button type="button" className="text-xs text-gray-400 transition-colors hover:text-white">
-              View report
-            </button>
+            <button type="button" className="text-xs text-gray-400 transition-colors hover:text-white">View report</button>
           </div>
           <div className="space-y-4">
             {topProducts.map((item, index) => (
@@ -365,18 +472,13 @@ export default function DashboardPage() {
                     <span className="w-5 font-mono text-xs text-gray-500">#{index + 1}</span>
                     <div>
                       <div className="text-sm font-medium text-white">{item.name}</div>
-                      <div className="text-[11px] text-gray-500">
-                        {item.cat} · {item.units} sold
-                      </div>
+                      <div className="text-[11px] text-gray-500">{item.cat} · {item.units} sold</div>
                     </div>
                   </div>
                   <div className="text-sm font-semibold text-white">{item.revenue}</div>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${item.pct}%`, background: item.color }}
-                  />
+                  <div className="h-full rounded-full" style={{ width: `${item.pct}%`, background: item.color }} />
                 </div>
               </div>
             ))}
@@ -384,10 +486,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="card relative overflow-hidden p-5">
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl"
-            style={{ background: "#3b82f6", opacity: 0.28 }}
-          />
+          <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl" style={{ background: "#3b82f6", opacity: 0.28 }} />
           <div className="relative">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -395,45 +494,23 @@ export default function DashboardPage() {
                 <h2 className="text-base font-semibold text-white">Today&apos;s rhythm</h2>
               </div>
               <div className="flex items-center gap-3 font-mono text-[11px] text-gray-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-sm bg-blue-500" />
-                  Today
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-sm bg-white/15" />
-                  Last Mon
-                </span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-blue-500" />Today</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-white/15" />Last Mon</span>
               </div>
             </div>
-
             <div className="flex h-44 items-end gap-1.5">
               {hourlyData.map((value, index) => (
                 <div key={index} className="flex flex-1 flex-col items-center">
                   <div className="flex w-full items-end gap-0.5" style={{ height: "100%" }}>
-                    <div
-                      className="flex-1 rounded-t"
-                      style={{
-                        height: `${value}%`,
-                        background: "linear-gradient(180deg,#60a5fa,#3b82f6)",
-                      }}
-                    />
-                    <div
-                      className="flex-1 rounded-t bg-white/10"
-                      style={{ height: `${Math.max(5, value - 12)}%` }}
-                    />
+                    <div className="flex-1 rounded-t" style={{ height: `${value}%`, background: "linear-gradient(180deg,#60a5fa,#3b82f6)" }} />
+                    <div className="flex-1 rounded-t bg-white/10" style={{ height: `${Math.max(5, value - 12)}%` }} />
                   </div>
                 </div>
               ))}
             </div>
-
             <div className="mt-2 flex justify-between font-mono text-[10px] text-gray-600">
-              <span>00</span>
-              <span>06</span>
-              <span>12</span>
-              <span>18</span>
-              <span>24</span>
+              <span>00</span><span>06</span><span>12</span><span>18</span><span>24</span>
             </div>
-
             <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/5 pt-5 text-center">
               <div>
                 <div className="font-mono text-[10px] uppercase text-gray-500">Peak hour</div>
@@ -451,7 +528,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

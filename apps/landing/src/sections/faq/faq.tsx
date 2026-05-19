@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 interface FAQItem {
   question: string;
@@ -43,15 +45,21 @@ const faqs: FAQItem[] = [
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
-    <section
+    <motion.section
       id="faq"
+      ref={ref}
+      variants={staggerContainer}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
       className="mx-auto max-w-3xl px-4 py-16 md:px-6 md:py-20 lg:py-28"
     >
-      <div className="mb-12 text-center">
+      <motion.div variants={fadeInUp} className="mb-12 text-center">
         <span className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-cyan-200">
-          // faq
+          {"// faq"}
         </span>
         <h2 className="mt-5 text-3xl font-bold md:text-4xl">
           Frequently Asked Questions
@@ -59,7 +67,7 @@ export default function FAQ() {
         <p className="mt-4 text-white/60">
           Everything you need to know about NexoraXS.
         </p>
-      </div>
+      </motion.div>
 
       <div className="space-y-3">
         {faqs.map((item, index) => {
@@ -67,7 +75,11 @@ export default function FAQ() {
           const answerId = `faq-answer-${index}`;
 
           return (
-            <div key={item.question} className="glass-card overflow-hidden">
+            <motion.div
+              key={item.question}
+              variants={fadeInUp}
+              className="glass-card overflow-hidden"
+            >
               <button
                 type="button"
                 className="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-4 text-left font-medium text-white/90 transition-colors hover:text-white"
@@ -81,18 +93,28 @@ export default function FAQ() {
                   aria-hidden="true"
                 />
               </button>
-              <div
-                id={answerId}
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96" : "max-h-0"}`}
-              >
-                <p className="px-5 pb-5 text-sm leading-relaxed text-white/60">
-                  {item.answer}
-                </p>
-              </div>
-            </div>
+
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    id={answerId}
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-5 pb-5 text-sm leading-relaxed text-white/60">
+                      {item.answer}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           );
         })}
       </div>
-    </section>
+    </motion.section>
   );
 }

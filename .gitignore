@@ -9,3 +9,5 @@ coverage
 *:Zone.Identifier
 .next/
 node_modules/
+nexoraxs-skill.zip
+docs/*.docx

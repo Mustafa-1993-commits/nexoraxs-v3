@@ -1,222 +1,172 @@
 "use client";
 
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { type BusinessType, type ShopsMode } from "@/lib/mode";
-import { type StoreSetupData } from "@/components/onboarding/StepStoreSetup";
+import { Icon } from "@nexoraxs/ui";
+import type { BusinessType, ShopsMode } from "@/lib/mode";
+import type { StoreSetupFormData } from "@/lib/onboarding-types";
+import { MODULE_DEFINITIONS } from "@/lib/onboarding-types";
 
-interface SummaryItem {
-  label: string;
-  value: string;
-  icon: IconName;
-}
-
-interface ModuleItem {
-  label: string;
-  icon: IconName;
-}
-
-const businessTypeLabel: Record<BusinessType, string> = {
-  mobile: "Mobile Store",
-  accessories: "Accessories Store",
-  clothing: "Clothing Store",
-  supermarket: "Supermarket",
-  electronics: "Electronics Store",
-  cosmetics: "Cosmetics Store",
-  other: "Other Retail",
+const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
+  mobile:          "Mobile Store",
+  electronics:     "Electronics",
+  clothing:        "Clothing & Fashion",
+  "food-beverage": "Food & Beverage",
+  "books-media":   "Books & Media",
+  "home-furniture":"Home & Furniture",
+  cosmetics:       "Cosmetics & Beauty",
+  supermarket:     "Supermarket",
+  other:           "Other",
+  accessories:     "Accessories Store",
 };
 
-const salesModelLabel: Record<ShopsMode, string> = {
-  physical: "Physical only",
-  online: "Online only",
-  both: "Physical + Online",
+const SALES_MODEL_LABEL: Record<ShopsMode, string> = {
+  physical: "Physical store only",
+  online:   "Online store only",
+  both:     "Both physical + online",
 };
 
-const baseModules: ModuleItem[] = [
-  { label: "Dashboard", icon: "dashboard" },
-  { label: "Products", icon: "package" },
-  { label: "Inventory", icon: "package-search" },
-  { label: "Customers", icon: "users" },
-  { label: "Sales", icon: "receipt" },
-  { label: "Reports", icon: "chart-bar" },
-];
-
-const nextActions = [
-  "Add first product",
-  "Set opening stock",
-  "Invite team member",
-  "Review settings",
-];
-
-function buildSummary(
-  businessType: BusinessType | null,
-  salesModel: ShopsMode | null,
-  setup: StoreSetupData,
-  workspaceCountry: string,
-  workspaceCurrency: string,
-): SummaryItem[] {
-  return [
-    { label: "Workspace",         value: "Mustafa's Co.",                                            icon: "dashboard"    },
-    { label: "Workspace country", value: workspaceCountry,                                           icon: "map-pin"      },
-    { label: "Business Type",     value: businessType ? businessTypeLabel[businessType] : "Unselected", icon: "package"  },
-    { label: "Sales Model",       value: salesModel ? salesModelLabel[salesModel] : "Unselected",    icon: "shopping-bag" },
-    { label: "Store Name",        value: setup.storeName || "—",                                     icon: "file-text"    },
-    { label: "Main Branch",       value: setup.branch    || "—",                                     icon: "map-pin"      },
-    { label: "Currency",          value: workspaceCurrency,                                          icon: "banknote"     },
-  ];
-}
-
-function buildModules(salesModel: ShopsMode | null): ModuleItem[] {
-  const modules = [...baseModules];
-
-  if (salesModel === "physical" || salesModel === "both") {
-    modules.splice(5, 0, { label: "POS", icon: "scan-line" });
-  }
-
-  if (salesModel === "online" || salesModel === "both") {
-    modules.push({ label: "Storefront", icon: "shopping-bag" });
-  }
-
-  return modules;
-}
-
-export interface StepReviewProps {
+interface StepReviewProps {
   businessType: BusinessType | null;
+  customBusinessType: string;
   salesModel: ShopsMode | null;
-  setup: StoreSetupData;
-  workspaceCountry: string;
-  workspaceCurrency: string;
+  setup: StoreSetupFormData;
+  productsCount: number;
 }
 
 export function StepReview({
   businessType,
+  customBusinessType,
   salesModel,
   setup,
-  workspaceCountry,
-  workspaceCurrency,
+  productsCount,
 }: StepReviewProps) {
-  const summary = buildSummary(businessType, salesModel, setup, workspaceCountry, workspaceCurrency);
-  const modules = buildModules(salesModel);
+  const businessLabel =
+    businessType === "other" && customBusinessType.trim()
+      ? customBusinessType.trim()
+      : businessType
+        ? BUSINESS_TYPE_LABEL[businessType]
+        : "—";
 
   return (
-    <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      <div className="space-y-5 lg:col-span-2">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-            </span>
-            <div>
-              <p className="chip text-gray-500">{"// review"}</p>
-              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                Your shop workspace is ready
-              </h2>
-            </div>
+    <section className="space-y-8">
+      <div className="space-y-2">
+        <p className="chip text-gray-500">{"// review & launch"}</p>
+        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          Your store is ready to launch
+        </h2>
+        <p className="text-sm text-gray-400">
+          Review everything below. You can change all settings anytime from Settings.
+        </p>
+      </div>
+
+      {/* Two-column summary */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Left: workspace, business type, sales model */}
+        <div className="card space-y-4 p-6">
+          <p className="chip text-gray-500">{"// workspace & business"}</p>
+          <div className="space-y-3">
+            <SummaryRow label="Workspace" value="Mustafa's Co." readOnly />
+            <SummaryRow label="Business Type" value={businessLabel} />
+            <SummaryRow
+              label="Sales Model"
+              value={salesModel ? SALES_MODEL_LABEL[salesModel] : "—"}
+            />
           </div>
-          <p className="max-w-2xl text-sm text-gray-400">
-            Review your setup. You can change anything later from Settings.
+        </div>
+
+        {/* Right: store details */}
+        <div className="card space-y-4 p-6">
+          <p className="chip text-gray-500">{"// store details"}</p>
+          <div className="space-y-3">
+            <SummaryRow label="Store Name" value={setup.storeName || "—"} />
+            <SummaryRow label="Branch" value={setup.branch || "—"} />
+            <SummaryRow label="Country" value={setup.branchCountry || "—"} />
+            <SummaryRow label="Currency" value={setup.branchCurrency || "—"} />
+            <SummaryRow label="Timezone" value={setup.branchTimezone || "—"} mono />
+            <SummaryRow
+              label="Products"
+              value={productsCount > 0 ? `${productsCount} product${productsCount === 1 ? "" : "s"} added` : "No products added yet"}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Modules grid */}
+      <div className="space-y-4">
+        <div>
+          <p className="chip mb-1 text-gray-500">{"// enabled modules"}</p>
+          <h3 className="text-base font-semibold text-white">Module availability</h3>
+          <p className="mt-1 text-xs text-white/40">
+            You can change modules anytime from Settings → Modules
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {summary.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-2xl border border-white/10 bg-white/[0.02] p-4"
-            >
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-white/60">
-                <Icon name={item.icon} className="h-4 w-4" />
-              </div>
-              <div className="text-xs uppercase tracking-wider text-white/30">
-                {item.label}
-              </div>
-              <div className="mt-1 text-sm font-medium text-white">{item.value}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="chip mb-1 text-gray-500">{"// enabled modules"}</p>
-              <h3 className="text-base font-semibold text-white">Modules turned on</h3>
-            </div>
-            <Badge color="cyan">{modules.length}</Badge>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {modules.map((module) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {MODULE_DEFINITIONS.map((mod) => {
+            const enabled = salesModel !== null && (mod.enabledFor as readonly ShopsMode[]).includes(salesModel);
+            return (
               <div
-                key={module.label}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4"
+                key={mod.id}
+                className={`flex flex-col gap-3 rounded-2xl border p-4 ${
+                  enabled
+                    ? "border-emerald-500/20 bg-emerald-500/[0.05]"
+                    : "border-white/5 bg-white/[0.02] opacity-60"
+                }`}
               >
-                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-cyan-300">
-                  <Icon name={module.icon} className="h-4 w-4" />
-                </span>
-                <span className="text-sm font-medium text-white">{module.label}</span>
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                      enabled
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                        : "border-white/10 bg-white/5 text-white/30"
+                    }`}
+                  >
+                    <Icon name={mod.icon} className="h-4 w-4" />
+                  </span>
+                  {enabled ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-emerald-400">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-white/20">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <div className={`text-sm font-medium ${enabled ? "text-white" : "text-white/40"}`}>
+                    {mod.label}
+                  </div>
+                  {!enabled && mod.disabledReason && (
+                    <div className="mt-0.5 text-[11px] text-white/30">{mod.disabledReason}</div>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-5 lg:col-span-1">
-        <div className="card p-6">
-          <p className="chip mb-3 text-gray-500">{"// next actions"}</p>
-          <h3 className="text-base font-semibold text-white">Next recommended actions</h3>
-          <div className="mt-4 space-y-3">
-            {nextActions.map((action) => (
-              <a
-                key={action}
-                href="#"
-                onClick={(event) => event.preventDefault()}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 transition-colors hover:bg-white/5"
-              >
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-300">
-                  <Icon name="arrow-up-right" className="h-4 w-4" />
-                </span>
-                <span className="text-sm text-white/80">{action}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <p className="chip mb-3 text-gray-500">{"// summary"}</p>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/50">Business Type</span>
-              <span className="text-white">
-                {businessType ? businessTypeLabel[businessType] : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/50">Sales Model</span>
-              <span className="text-white">
-                {salesModel ? salesModelLabel[salesModel] : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/50">Store</span>
-              <span className="text-white">{setup.storeName || "—"}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/50">Branch</span>
-              <span className="text-white">{setup.branch || "—"}</span>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  readOnly,
+  mono,
+}: {
+  label: string;
+  value: string;
+  readOnly?: boolean;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-sm">
+      <span className="flex-shrink-0 text-white/40">{label}</span>
+      <span className={`text-right ${readOnly ? "text-white/50" : "font-medium text-white"} ${mono ? "font-mono text-xs" : ""}`}>
+        {value}
+        {readOnly && <span className="ml-1.5 text-xs text-white/25">(read-only)</span>}
+      </span>
+    </div>
   );
 }

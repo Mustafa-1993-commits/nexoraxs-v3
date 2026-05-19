@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type ComponentProps } from "react";
 
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
 import {
   completeWorkspaceOnboarding,
+  getMockUserName,
   isWorkspaceOnboardingComplete,
   saveWorkspaceCountry,
   saveWorkspaceSetup,
@@ -21,13 +22,33 @@ const regionOptions = [
   { value: "ap-southeast", label: "Asia Pacific (SE)" },
 ] as const;
 
-const countryOptions = [
-  { value: "Egypt",                label: "Egypt"                },
-  { value: "Saudi Arabia",         label: "Saudi Arabia"         },
-  { value: "United Arab Emirates", label: "United Arab Emirates" },
-  { value: "Kuwait",               label: "Kuwait"               },
-  { value: "Qatar",                label: "Qatar"                },
-] as const;
+const REGION_COUNTRIES: Record<string, readonly { value: string; label: string }[]> = {
+  "me-central": [
+    { value: "Egypt",                label: "Egypt"                },
+    { value: "Saudi Arabia",         label: "Saudi Arabia"         },
+    { value: "United Arab Emirates", label: "United Arab Emirates" },
+    { value: "Kuwait",               label: "Kuwait"               },
+    { value: "Qatar",                label: "Qatar"                },
+  ],
+  "eu-central": [
+    { value: "Germany",     label: "Germany"     },
+    { value: "France",      label: "France"      },
+    { value: "Netherlands", label: "Netherlands" },
+    { value: "Poland",      label: "Poland"      },
+    { value: "Spain",       label: "Spain"       },
+  ],
+  "us-east": [
+    { value: "United States", label: "United States" },
+    { value: "Canada",        label: "Canada"        },
+  ],
+  "ap-southeast": [
+    { value: "Singapore",   label: "Singapore"   },
+    { value: "Malaysia",    label: "Malaysia"    },
+    { value: "Thailand",    label: "Thailand"    },
+    { value: "Indonesia",   label: "Indonesia"   },
+    { value: "Philippines", label: "Philippines" },
+  ],
+};
 
 const appCards = [
   {
@@ -69,7 +90,6 @@ const appCards = [
 
 type Step = 1 | 2 | 3;
 type RegionValue = (typeof regionOptions)[number]["value"];
-type CountryValue = (typeof countryOptions)[number]["value"];
 
 function toSlug(name: string): string {
   return name
@@ -164,13 +184,18 @@ export default function OnboardingPage() {
   const router = useRouter();
   const mounted = useSyncExternalStore(subscribeToNothing, () => true, () => false);
   const isComplete = mounted ? isWorkspaceOnboardingComplete() : false;
+  const mockUserName = useSyncExternalStore(
+    subscribeToNothing,
+    () => getMockUserName() ?? "Workspace owner",
+    () => "Workspace owner",
+  );
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [workspaceName, setWorkspaceName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [region, setRegion] = useState<RegionValue>("me-central");
-  const [country, setCountry] = useState<CountryValue>("Egypt");
+  const [country, setCountry] = useState<string>("Egypt");
   const [shopsEnabled, setShopsEnabled] = useState(true);
 
   const canProceed =
@@ -190,6 +215,12 @@ export default function OnboardingPage() {
   const handleSlugChange = (value: string) => {
     setSlugManuallyEdited(true);
     setSlug(value);
+  };
+
+  const handleRegionChange = (newRegion: RegionValue) => {
+    setRegion(newRegion);
+    const firstCountry = REGION_COUNTRIES[newRegion]?.[0]?.value ?? "";
+    setCountry(firstCountry);
   };
 
   const handleBack = () => {
@@ -335,7 +366,7 @@ export default function OnboardingPage() {
                         <select
                           value={region}
                           onChange={(event) =>
-                            setRegion(event.target.value as RegionValue)
+                            handleRegionChange(event.target.value as RegionValue)
                           }
                           className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-blue-500/50"
                         >
@@ -358,12 +389,10 @@ export default function OnboardingPage() {
                         </span>
                         <select
                           value={country}
-                          onChange={(event) =>
-                            setCountry(event.target.value as CountryValue)
-                          }
+                          onChange={(event) => setCountry(event.target.value)}
                           className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-blue-500/50"
                         >
-                          {countryOptions.map((option) => (
+                          {(REGION_COUNTRIES[region] ?? []).map((option) => (
                             <option
                               key={option.value}
                               value={option.value}
@@ -531,7 +560,7 @@ export default function OnboardingPage() {
                       <SummaryCard
                         icon="users"
                         label="Team owner"
-                        value="Mustafa Ahmed"
+                        value={mockUserName}
                       />
                       <SummaryCard
                         icon="apps"

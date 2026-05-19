@@ -1,12 +1,12 @@
-import { Badge } from "@/components/dashboard/Badge";
+import { Badge } from "@nexoraxs/ui";
 
 type CustomerSegment = "VIP" | "Regular" | "New";
-type SegmentColor = "purple" | "blue" | "emerald";
+type SegmentColor = "purple" | "info" | "success";
 
 const segmentColor: Record<CustomerSegment, SegmentColor> = {
   VIP: "purple",
-  Regular: "blue",
-  New: "emerald",
+  Regular: "info",
+  New: "success",
 };
 
 const customers: {
@@ -40,7 +40,7 @@ export default function CustomersPage() {
         <h1 className="text-3xl font-bold tracking-tight text-white">Customers</h1>
         <p className="mt-2 text-sm text-gray-400">
           View and manage your customer base.{" "}
-          <span className="font-mono text-[11px] text-amber-400/80">mock data</span>
+          <span className="font-mono text-[11px] text-amber-400/80">Sample data</span>
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export default function CustomersPage() {
 
             <div className="flex flex-wrap justify-end gap-2">
               {customer.segments.map((segment) => (
-                <Badge key={segment} color={segmentColor[segment]}>
+                <Badge key={segment} variant={segmentColor[segment]}>
                   {segment}
                 </Badge>
               ))}

@@ -1,6 +1,31 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.0.0 → 1.1.0 (MINOR — new technology addition)
+
+Modified sections:
+  Technology & Infrastructure Standards → Approved Stack table: added Framer Motion row
+
+Added:
+  - Row: | Animation | Framer Motion | latest | Landing + future apps |
+
+Removed sections:
+  - None
+
+Modified principles:
+  - None — this is a pure addition; no existing principle was changed or redefined
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md       ✅ Compatible — no structural changes to constitution
+  - .specify/templates/spec-template.md       ✅ Compatible — no structural changes
+  - .specify/templates/tasks-template.md      ✅ Compatible — no structural changes
+
+Follow-up TODOs:
+  - When adding Framer Motion to core-platform or shops-app: file another MINOR amendment
+
+---
+PREVIOUS SYNC IMPACT REPORT (v1.0.0 — initial ratification)
+==================
 Version change: [blank template] → 1.0.0 (initial ratification)
 
 Modified principles:
@@ -120,6 +145,7 @@ approval and MUST be documented in the PR description.
 | Database    | PostgreSQL           | —         | Primary store                  |
 | Cache/Queue | Redis                | —         | Sessions, queues, cache        |
 | Infra       | Docker Compose       | —         | Local + production             |
+| Animation   | Framer Motion        | latest    | Landing + future apps          |
 
 No technology outside this stack may be introduced without a constitution
 amendment.
@@ -211,4 +237,4 @@ All PRs and code reviews MUST verify compliance with:
 
 ---
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-11 | **Last Amended**: 2026-05-11
+**Version**: 1.1.0 | **Ratified**: 2026-05-11 | **Last Amended**: 2026-05-17

@@ -1,39 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { Badge, Icon, type IconName, Logo } from "@nexoraxs/ui";
+import { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Badge } from "@/components/dashboard/Badge";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { Logo } from "@/components/ui/Logo";
+import { getMode } from "@/lib/mode";
+
+const CORE_PLATFORM_URL =
+  process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001";
 
 type NavItem = {
   label: string;
   href: string;
   icon: IconName;
-  badge?: { label: string; color: "gray" | "amber" | "cyan" };
+  badge?: { label: string; variant: "default" | "warning" | "info" };
   disabled?: boolean;
 };
 
 const operations: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "dashboard" },
-  { label: "Products", href: "/products", icon: "package", badge: { label: "412", color: "gray" } },
-  { label: "Inventory", href: "#", icon: "boxes", badge: { label: "7", color: "amber" }, disabled: true },
-  { label: "Customers", href: "/customers", icon: "users" },
-  { label: "Sales", href: "#", icon: "receipt", disabled: true },
-  { label: "POS", href: "#", icon: "scan-line", badge: { label: "F8", color: "cyan" }, disabled: true },
-  { label: "Reports", href: "/reports", icon: "chart-bar" },
+  { label: "Dashboard",  href: "/dashboard",  icon: "dashboard"      },
+  { label: "Products",   href: "/products",   icon: "package",       badge: { label: "412", variant: "default" } },
+  { label: "Inventory",  href: "#",           icon: "boxes",         badge: { label: "7", variant: "warning" }, disabled: true },
+  { label: "Customers",  href: "/customers",  icon: "users"          },
+  { label: "Sales",      href: "#",           icon: "receipt",       disabled: true },
+  { label: "POS",        href: "/pos",        icon: "scan-line",     badge: { label: "F8", variant: "info" } },
+  { label: "Storefront", href: "#",           icon: "shopping-bag",  disabled: true },
+  { label: "Reports",    href: "/reports",    icon: "chart-bar"      },
 ];
 
 const configure: NavItem[] = [
-  { label: "Discounts", href: "#", icon: "tag", disabled: true },
-  { label: "Taxes", href: "#", icon: "percent", disabled: true },
-  { label: "Settings", href: "/settings", icon: "settings" },
+  { label: "Discounts",  href: "#",           icon: "tag",           disabled: true },
+  { label: "Taxes",      href: "#",           icon: "percent",       disabled: true },
+  { label: "Settings",   href: "/settings",   icon: "settings"       },
 ];
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const mode = useSyncExternalStore(
+    () => () => {},
+    () => getMode(),
+    () => null,
+  );
+
+  const visibleOperations = operations.filter((item) => {
+    if (item.label === "POS"        && mode === "online")   return false;
+    if (item.label === "Storefront" && mode === "physical") return false;
+    return true;
+  });
 
   return (
     <>
@@ -60,17 +74,17 @@ export function Sidebar() {
         className={`fixed left-0 top-0 z-50 flex h-full w-[260px] flex-col border-r border-white/5 bg-[#0a0a0f]/95 transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        {/* Header: back link + logo */}
+        {/* Header */}
         <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
           <a
-            href="#"
+            href={`${CORE_PLATFORM_URL}/dashboard`}
             aria-label="Back to platform"
             className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Icon name="chevron-left" className="h-4 w-4 flex-shrink-0" />
             <span className="text-xs">Back to Platform</span>
           </a>
-          <Logo />
+          <Logo app="shops" />
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -83,10 +97,9 @@ export function Sidebar() {
 
         {/* Nav */}
         <div className="flex-1 overflow-y-auto px-3 py-5">
-          {/* Operations */}
           <p className="chip mb-2 px-3 text-gray-600">Operations</p>
           <nav className="mb-7 space-y-0.5">
-            {operations.map((item) => {
+            {visibleOperations.map((item) => {
               const isActive = item.href !== "#" && pathname === item.href;
               const commonClasses = `nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm ${
                 isActive
@@ -95,48 +108,30 @@ export function Sidebar() {
                     ? "cursor-default text-gray-500"
                     : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`;
-
               const content = (
                 <>
                   <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
                   <span>{item.label}</span>
                   {item.badge && (
-                    <Badge color={item.badge.color}>{item.badge.label}</Badge>
+                    <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
                   )}
                 </>
               );
-
               if (item.href === "#") {
                 return (
-                  <a
-                    key={item.label}
-                    href="#"
-                    aria-disabled="true"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setIsOpen(false);
-                    }}
-                    className={commonClasses}
-                  >
+                  <a key={item.label} href="#" aria-disabled="true" onClick={(e) => { e.preventDefault(); setIsOpen(false); }} className={commonClasses}>
                     {content}
                   </a>
                 );
               }
-
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={commonClasses}
-                >
+                <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)} className={commonClasses}>
                   {content}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Configure */}
           <p className="chip mb-2 px-3 text-gray-600">Configure</p>
           <nav className="space-y-0.5">
             {configure.map((item) => {
@@ -148,38 +143,21 @@ export function Sidebar() {
                     ? "cursor-default text-gray-500"
                     : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`;
-
               const content = (
                 <>
                   <Icon name={item.icon} className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
                   <span>{item.label}</span>
                 </>
               );
-
               if (item.href === "#") {
                 return (
-                  <a
-                    key={item.label}
-                    href="#"
-                    aria-disabled="true"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setIsOpen(false);
-                    }}
-                    className={commonClasses}
-                  >
+                  <a key={item.label} href="#" aria-disabled="true" onClick={(e) => { e.preventDefault(); setIsOpen(false); }} className={commonClasses}>
                     {content}
                   </a>
                 );
               }
-
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={commonClasses}
-                >
+                <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)} className={commonClasses}>
                   {content}
                 </Link>
               );

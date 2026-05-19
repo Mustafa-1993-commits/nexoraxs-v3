@@ -4,6 +4,13 @@
 > working on the NexoraXS platform. Read this fully before writing any code.
 
 ---
+## Project Documentation
+
+| Document | Path | Purpose |
+|----------|------|---------|
+| Master Plan | `docs/NexoraXS-Master-Plan.docx` | Full roadmap — Phases 0–5 |
+| UX Master Plan | `docs/NexoraXS-UX-Master-Plan.docx` | All screens, flows, states |
+
 
 ## 1. Project Identity
 
@@ -135,11 +142,22 @@ nexoraxs-v3/
 - ❌ Any maintenance logic
 
 ### Shared Packages Rules:
-- `packages/ui` → UI components ONLY, no business logic
+- `packages/ui` (`@nexoraxs/ui`) → UI components ONLY, no business logic, no API calls, no domain data
+  - Exports: `Button`, `Input`, `Badge`, `Card`, `Icon`, `Logo` + their prop types
+  - `Icon` contains 48 SVG icons (stroke style); add new icons here, NOT in apps
+  - `Badge` uses semantic variants: `default | success | warning | error | info | purple`
+  - `Logo` uses `app` prop: `"core"` (NexoraXS wordmark) | `"shops"` (Shops brandmark)
+  - Consuming apps must add `"@nexoraxs/ui": "workspace:*"` and `transpilePackages: ["@nexoraxs/ui"]`
 - `packages/sdk` → API clients and fetch helpers ONLY
 - `packages/types` → TypeScript interfaces/types ONLY
 - `packages/auth` → Auth helpers ONLY
 - Each app imports from packages, never from another app directly
+
+### Approved Third-Party Packages:
+- `framer-motion` → approved for `apps/landing` only
+  - Import: `import { motion, AnimatePresence } from "framer-motion"`
+  - Presets: `import { fadeInUp, fadeIn, staggerContainer, slideInLeft, slideInRight } from "@/lib/animations"` (landing only)
+  - Adding to `apps/core-platform` or `apps/shops-app` requires a separate MINOR constitution amendment
 
 ### Multi-Tenancy Rule:
 - Every database table that holds business data MUST have `workspace_id`
@@ -444,8 +462,8 @@ NexoraXS aims to become a **Business Operating System** supporting:
 ## 20. Active Feature Plan
 
 <!-- SPECKIT START -->
-**Current feature**: `022-onboarding-country-currency-from-workspace`
-**Plan**: [specs/022-onboarding-country-currency-from-workspace/plan.md](specs/022-onboarding-country-currency-from-workspace/plan.md)
-**Spec**: [specs/022-onboarding-country-currency-from-workspace/spec.md](specs/022-onboarding-country-currency-from-workspace/spec.md)
-**Branch**: `023-onboarding-country-currency-from-workspace`
+**Current feature**: `035-shops-onboarding-redesign`
+**Plan**: [specs/035-shops-onboarding-redesign/plan.md](specs/035-shops-onboarding-redesign/plan.md)
+**Spec**: [specs/035-shops-onboarding-redesign/spec.md](specs/035-shops-onboarding-redesign/spec.md)
+**Branch**: `035-shops-onboarding-redesign`
 <!-- SPECKIT END -->

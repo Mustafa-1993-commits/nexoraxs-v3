@@ -1,12 +1,10 @@
 "use client";
 
+import { Icon, Logo } from "@nexoraxs/ui";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { navItems } from "@/lib/mock-data/nav-items";
-import { Icon } from "@/components/ui/Icon";
-import { Logo } from "@/components/ui/Logo";
-
 const resources = [
   { label: "Documentation", href: "#" },
   { label: "Changelog",     href: "#" },

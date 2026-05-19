@@ -37,7 +37,7 @@ export default function DashboardPage() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-white">NexoraXS Shops</p>
-            <p className="text-xs text-white/40">Commerce &amp; POS · mock data</p>
+            <p className="text-xs text-white/40">Commerce &amp; POS · Sample data</p>
           </div>
           <span className="chip rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-emerald-400">
             Active

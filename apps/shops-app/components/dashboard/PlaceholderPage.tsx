@@ -1,4 +1,4 @@
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Icon, type IconName } from "@nexoraxs/ui";
 
 interface PlaceholderPageProps {
   icon: IconName;

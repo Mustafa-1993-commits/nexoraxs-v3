@@ -1,7 +1,19 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { Icon } from "@/components/ui/Icon";
+import { Icon } from "@nexoraxs/ui";
+import { getMockUserName } from "@/lib/session";
+
+const subscribeToNothing = () => () => {};
+
+function getInitials(name: string): string {
+  return (
+    name.trim().split(/\s+/).filter(Boolean)
+      .slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("")
+    || "WO"
+  );
+}
 
 const titles: Record<string, string> = {
   "/dashboard":          "Dashboard",
@@ -13,6 +25,11 @@ const titles: Record<string, string> = {
 export function Topbar() {
   const pathname = usePathname();
   const title = titles[pathname] ?? "Dashboard";
+  const userName = useSyncExternalStore(
+    subscribeToNothing,
+    () => getMockUserName() ?? "Workspace owner",
+    () => "Workspace owner",
+  );
 
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-white/5 bg-[#0a0a0f]/85 backdrop-blur-xl">
@@ -62,10 +79,10 @@ export function Topbar() {
             className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold text-white"
             style={{ background: "linear-gradient(135deg,#8b5cf6,#3b82f6)" }}
           >
-            MA
+            {getInitials(userName)}
           </div>
           <div className="hidden text-left leading-tight sm:block">
-            <div className="text-xs font-medium text-white">Mustafa A.</div>
+            <div className="text-xs font-medium text-white">{userName}</div>
             <div className="font-mono text-[10px] text-white/40">Owner</div>
           </div>
           <Icon name="chevron-down" className="h-3.5 w-3.5 text-white/40" />

@@ -1,8 +1,18 @@
+"use client";
+
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { useRouter } from "next/navigation";
+import { Button, Input } from "@nexoraxs/ui";
+import { initMockUserFallback, isWorkspaceOnboardingComplete } from "@/lib/session";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleSignIn = () => {
+    initMockUserFallback();
+    router.push(isWorkspaceOnboardingComplete() ? "/workspaces" : "/onboarding");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f] px-4">
       <div className="w-full max-w-md">
@@ -31,7 +41,12 @@ export default function LoginPage() {
             />
 
             <div className="pt-2">
-              <Button variant="primary" type="button" className="w-full">
+              <Button
+                variant="primary"
+                type="button"
+                className="w-full"
+                onClick={handleSignIn}
+              >
                 Sign In
               </Button>
             </div>

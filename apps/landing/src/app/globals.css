@@ -177,6 +177,16 @@ body {
   }
 }
 
+@keyframes floating-orb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.08); }
+  66%       { transform: translate(-15px, 15px) scale(0.95); }
+}
+
+.animate-orb-slow   { animation: floating-orb 12s ease-in-out infinite; }
+.animate-orb-medium { animation: floating-orb 15s ease-in-out infinite 3s; }
+.animate-orb-fast   { animation: floating-orb 18s ease-in-out infinite 6s; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

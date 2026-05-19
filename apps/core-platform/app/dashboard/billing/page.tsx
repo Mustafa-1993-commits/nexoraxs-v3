@@ -1,4 +1,17 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { getMockUserName } from "@/lib/session";
+
+const subscribeToNothing = () => () => {};
+
 export default function BillingPage() {
+  const userName = useSyncExternalStore(
+    subscribeToNothing,
+    () => getMockUserName() ?? "Workspace owner",
+    () => "Workspace owner",
+  );
+
   return (
     <div>
       {/* Header */}
@@ -68,7 +81,7 @@ export default function BillingPage() {
               •••• •••• •••• 4242
             </div>
             <div className="mt-3 flex justify-between font-mono text-[11px] text-white/60">
-              <span>Mustafa Ahmed</span>
+              <span>{userName}</span>
               <span>09/28</span>
             </div>
           </div>

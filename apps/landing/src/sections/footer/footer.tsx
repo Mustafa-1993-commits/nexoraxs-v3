@@ -34,15 +34,22 @@ const linkGroups = [
 
 export default function Footer() {
   return (
-    <footer id="footer" className="border-t border-white/10 bg-[#0a0a0f]">
+    <footer id="footer" className="bg-[#0a0a0f]">
+      {/* Gradient divider */}
+      <div
+        className="h-px w-full bg-gradient-to-r from-purple-500/50 via-blue-500/40 to-cyan-500/50"
+        aria-hidden="true"
+      />
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-16">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="flex-shrink-0">
             <Image
-              src="/branding/logo-bottom.png"
+              src="/branding/logo-top.png"
               alt="NexoraXS"
-              width={140}
-              height={38}
+              width={160}
+              height={44}
+              className="h-10 w-auto"
             />
           </div>
 
@@ -56,7 +63,7 @@ export default function Footer() {
                   <a
                     key={link.label}
                     href={link.href}
-                    className="block py-1.5 text-sm text-white/60 transition-colors hover:text-white"
+                    className="block py-1.5 text-sm text-white/60 transition-colors hover:text-purple-300"
                   >
                     {link.label}
                   </a>

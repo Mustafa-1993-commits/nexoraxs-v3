@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { Logo, Icon } from "@nexoraxs/ui";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Logo } from "@/components/ui/Logo";
-import { Icon } from "@/components/ui/Icon";
 import { mockWorkspaces } from "@/lib/mock-data/workspaces";
+import { getMockUserEmail, getMockUserName } from "@/lib/session";
+
+const subscribeToNothing = () => () => {};
+
+function getInitials(name: string): string {
+  return (
+    name.trim().split(/\s+/).filter(Boolean)
+      .slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("")
+    || "WO"
+  );
+}
 
 export default function WorkspacesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const router = useRouter();
+  const userName  = useSyncExternalStore(subscribeToNothing, () => getMockUserName()  ?? "Workspace owner",     () => "Workspace owner");
+  const userEmail = useSyncExternalStore(subscribeToNothing, () => getMockUserEmail() ?? "owner@nexoraxs.local", () => "owner@nexoraxs.local");
 
   const handleContinue = () => {
     if (selectedId) router.push("/dashboard");
@@ -29,12 +41,12 @@ export default function WorkspacesPage() {
                 className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-[10px] font-bold text-white"
                 style={{ background: "linear-gradient(135deg,#8b5cf6,#3b82f6)" }}
               >
-                MA
+                {getInitials(userName)}
               </div>
               <div className="hidden leading-tight sm:block">
-                <p className="text-xs font-medium text-white">Mustafa A.</p>
+                <p className="text-xs font-medium text-white">{userName}</p>
                 <p className="font-mono text-[10px] text-white/40">
-                  mustafa@nexoraxs.com
+                  {userEmail}
                 </p>
               </div>
             </div>
