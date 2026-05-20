@@ -20,7 +20,7 @@ type NavItem = {
 const operations: NavItem[] = [
   { label: "Dashboard",  href: "/dashboard",  icon: "dashboard"      },
   { label: "Products",   href: "/products",   icon: "package",       badge: { label: "412", variant: "default" } },
-  { label: "Inventory",  href: "#",           icon: "boxes",         badge: { label: "7", variant: "warning" }, disabled: true },
+  { label: "Inventory",  href: "/inventory",  icon: "boxes",         badge: { label: "7", variant: "warning" } },
   { label: "Customers",  href: "/customers",  icon: "users"          },
   { label: "Sales",      href: "#",           icon: "receipt",       disabled: true },
   { label: "POS",        href: "/pos",        icon: "scan-line",     badge: { label: "F8", variant: "info" } },
