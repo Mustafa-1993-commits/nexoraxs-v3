@@ -56,7 +56,7 @@ export default function RegisterPage() {
                 className="w-full"
                 onClick={() => {
                   saveMockUser(name.trim(), email.trim());
-                  router.push("/login");
+                  router.push("/verify-email");
                 }}
               >
                 Create Account
