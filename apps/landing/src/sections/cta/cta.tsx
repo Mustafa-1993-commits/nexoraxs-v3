@@ -45,7 +45,7 @@ export default function CTA() {
           variants={fadeInUp}
           className="mx-auto mt-4 max-w-2xl text-white/60"
         >
-          Explore the MVP path for a workspace-based platform with modular apps.
+          Explore Commerce OS — the first Operating System available on the platform.
         </motion.p>
         <motion.div
           variants={staggerContainer}
@@ -60,10 +60,10 @@ export default function CTA() {
           </motion.a>
           <motion.a
             variants={fadeInUp}
-            href="#apps"
+            href="#products"
             className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-6 py-3 font-semibold text-white/80 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white"
           >
-            Explore Apps
+            Explore Products
           </motion.a>
         </motion.div>
       </div>

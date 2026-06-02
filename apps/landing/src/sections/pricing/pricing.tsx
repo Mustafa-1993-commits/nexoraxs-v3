@@ -12,7 +12,7 @@ const betaFeatures = [
   "Free during beta",
   "Core platform access",
   "Workspace setup",
-  "Shops app MVP access",
+  "Commerce OS MVP access",
 ];
 
 export default function Pricing() {

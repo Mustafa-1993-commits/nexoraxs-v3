@@ -5,7 +5,7 @@ const linkGroups = [
     heading: "Product",
     links: [
       { label: "Features", href: "#features" },
-      { label: "Apps", href: "#apps" },
+      { label: "Products", href: "#products" },
       { label: "Pricing", href: "#pricing" },
     ],
   },

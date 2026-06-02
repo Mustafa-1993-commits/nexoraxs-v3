@@ -27,7 +27,7 @@ const features: FeatureCard[] = [
     icon: Boxes,
     title: "Modular Architecture",
     description:
-      "Start with the platform core, then add focused business apps as the product expands.",
+      "Start with the Core Platform, then activate independent Operating Systems as your business grows.",
     iconBg: "bg-blue-500/15",
     accent: "text-blue-300",
     glow: "rgba(59,130,246,0.15)",
@@ -45,7 +45,7 @@ const features: FeatureCard[] = [
     icon: Building2,
     title: "Workspace Management",
     description:
-      "Keep teams, billing, and enabled apps organized around workspace boundaries.",
+      "Keep teams, billing, and enabled Operating Systems organized around workspace boundaries.",
     iconBg: "bg-cyan-500/15",
     accent: "text-cyan-300",
     glow: "rgba(6,182,212,0.15)",

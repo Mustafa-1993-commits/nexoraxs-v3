@@ -18,7 +18,7 @@ const coreItems = [
   { label: "Launcher", icon: LayoutGrid },
 ];
 
-const appTiles = ["Shops", "Clinics", "Maintenance", "Restaurants", "CRM"];
+const appTiles = ["Commerce OS", "Healthcare OS", "HR OS", "CRM OS", "Gym OS", "Maintenance OS"];
 
 export default function Platform() {
   const ref = useRef(null);
@@ -42,12 +42,12 @@ export default function Platform() {
             {"// platform model"}
           </span>
           <h2 className="mt-5 text-3xl font-bold md:text-4xl">
-            One Core. Many Apps.
+            One Core. Six Operating Systems.
           </h2>
           <p className="mt-4 text-lg leading-8 text-white/60">
-            NexoraXS separates the shared platform shell from focused business
-            apps, so workspaces, authentication, billing, and app access stay in
-            one core while each app can serve its own domain.
+            NexoraXS separates the shared Core Platform from independent
+            Operating Systems — so workspaces, authentication, billing, and OS
+            access stay in one core while each Operating System owns its domain.
           </p>
         </motion.div>
 
@@ -96,7 +96,7 @@ export default function Platform() {
             animate={isInView ? "visible" : "hidden"}
             className="glass-card p-6 md:p-8"
           >
-            <p className="mono-chip text-cyan-200">App Satellites</p>
+            <p className="mono-chip text-cyan-200">Operating Systems</p>
             <h3 className="mt-3 text-2xl font-semibold text-white">
               Domain modules
             </h3>

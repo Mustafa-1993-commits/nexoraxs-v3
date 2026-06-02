@@ -9,13 +9,13 @@ import { staggerContainer, fadeInUp, fadeIn } from "@/lib/animations";
 const CORE_LOGIN_URL =
   (process.env.NEXT_PUBLIC_CORE_PLATFORM_URL ?? "http://localhost:3001") + "/login";
 
-const headline = "Business operations, connected by one modular core";
+const headline = "The Business Operating Platform for every business domain";
 const headlineWords = headline.split(" ");
 
 const featurePills = [
-  "Modular SaaS architecture",
-  "Workspace-based platform",
-  "Built for future apps",
+  "Business Operating Platform",
+  "6 Operating Systems planned",
+  "Commerce OS — available now",
 ];
 
 export default function Hero() {
@@ -62,7 +62,7 @@ export default function Hero() {
               className="mt-5 max-w-3xl text-4xl font-bold leading-tight md:text-5xl lg:text-6xl"
             >
               {headlineWords.map((word, i) => {
-                const isGradient = i >= headlineWords.indexOf("modular");
+                const isGradient = i >= 1 && i <= 3;
                 return (
                   <motion.span
                     key={i}
@@ -82,9 +82,9 @@ export default function Hero() {
               variants={fadeIn}
               className="mt-6 max-w-xl text-lg leading-8 text-white/65"
             >
-              NexoraXS is an MVP-stage modular SaaS platform for workspaces,
-              shared authentication, app launching, and future business apps
-              built around a single platform shell.
+              NexoraXS is a Business Operating Platform — a shared foundation
+              powering independent Operating Systems for Commerce, Healthcare,
+              HR, CRM, Gym, and Maintenance.
             </motion.p>
 
             <motion.div

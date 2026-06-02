@@ -1,4 +1,4 @@
-import { ShoppingBag, Stethoscope, Utensils, Wrench } from "lucide-react";
+import { ShoppingBag, Stethoscope, UsersRound, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface SatelliteApp {
@@ -13,8 +13,8 @@ interface SatelliteApp {
 
 const satelliteApps: SatelliteApp[] = [
   {
-    id: "shops",
-    label: "Shops",
+    id: "commerce",
+    label: "Commerce OS",
     icon: ShoppingBag,
     position: "left-0 top-6",
     animation: "animate-float-b",
@@ -22,8 +22,8 @@ const satelliteApps: SatelliteApp[] = [
     iconBg: "bg-blue-500/15",
   },
   {
-    id: "clinics",
-    label: "Clinics",
+    id: "healthcare",
+    label: "Healthcare OS",
     icon: Stethoscope,
     position: "right-0 top-6",
     animation: "animate-float-c",
@@ -32,21 +32,21 @@ const satelliteApps: SatelliteApp[] = [
   },
   {
     id: "maintenance",
-    label: "Maintenance",
+    label: "Maintenance OS",
     icon: Wrench,
     position: "bottom-8 left-0",
     animation: "animate-float-d",
-    accent: "text-orange-300",
-    iconBg: "bg-orange-500/15",
-  },
-  {
-    id: "restaurants",
-    label: "Restaurants",
-    icon: Utensils,
-    position: "bottom-8 right-0",
-    animation: "animate-float-b",
     accent: "text-pink-300",
     iconBg: "bg-pink-500/15",
+  },
+  {
+    id: "crm",
+    label: "CRM OS",
+    icon: UsersRound,
+    position: "bottom-8 right-0",
+    animation: "animate-float-b",
+    accent: "text-cyan-300",
+    iconBg: "bg-cyan-500/15",
   },
 ];
 

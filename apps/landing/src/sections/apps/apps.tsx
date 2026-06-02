@@ -3,10 +3,11 @@
 import { useRef } from "react";
 import { motion, useInView, type Variants } from "framer-motion";
 import {
+  BriefcaseBusiness,
+  Dumbbell,
   ShoppingBag,
   Stethoscope,
   UsersRound,
-  Utensils,
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -34,20 +35,20 @@ const scaleIn: Variants = {
 
 const apps: AppCard[] = [
   {
-    name: "Shops",
-    tagline: "Commerce & POS",
+    name: "Commerce OS",
+    tagline: "Commerce & Business Presets",
     description:
-      "Manage products, inventory, sales, and customers in one place.",
+      "Sell, manage inventory, run POS, and serve customers — with presets for retail, restaurants, pharmacy, and more.",
     icon: ShoppingBag,
     accent: "text-blue-300",
     iconBg: "bg-blue-500/15",
     glow: "rgba(59, 130, 246, 0.22)",
   },
   {
-    name: "Clinics",
+    name: "Healthcare OS",
     tagline: "Healthcare Management",
     description:
-      "A planned app for appointments, patient records, and clinic workflows.",
+      "A planned Operating System for appointments, patient records, clinical workflows, and healthcare teams.",
     badge: "Coming Soon",
     icon: Stethoscope,
     accent: "text-emerald-300",
@@ -55,37 +56,48 @@ const apps: AppCard[] = [
     glow: "rgba(16, 185, 129, 0.2)",
   },
   {
-    name: "Maintenance",
-    tagline: "Field Service",
+    name: "HR OS",
+    tagline: "People & Workforce",
     description:
-      "A planned app for jobs, assets, technicians, and service operations.",
+      "A planned Operating System for employees, attendance, payroll, leaves, and HR workflows.",
     badge: "Coming Soon",
-    icon: Wrench,
-    accent: "text-orange-300",
-    iconBg: "bg-orange-500/15",
-    glow: "rgba(249, 115, 22, 0.2)",
+    icon: BriefcaseBusiness,
+    accent: "text-violet-300",
+    iconBg: "bg-violet-500/15",
+    glow: "rgba(139, 92, 246, 0.2)",
   },
   {
-    name: "Restaurants",
-    tagline: "Hospitality Operations",
-    description:
-      "A planned app for table flow, orders, menus, and hospitality teams.",
-    badge: "Coming Soon",
-    icon: Utensils,
-    accent: "text-pink-300",
-    iconBg: "bg-pink-500/15",
-    glow: "rgba(236, 72, 153, 0.2)",
-  },
-  {
-    name: "CRM",
+    name: "CRM OS",
     tagline: "Customer Relations",
     description:
-      "A planned customer workspace for leads, deals, and follow-up activity.",
+      "A planned Operating System for leads, deals, campaigns, and customer relationship workflows.",
     badge: "Coming Soon",
     icon: UsersRound,
     accent: "text-cyan-300",
     iconBg: "bg-cyan-500/15",
     glow: "rgba(6, 182, 212, 0.2)",
+  },
+  {
+    name: "Gym OS",
+    tagline: "Fitness & Memberships",
+    description:
+      "A planned Operating System for gym members, memberships, trainers, classes, and renewals.",
+    badge: "Coming Soon",
+    icon: Dumbbell,
+    accent: "text-orange-300",
+    iconBg: "bg-orange-500/15",
+    glow: "rgba(249, 115, 22, 0.2)",
+  },
+  {
+    name: "Maintenance OS",
+    tagline: "Field Service",
+    description:
+      "A planned Operating System for repair centers, tickets, technicians, warranties, and service operations.",
+    badge: "Coming Soon",
+    icon: Wrench,
+    accent: "text-pink-300",
+    iconBg: "bg-pink-500/15",
+    glow: "rgba(236, 72, 153, 0.2)",
   },
 ];
 
@@ -95,7 +107,7 @@ export default function Apps() {
 
   return (
     <motion.section
-      id="apps"
+      id="products"
       ref={ref}
       variants={staggerContainer}
       initial="hidden"
@@ -104,11 +116,11 @@ export default function Apps() {
     >
       <motion.div variants={fadeInUp} className="mb-12 text-center">
         <span className="mono-chip inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-purple-200">
-          {"// app launcher"}
+          {"// product hub"}
         </span>
-        <h2 className="mt-5 text-3xl font-bold md:text-4xl">Our Apps</h2>
+        <h2 className="mt-5 text-3xl font-bold md:text-4xl">Product Hub</h2>
         <p className="mx-auto mt-4 max-w-2xl text-white/60">
-          One platform. Multiple business tools. All under one login.
+          One platform. Multiple Operating Systems. All under one login.
         </p>
       </motion.div>
 

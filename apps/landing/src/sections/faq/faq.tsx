@@ -14,32 +14,32 @@ const faqs: FAQItem[] = [
   {
     question: "What is NexoraXS?",
     answer:
-      "NexoraXS is an MVP-stage modular SaaS platform that combines a core platform shell with focused business apps under workspace-based access.",
+      "NexoraXS is a Business Operating Platform — a shared Core Platform foundation connected to independent Operating Systems for different business domains such as Commerce, Healthcare, HR, CRM, Gym, and Maintenance.",
   },
   {
-    question: "Can I use multiple apps under one account?",
+    question: "Can I use multiple Operating Systems under one account?",
     answer:
-      "That is the intended platform model. The core platform is designed for shared authentication, workspaces, billing, and an app launcher for enabled modules.",
+      "That is the intended platform model. The Core Platform provides shared authentication, workspaces, billing, and a Product Hub where each enabled Operating System can be launched.",
   },
   {
     question: "Is my business data kept separate from other users?",
     answer:
-      "The product is being built around workspace-level isolation, so business data belongs to its workspace and app modules must query within that boundary.",
+      "The platform is built around workspace-level isolation. Business data belongs to its workspace and each Operating System queries only within that boundary.",
   },
   {
-    question: "What apps are available right now?",
+    question: "Which Operating Systems are available right now?",
     answer:
-      "The current MVP scope focuses on the Core Platform and Shops app. Clinics, Maintenance, Restaurants, and CRM are future app modules.",
+      "Commerce OS is the first available Operating System — covering POS, products, inventory, and business presets for retail, restaurants, pharmacy, and more. Healthcare OS, HR OS, CRM OS, Gym OS, and Maintenance OS are planned future products.",
   },
   {
     question: "How does pricing work?",
     answer:
-      "Beta access is positioned as free during beta. Future paid plans will be defined after the MVP validates the platform and app model.",
+      "Beta access is free during the early access period. Future paid plans will be defined per Operating System after the MVP validates the platform model.",
   },
   {
     question: "How do I get started?",
     answer:
-      "Use the beta entry points on this page to follow the MVP onboarding path as the platform becomes ready for early users.",
+      "Use the Get Started button on this page to follow the onboarding path and set up your workspace with Commerce OS.",
   },
 ];
 

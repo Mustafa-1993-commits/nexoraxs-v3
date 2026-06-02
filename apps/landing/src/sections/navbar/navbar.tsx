@@ -9,7 +9,7 @@ const CORE_LOGIN_URL =
 
 const navLinks = [
   { label: "Features", href: "#features" },
-  { label: "Apps", href: "#apps" },
+  { label: "Products", href: "#products" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
