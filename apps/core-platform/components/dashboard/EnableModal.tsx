@@ -31,7 +31,7 @@ export function EnableModal({ app, onConfirm, onClose }: EnableModalProps) {
           {app.description}
         </p>
         <p className="mt-3 text-sm text-white/50">
-          This app will be activated for your workspace. You can disable it at any time from settings.
+          This operating system will be activated for your workspace. You can disable it at any time from settings.
         </p>
         <div className="mt-6 flex gap-3">
           <button

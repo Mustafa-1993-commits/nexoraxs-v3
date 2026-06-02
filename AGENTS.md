@@ -830,3 +830,9 @@ Before writing code, answer these questions:
 7. Can this be implemented as UI/mock first before backend?
 
 If unsure, do not expand the architecture. Create a small spec and keep the MVP boundary narrow.
+
+---
+
+<!-- SPECKIT START -->
+Active plan: specs/038-platform-alignment-localization-product-hub/plan.md
+<!-- SPECKIT END -->

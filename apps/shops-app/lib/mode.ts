@@ -10,6 +10,8 @@ export type BusinessType =
   | "home-furniture"
   | "cosmetics"
   | "supermarket"
+  | "pharmacy"
+  | "restaurant"
   | "other"
   | "accessories"; // legacy — kept for backward compat, not shown in UI grid
 
@@ -41,6 +43,8 @@ const VALID_BUSINESS_TYPES: readonly BusinessType[] = [
   "home-furniture",
   "cosmetics",
   "supermarket",
+  "pharmacy",
+  "restaurant",
   "other",
   "accessories",
 ];

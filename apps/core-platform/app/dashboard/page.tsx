@@ -23,20 +23,20 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Enabled apps */}
+      {/* Active OS */}
       <div className="card mt-6 p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="chip mb-1 text-white/30">{"// enabled apps"}</p>
-            <h2 className="text-lg font-semibold text-white">Active in this workspace</h2>
+            <p className="chip mb-1 text-white/30">{"// active os"}</p>
+            <h2 className="text-lg font-semibold text-white">Operating systems active in this workspace</h2>
           </div>
         </div>
         <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 text-sm font-bold">
-            S
+            C
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-white">NexoraXS Shops</p>
+            <p className="text-sm font-semibold text-white">Commerce OS</p>
             <p className="text-xs text-white/40">Commerce &amp; POS · Sample data</p>
           </div>
           <span className="chip rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-emerald-400">
