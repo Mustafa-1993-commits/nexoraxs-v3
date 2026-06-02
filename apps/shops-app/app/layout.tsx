@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NexoraXS Shops",
-  description: "NexoraXS Business Operating System — Shops",
+  title: "Commerce OS",
+  description: "NexoraXS — Commerce OS",
 };
 
 export default function RootLayout({

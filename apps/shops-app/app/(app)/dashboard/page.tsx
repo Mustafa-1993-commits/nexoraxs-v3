@@ -271,13 +271,13 @@ export default function DashboardPage() {
           <div className="mb-2 flex items-center gap-1.5 font-mono text-xs text-gray-500">
             <a href="/dashboard" className="transition-colors hover:text-gray-300">Platform</a>
             <Icon name="chevron-right" className="h-3 w-3" />
-            <span className="text-gray-300">Shops</span>
+            <span className="text-gray-300">Commerce OS</span>
             <Icon name="chevron-right" className="h-3 w-3" />
             <span>Dashboard</span>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Shops Dashboard
+              Commerce Dashboard
             </h1>
             <ModeBadge mode={mode} />
           </div>

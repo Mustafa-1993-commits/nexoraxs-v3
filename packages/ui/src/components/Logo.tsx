@@ -55,7 +55,7 @@ function ShopsLogo({ size }: { size: LogoSize }) {
         <Icon name="shopping-bag" className="h-4 w-4" strokeWidth={2.2} />
       </div>
       <span className={`${textSize} font-bold tracking-tight text-white`}>
-        Shops
+        Commerce OS
       </span>
     </div>
   );

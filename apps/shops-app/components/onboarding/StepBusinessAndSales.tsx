@@ -10,15 +10,17 @@ interface BusinessTypeOption {
 }
 
 const BUSINESS_TYPES: BusinessTypeOption[] = [
-  { id: "mobile",        emoji: "📱", label: "Mobile Store"       },
-  { id: "electronics",   emoji: "💻", label: "Electronics"        },
+  { id: "mobile",        emoji: "📱", label: "Mobile Store"        },
+  { id: "electronics",   emoji: "💻", label: "Electronics"         },
   { id: "clothing",      emoji: "👕", label: "Clothing & Fashion"  },
-  { id: "food-beverage", emoji: "🍕", label: "Food & Beverage"    },
-  { id: "books-media",   emoji: "📚", label: "Books & Media"      },
-  { id: "home-furniture",emoji: "🏠", label: "Home & Furniture"   },
-  { id: "cosmetics",     emoji: "💄", label: "Cosmetics & Beauty" },
-  { id: "supermarket",   emoji: "🛒", label: "Supermarket"        },
-  { id: "other",         emoji: "🔧", label: "Other"              },
+  { id: "food-beverage", emoji: "🍕", label: "Food & Beverage"     },
+  { id: "books-media",   emoji: "📚", label: "Books & Media"       },
+  { id: "home-furniture",emoji: "🏠", label: "Home & Furniture"    },
+  { id: "cosmetics",     emoji: "💄", label: "Cosmetics & Beauty"  },
+  { id: "supermarket",   emoji: "🛒", label: "Supermarket"         },
+  { id: "pharmacy",      emoji: "💊", label: "Pharmacy"            },
+  { id: "restaurant",    emoji: "🍽️", label: "Restaurant / Cafe"  },
+  { id: "other",         emoji: "🔧", label: "Other"               },
 ];
 
 const PHYSICAL_MODULES = [

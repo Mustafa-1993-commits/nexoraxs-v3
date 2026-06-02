@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { Icon } from "@nexoraxs/ui";
 import { getMockUserName } from "@/lib/session";
+import { LanguageSwitcher } from "@/components/dashboard/LanguageSwitcher";
 
 const subscribeToNothing = () => () => {};
 
@@ -17,7 +18,7 @@ function getInitials(name: string): string {
 
 const titles: Record<string, string> = {
   "/dashboard":          "Dashboard",
-  "/dashboard/apps":     "App Launcher",
+  "/dashboard/apps":     "Product Hub",
   "/dashboard/billing":  "Plan & billing",
   "/dashboard/settings": "Settings",
 };
@@ -66,6 +67,9 @@ export function Topbar() {
             placeholder="Search…"
           />
         </div>
+
+        {/* Language switcher */}
+        <LanguageSwitcher />
 
         {/* Bell */}
         <button className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/60 transition-colors hover:bg-white/10 hover:text-white">

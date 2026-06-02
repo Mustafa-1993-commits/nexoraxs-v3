@@ -349,7 +349,7 @@ function OnboardingHeader() {
           </div>
           <span className="text-sm font-semibold text-white">
             Nexora<span className="text-cyan-300">XS</span>{" "}
-            <span className="font-normal text-white/50">Shops</span>
+            <span className="font-normal text-white/50">Commerce OS</span>
           </span>
         </div>
         <div className="chip text-gray-500">setup wizard</div>

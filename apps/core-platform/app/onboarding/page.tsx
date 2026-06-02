@@ -50,39 +50,46 @@ const REGION_COUNTRIES: Record<string, readonly { value: string; label: string }
   ],
 };
 
-const appCards = [
+const osCards = [
   {
-    id: "shops",
-    name: "NexoraXS Shops",
+    id: "commerce",
+    name: "Commerce OS",
     description: "Retail, inventory, and point-of-sale management.",
     available: true,
     icon: "apps" as const,
   },
   {
-    id: "clinics",
-    name: "NexoraXS Clinics",
-    description: "Appointment and patient operations are coming soon.",
+    id: "healthcare",
+    name: "Healthcare OS",
+    description: "Clinic, appointment, and patient management — coming soon.",
     available: false,
     icon: "apps" as const,
   },
   {
-    id: "maintenance",
-    name: "NexoraXS Maintenance",
-    description: "Field service workflows are coming soon.",
-    available: false,
-    icon: "apps" as const,
-  },
-  {
-    id: "restaurants",
-    name: "NexoraXS Restaurants",
-    description: "Table and kitchen operations are coming soon.",
+    id: "hr",
+    name: "HR OS",
+    description: "Employee, payroll, and attendance management — coming soon.",
     available: false,
     icon: "apps" as const,
   },
   {
     id: "crm",
-    name: "NexoraXS CRM",
-    description: "Lead and customer management are coming soon.",
+    name: "CRM OS",
+    description: "Leads, pipelines, and customer communications — coming soon.",
+    available: false,
+    icon: "apps" as const,
+  },
+  {
+    id: "gym",
+    name: "Gym OS",
+    description: "Memberships, trainers, and class management — coming soon.",
+    available: false,
+    icon: "apps" as const,
+  },
+  {
+    id: "maintenance",
+    name: "Maintenance OS",
+    description: "Field service and repair ticket workflows — coming soon.",
     available: false,
     icon: "apps" as const,
   },
@@ -420,16 +427,16 @@ export default function OnboardingPage() {
                         Step 2
                       </p>
                       <h2 className="mt-2 text-2xl font-bold tracking-tight text-white">
-                        Choose your apps
+                        Choose your operating systems
                       </h2>
                       <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/55">
-                        Select the apps you want to enable in this workspace.
+                        Select the operating systems you want to activate in this workspace.
                       </p>
                     </div>
 
                     <div className="space-y-3">
-                      {appCards.map((app) => {
-                        const active = app.id === "shops" && shopsEnabled;
+                      {osCards.map((app) => {
+                        const active = app.id === "commerce" && shopsEnabled;
 
                         return (
                           <button
@@ -505,7 +512,7 @@ export default function OnboardingPage() {
 
                     {!shopsEnabled && (
                       <p className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs leading-relaxed text-amber-100/85">
-                        At least one app must be selected to continue.
+                        At least one operating system must be selected to continue.
                       </p>
                     )}
                   </div>
@@ -564,8 +571,8 @@ export default function OnboardingPage() {
                       />
                       <SummaryCard
                         icon="apps"
-                        label="Enabled apps"
-                        value={shopsEnabled ? "Shops" : "None selected"}
+                        label="Active OS"
+                        value={shopsEnabled ? "Commerce OS" : "None selected"}
                       />
                     </div>
 

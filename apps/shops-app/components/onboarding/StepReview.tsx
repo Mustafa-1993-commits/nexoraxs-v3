@@ -14,6 +14,8 @@ const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
   "home-furniture":"Home & Furniture",
   cosmetics:       "Cosmetics & Beauty",
   supermarket:     "Supermarket",
+  pharmacy:        "Pharmacy",
+  restaurant:      "Restaurant / Cafe",
   other:           "Other",
   accessories:     "Accessories Store",
 };

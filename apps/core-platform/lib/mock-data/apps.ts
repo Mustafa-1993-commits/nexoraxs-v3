@@ -1,47 +1,51 @@
-import type { AppStatus } from "@/lib/types";
+import type { OSState } from "@/lib/types";
 
-export interface App {
+export interface OSItem {
   id: string;
   name: string;
   description: string;
-  status: AppStatus;
+  state: OSState;
   href?: string;
-  subtitle?: string;
 }
 
 const SHOPS_URL = process.env.NEXT_PUBLIC_SHOPS_APP_URL ?? "http://localhost:3002";
 
-export const mockApps: App[] = [
+export const mockOS: OSItem[] = [
   {
-    id: "shops",
-    name: "Shops",
-    description: "Commerce & POS — manage products, sales, and customers.",
-    status: "active",
-    subtitle: "Business management · POS · Commerce",
+    id: "commerce",
+    name: "Commerce OS",
+    description: "Retail, POS, inventory, and customer commerce operations.",
+    state: "active",
     href: SHOPS_URL,
   },
   {
-    id: "clinics",
-    name: "Clinics",
-    description: "Healthcare management for appointments and billing.",
-    status: "coming-soon",
+    id: "healthcare",
+    name: "Healthcare OS",
+    description: "Clinic, appointment, and patient management.",
+    state: "coming-soon",
   },
   {
-    id: "maintenance",
-    name: "Maintenance",
-    description: "Field service — schedule jobs and track assets.",
-    status: "coming-soon",
-  },
-  {
-    id: "restaurants",
-    name: "Restaurants",
-    description: "Table management and kitchen operations.",
-    status: "coming-soon",
+    id: "hr",
+    name: "HR OS",
+    description: "Employee, payroll, attendance, and leave management.",
+    state: "coming-soon",
   },
   {
     id: "crm",
-    name: "CRM",
-    description: "Track leads, deals, and customer communications.",
-    status: "upgrade",
+    name: "CRM OS",
+    description: "Leads, pipelines, campaigns, and follow-ups.",
+    state: "coming-soon",
+  },
+  {
+    id: "gym",
+    name: "Gym OS",
+    description: "Memberships, trainers, classes, and renewals.",
+    state: "coming-soon",
+  },
+  {
+    id: "maintenance",
+    name: "Maintenance OS",
+    description: "Field service, repair tickets, and asset management.",
+    state: "coming-soon",
   },
 ];
