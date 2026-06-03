@@ -30,7 +30,7 @@ const operations: NavItem[] = [
 
 const configure: NavItem[] = [
   { label: "Discounts",  href: "#",           icon: "tag",           disabled: true },
-  { label: "Taxes",      href: "#",           icon: "percent",       disabled: true },
+  { label: "Taxes",      href: "/settings/tax", icon: "percent"        },
   { label: "Settings",   href: "/settings",   icon: "settings"       },
 ];
 

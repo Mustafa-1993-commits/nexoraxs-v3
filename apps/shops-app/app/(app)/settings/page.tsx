@@ -49,14 +49,6 @@ export default function SettingsPage() {
   if (!mounted) {
     return (
       <div>
-        <div className="mb-6">
-          <p className="chip mb-2 text-gray-500">{"// settings"}</p>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Configure your shop preferences and account.
-          </p>
-        </div>
-
         <div className="card p-6">
           <div className="h-4 w-32 rounded bg-white/5" />
           <div className="mt-4 space-y-3">
@@ -71,14 +63,6 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <p className="chip mb-2 text-gray-500">{"// settings"}</p>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Configure your shop preferences and account.
-        </p>
-      </div>
-
       <div className="space-y-4">
         <section className="card p-6 space-y-4">
           <div>

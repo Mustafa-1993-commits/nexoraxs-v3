@@ -834,5 +834,5 @@ If unsure, do not expand the architecture. Create a small spec and keep the MVP 
 ---
 
 <!-- SPECKIT START -->
-Active plan: specs/039-landing-page-v5-2-positioning/plan.md
+Active plan: specs/040-commerce-identity-tax-document-templates/plan.md
 <!-- SPECKIT END -->

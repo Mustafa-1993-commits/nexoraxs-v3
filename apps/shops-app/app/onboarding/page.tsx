@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StepBusinessAndSales } from "@/components/onboarding/StepBusinessAndSales";
 import { StepStoreSetup } from "@/components/onboarding/StepStoreSetup";
@@ -83,17 +83,17 @@ function readSessionSnapshot(): SessionSnapshot {
   };
 }
 
-// ─── Shell: lazy-init reads sessionStorage once; server always gets null ─────
+// ─── Shell: reads sessionStorage after mount; server and first client render both get null ───
 
 export default function OnboardingPage() {
-  // Lazy initializer: runs once on mount.
-  // Server (SSR): typeof window === 'undefined' → null → loading skeleton.
-  // Client: reads sessionStorage directly — no useEffect, no setState-in-effect.
-  // suppressHydrationWarning on the root div handles the server/client mismatch.
-  const [session] = useState<SessionSnapshot | null>(() => {
-    if (typeof window === "undefined") return null;
-    return readSessionSnapshot();
-  });
+  // Initial state is null on both server and client so the pre-rendered HTML
+  // matches the first client render (no hydration mismatch).
+  // useEffect runs after hydration and populates session from sessionStorage.
+  const [session, setSession] = useState<SessionSnapshot | null>(null);
+
+  useEffect(() => {
+    setSession(readSessionSnapshot());
+  }, []);
 
   if (session === null) {
     return (
