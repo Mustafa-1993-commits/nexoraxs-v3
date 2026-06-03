@@ -3,7 +3,7 @@
 > This file is the single source of truth for any AI agent (Claude Code, Codex, or other)
 > working on the NexoraXS platform. Read this fully before writing any code.
 >
-> **Architecture status:** v5.2 Final Master Architecture — Architecture Freeze Ready.
+> **Architecture status:** v5.3 Final Master Architecture — Architecture Freeze Ready.
 > Do not reopen platform architecture unless an implementation blocker proves a real conflict.
 
 ---
@@ -12,7 +12,7 @@
 
 | Document | Path | Purpose |
 |----------|------|---------|
-| Final Master Architecture | `docs/NexoraXS_Platform_Documentation_v5_2_Final_Master_Architecture_CLEAN.md` | Final platform architecture and MVP execution boundary |
+| Final Master Architecture | `docs/NexoraXS_Platform_Documentation_v5_3_Final_Master_Architecture.md` | Final platform architecture and MVP execution boundary |
 | Master Plan | `docs/NexoraXS-Master-Plan.docx` | Legacy roadmap reference |
 | UX Master Plan | `docs/NexoraXS-UX-Master-Plan.docx` | UX screens, flows, states |
 
@@ -23,7 +23,7 @@
 | Field        | Value                                               |
 |--------------|-----------------------------------------------------|
 | Project      | NexoraXS — Business Operating Platform              |
-| Version      | v3 repo / v5.2 architecture                         |
+| Version      | v3 repo / v5.3 architecture                         |
 | Repo         | git@github.com:Mustafa-1993-commits/nexoraxs-v3.git |
 | Domain       | https://www.nexoraxs.com                            |
 | Architecture | Modular Monolith (NOT microservices)                |
@@ -174,6 +174,72 @@ Workspace: Mustafa Group
 │   └── Branch: Miami
 ├── Business Unit: Mustafa Gym → Gym OS
 └── Business Unit: Mustafa Maintenance Center → Maintenance OS
+```
+
+### Business Unit MVP decision
+
+Business Units are part of the core data model from day one, but they are hidden in the MVP user interface behind a system-created Default Business Unit.
+
+Every Workspace must create at least one Default Business Unit, and every Branch must belong to a Business Unit, even when the user does not see or manage Business Units directly.
+
+MVP internal structure:
+
+```txt
+Workspace: Mustafa Group
+  → Business Unit: Default Business Unit
+    → Branch: Main Branch
+```
+
+This prevents the platform from building directly on Workspace and avoids a major refactor when multi-business operations are introduced.
+
+### Business Unit UI visibility triggers
+
+Business Unit management becomes visible in the UI when one or more of the following triggers exist:
+
+1. The workspace has multiple business lines, such as Pharmacy + Gym + Maintenance Center.
+2. The workspace subscribes to multiple Operating Systems, such as Commerce OS + Gym OS.
+3. The same OS is used for multiple distinct activities, such as Pharmacy + Supermarket + Restaurant inside Commerce OS.
+4. The active plan allows more than one Business Unit, such as Starter = 1 BU, Pro = 3 BUs, Business = Unlimited / Custom.
+
+Branches are visible from day one. Business Units are revealed progressively only when operational complexity requires them.
+
+MVP visible concepts:
+
+```txt
+Visible:
+- Workspace
+- Main Branch / Branches
+
+Hidden:
+- Default Business Unit
+```
+
+### Required data model rule
+
+Even when Business Units are hidden in the MVP UI, every Branch must belong to a `businessUnitId`.
+
+```ts
+interface Workspace {
+  id: string;
+  name: string;
+}
+
+interface BusinessUnit {
+  id: string;
+  workspace_id: string;
+  name: string;
+  type?: string;
+  status: "active" | "archived";
+}
+
+interface Branch {
+  id: string;
+  workspace_id: string;
+  business_unit_id: string;
+  name: string;
+  code: string;
+  is_main: boolean;
+}
 ```
 
 ### Critical rule
@@ -395,19 +461,116 @@ Commerce Core is always present for every Commerce workspace. Modules extend it;
 
 ### Business Presets
 
+The user-facing phrase “Business Type” is a simplified UX label. Architecturally, it must be treated as a **Business Preset** and stored as `businessPreset`.
+
+The UI may ask:
+
+```txt
+What type of business are you running?
+```
+
+But internally this means:
+
+```txt
+businessPreset
+```
+
 Business Preset is a smart starter setup only. It seeds defaults and recommendations, not app boundaries.
 
-| Preset | Notes |
-|--------|-------|
-| Retail Store | Generic retail setup |
-| Restaurant / Cafe | POS now; kitchen/dine-in/delivery future modules |
-| Pharmacy | Commerce preset; expiry/batch future; no patient records |
-| Medical Supplies | Commerce preset; product sales and inventory |
-| Supermarket | Barcode-first, units, inventory |
-| Electronics / Mobile Store | Barcode/serial/IMEI/warranty future |
-| Clothing / Fashion | Variants/size/color future |
-| Cosmetics | Expiry/shade/category defaults |
-| Other | Minimal generic preset |
+A Commerce Preset may define or suggest:
+
+- Default categories
+- Default units
+- Suggested modules
+- Suggested document templates
+- Suggested POS behavior
+- Suggested reports
+- Suggested product fields
+- Optional sample products
+
+A preset must not create a separate OS, must not own modules, and must not hardcode workflows.
+
+#### Preset vs Module rule
+
+```txt
+Preset recommends modules.
+Preset does not own modules.
+Preset does not hardcode workflows.
+Users may enable or disable allowed modules based on plan and configuration.
+```
+
+Examples:
+
+- Mobile Store may use barcode scanning.
+- Restaurant may use online orders.
+- Pharmacy may use delivery.
+- Fashion may use POS only.
+
+| Preset | Enabled now | Recommended / locked later |
+|--------|-------------|-----------------------------|
+| Retail Store | POS, Products, Inventory, Invoices, Taxes | Online catalog, loyalty, advanced reports |
+| Restaurant / Cafe | POS, Orders, Invoices, Taxes | Dine-in, Delivery, Kitchen, Tables, Service charge |
+| Pharmacy | POS, Products, Inventory, Invoices, Taxes | Barcode, Expiry tracking, Batch tracking, Supplier purchases, Healthcare prescription integration |
+| Medical Supplies | POS, Products, Inventory, Invoices, Taxes | Batch/expiry, supplier purchases, Healthcare integration where applicable |
+| Supermarket | POS, Products, Inventory, Invoices, Taxes | Barcode-first POS, expiry, kg/gram/liter/pack units, fast checkout |
+| Electronics / Mobile Store | POS, Inventory, Invoices, Taxes | Barcode, Serial/IMEI, Warranty, Maintenance OS integration |
+| Clothing / Fashion | POS, Inventory, Invoices | Variants, Size, Color, Exchange policy template |
+| Cosmetics | POS, Products, Inventory, Invoices, Taxes | Expiry, shade/category defaults, batch tracking |
+| Other | Minimal generic setup | User-selected modules |
+
+#### Commerce Presets in MVP
+
+MVP onboarding should show these presets:
+
+- Retail
+- Pharmacy
+- Restaurant / Cafe
+- Supermarket
+- Electronics / Mobile Store
+- Fashion
+- Cosmetics
+- Other
+
+In the MVP, a preset only changes:
+
+- Default categories
+- Default units
+- Suggested modules UI
+- Optional sample products
+- Document template recommendation
+
+Complex behaviors such as batch tracking, expiry tracking, kitchen workflows, IMEI tracking, supplier purchases, or Healthcare prescription integration must appear only as recommended, locked, or plan-gated capabilities until implemented.
+
+#### Suggested Modules Step
+
+After selecting a preset, onboarding should show a “Recommended setup” step.
+
+Example for Pharmacy:
+
+```txt
+Recommended setup for Pharmacy
+
+Enabled now:
+✓ POS
+✓ Products
+✓ Inventory
+✓ Invoices
+✓ Taxes
+
+Recommended later:
+○ Expiry Tracking
+○ Batch Tracking
+○ Supplier Purchases
+○ Healthcare Prescription Integration
+```
+
+If the selected plan does not allow a module, the UI should show:
+
+```txt
+Locked by plan
+```
+
+Modules remain independently enabled, disabled, locked, or plan-gated based on workspace subscription and user configuration.
 
 ### Commerce Modules
 
@@ -786,7 +949,7 @@ docs/*       → documentation-only alignment
 feat(core-platform): add product hub shell
 feat(shops-app): add commerce tax setup
 fix(shops-app): correct sidebar module filtering
-docs: align AGENTS.md with v5.2 architecture
+docs: align AGENTS.md with v5.3 architecture
 ```
 
 ### Rules

@@ -1,8 +1,8 @@
 # NexoraXS Constitution
 
-**Version:** 1.2.0  
-**Last Amended:** 2026-06-02  
-**Architecture Alignment:** NexoraXS v5.2 Final Master Architecture — Architecture Freeze Ready  
+**Version:** 1.3.0  
+**Last Amended:** 2026-06-03  
+**Architecture Alignment:** NexoraXS v5.3 Final Master Architecture — Architecture Freeze Ready  
 **Status:** Active governance document
 
 ---
@@ -21,7 +21,7 @@ It exists to protect the platform from:
 - premature backend implementation
 - unclear ownership between Core Platform and domain Operating Systems
 
-This document supersedes informal guidance. `AGENTS.md`, specs, implementation plans, and agent skills MUST reflect this constitution and the v5.2 Final Master Architecture.
+This document supersedes informal guidance. `AGENTS.md`, specs, implementation plans, and agent skills MUST reflect this constitution and the v5.3 Final Master Architecture.
 
 ---
 
@@ -124,6 +124,29 @@ NexoraXS uses this hierarchy:
 - A Business Unit represents an activity/business line.
 - A Branch represents an operating location.
 - In MVP, create/use one default Business Unit silently unless a spec explicitly exposes Business Unit UI.
+
+### Business Unit MVP decision
+
+Business Units are part of the core data model from day one, but they are hidden in the MVP user interface behind a system-created Default Business Unit.
+
+Every Workspace MUST create at least one Default Business Unit, and every Branch MUST belong to a Business Unit, even when the user does not see or manage Business Units directly.
+
+MVP internal structure:
+
+```txt
+Workspace
+→ Default Business Unit
+→ Main Branch
+```
+
+Business Unit management becomes visible in the UI only when at least one of these triggers exists:
+
+1. The workspace has multiple business lines.
+2. The workspace subscribes to multiple Operating Systems.
+3. The same OS is used for multiple distinct activities.
+4. The active plan allows more than one Business Unit.
+
+Branches are visible from day one. Business Units are revealed progressively only when operational complexity requires them.
 
 ---
 
@@ -277,6 +300,32 @@ Commerce OS owns commerce workflows.
 ### Commerce presets
 
 Restaurant/Cafe, Pharmacy, Supermarket, Electronics/Mobile Store, Fashion, Cosmetics, Medical Supplies, and Retail are Commerce presets, not separate apps.
+
+The user-facing phrase “Business Type” is a simplified UX label. Architecturally, it MUST be treated as a **Business Preset** and stored as `businessPreset`.
+
+A Commerce Preset provides smart starting configuration only. It may define or suggest:
+
+- default categories
+- default units
+- suggested modules
+- suggested document templates
+- suggested POS behavior
+- suggested reports
+- suggested fields
+- optional sample products
+
+Presets MUST NOT create separate applications, MUST NOT own modules, and MUST NOT hardcode workflows. They only provide smart defaults and recommendations.
+
+Required rule:
+
+```txt
+Preset recommends modules.
+Preset does not own modules.
+Preset does not hardcode workflows.
+Users may enable or disable allowed modules based on plan and configuration.
+```
+
+In MVP, preset output is limited to defaults and recommendations. Complex behaviors such as batch tracking, expiry tracking, kitchen workflows, IMEI tracking, supplier purchases, or Healthcare prescription integration MUST appear only as recommended, locked, or plan-gated capabilities until implemented.
 
 Pharmacy belongs to Commerce OS because it is operationally product, inventory, barcode, sales, invoices, tax, batch/expiry future.
 
@@ -458,7 +507,7 @@ This constitution is the highest governance document for the NexoraXS repository
 
 If `AGENTS.md` conflicts with this constitution, the constitution wins and `AGENTS.md` must be corrected.
 
-If this constitution conflicts with the v5.2 Final Master Architecture, pause and amend the constitution explicitly.
+If this constitution conflicts with the v5.3 Final Master Architecture, pause and amend the constitution explicitly.
 
 ### Amendment levels
 
