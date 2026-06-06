@@ -43,7 +43,6 @@ export default function ForgotPasswordPage() {
               id="email"
               className="nx-input"
               type="email"
-              placeholder="you@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

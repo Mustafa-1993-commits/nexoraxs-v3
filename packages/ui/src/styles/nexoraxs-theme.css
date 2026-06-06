@@ -1,3 +1,5 @@
+@keyframes nx-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 .gradient-text {
   background: linear-gradient(120deg, #3b82f6 0%, #8b5cf6 48%, #06b6d4 100%);
   -webkit-background-clip: text;

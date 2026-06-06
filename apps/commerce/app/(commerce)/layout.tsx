@@ -28,7 +28,14 @@ export default function CommerceLayout({ children }: { children: React.ReactNode
     }
   }, [isHydrated, hasCommerceSetupContext, isAuthenticated, isOnboardingComplete, isCommerceSetupComplete, router]);
 
-  if (!isHydrated || !hasCommerceSetupContext || !isAuthenticated || !isOnboardingComplete || !isCommerceSetupComplete) return null;
+  if (!isHydrated) {
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0c0e14" }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #4f46e5", borderTopColor: "transparent", animation: "nx-spin 0.8s linear infinite" }} />
+      </div>
+    );
+  }
+  if (!hasCommerceSetupContext || !isAuthenticated || !isOnboardingComplete || !isCommerceSetupComplete) return null;
 
   return <CommerceShell>{children}</CommerceShell>;
 }

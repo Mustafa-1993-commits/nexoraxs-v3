@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ShoppingCart, FileText, Printer } from "lucide-react";
-import { useApp } from "@/lib/store";
+import { useApp, computeDoc, fmtDate, readPosLastOrderId, clearPosLastOrderId } from "@/lib/store";
 import type { CommerceOrder, CommerceInvoice } from "@/lib/store";
-import { readPosLastOrderId, clearPosLastOrderId } from "@nexoraxs/shared";
 
 export default function POSSuccessPage() {
-  const { orders, invoices, money, showToast } = useApp();
+  const { orders, invoices, money, getCommerceSetup } = useApp();
+  const setup = getCommerceSetup();
+  const businessName = setup.displayName || setup.legalName || "Commerce Business";
   const [order, setOrder] = useState<CommerceOrder | null>(null);
   const [invoice, setInvoice] = useState<CommerceInvoice | null>(null);
 
@@ -24,6 +25,8 @@ export default function POSSuccessPage() {
       }
     }
   }, [orders, invoices]);
+
+  const doc = order ? computeDoc(order.items, setup, order.discount || 0) : null;
 
   if (!order) {
     return (
@@ -60,7 +63,7 @@ export default function POSSuccessPage() {
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
             <div style={{ fontSize: 12, color: "var(--text-3)" }}>Payment</div>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>{order.payment}</div>
+            <div style={{ fontWeight: 600, fontSize: 13, textTransform: "capitalize" }}>{order.payment}</div>
           </div>
 
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: 4 }}>
@@ -91,7 +94,7 @@ export default function POSSuccessPage() {
 
           {invoice && (
             <Link
-              href={`/invoices/${invoice.id}`}
+              href={`/invoices/${invoice.id}/document`}
               className="nx-btn"
               style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none", padding: "11px 20px", fontSize: 14 }}
             >
@@ -102,11 +105,76 @@ export default function POSSuccessPage() {
           <button
             className="nx-btn"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 14, padding: "11px 20px" }}
-            onClick={() => showToast("Printing coming soon", "info")}
+            onClick={() => window.print()}
           >
             <Printer size={16} />Print Receipt
           </button>
         </div>
+
+        {/* Receipt */}
+        {doc && (
+          <div style={{ marginTop: 32, textAlign: "left" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 14 }}>
+              Receipt
+            </div>
+            <div className="nx-receipt" style={{ margin: "0 auto" }}>
+              <div className="nx-receipt-head">
+                <div className="nx-receipt-logo ph">{businessName.charAt(0)}</div>
+                <div className="nx-receipt-biz">{businessName}</div>
+                {setup.address && <div className="nx-receipt-muted">{setup.address}</div>}
+                {setup.phone && <div className="nx-receipt-muted">Tel: {setup.phone}</div>}
+                {setup.vatRegistered && setup.taxNumber && (
+                  <div className="nx-receipt-muted">{setup.taxLabel || "VAT"} Reg: {setup.taxNumber}</div>
+                )}
+              </div>
+              <div className="nx-receipt-rule" />
+              <div className="nx-receipt-meta">
+                {invoice && <div><span>Receipt</span><b>{invoice.invoiceNumber}</b></div>}
+                <div><span>Order</span><b>{order.orderNumber}</b></div>
+                <div><span>Date</span><b>{fmtDate(order.createdAt)}</b></div>
+                <div><span>Payment</span><b style={{ textTransform: "capitalize" }}>{order.payment}</b></div>
+              </div>
+              <div className="nx-receipt-rule dashed" />
+              <table className="nx-receipt-items">
+                <thead>
+                  <tr><th>Item</th><th>Qty</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                  {order.items.map((it, i) => (
+                    <tr key={i}>
+                      <td>{it.name}<span className="nx-receipt-unit">{money(it.price)}</span></td>
+                      <td className="c">{it.qty}</td>
+                      <td className="r">{money(it.price * it.qty)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="nx-receipt-rule dashed" />
+              <div className="nx-receipt-totals">
+                <div><span>{setup.pricesIncludeTax ? "Net" : "Subtotal"}</span><b>{money(doc.net)}</b></div>
+                {(order.discount || 0) > 0 && (
+                  <div><span>Discount</span><b>−{money(order.discount || 0)}</b></div>
+                )}
+                {setup.vatRegistered && (
+                  <div><span>{setup.taxLabel || "VAT"} ({doc.rate}%)</span><b>{money(doc.vat)}</b></div>
+                )}
+                <div className="grand"><span>Total</span><b>{money(doc.total)}</b></div>
+                <div className="pay"><span style={{ textTransform: "capitalize" }}>{order.payment}</span><b>{money(doc.total)}</b></div>
+              </div>
+              <div className="nx-receipt-rule" />
+              <div className="nx-receipt-foot">
+                <div className="nx-receipt-barcode">
+                  {Array.from({ length: 44 }).map((_, i) => (
+                    <span key={i} style={{ width: i % 4 === 0 ? 2.5 : i % 3 === 0 ? 1 : 1.5 }} />
+                  ))}
+                </div>
+                {invoice && <div className="nx-receipt-muted">{invoice.invoiceNumber}</div>}
+                <div className="nx-receipt-thanks">{setup.footer || "Thank you for shopping with us"}</div>
+                {setup.returnPolicy && <div className="nx-receipt-policy">{setup.returnPolicy}</div>}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

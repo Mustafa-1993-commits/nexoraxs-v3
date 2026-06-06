@@ -221,11 +221,39 @@ Updated to use `nx-modal-scrim` / `nx-modal` / `nx-modal-head` / `nx-modal-body`
 
 ---
 
+## POS Stabilization Pass (2026-06-07)
+
+Completed as a follow-up QA pass against `docs/claude.aidesign/app/pos.jsx`.
+
+### Gaps Fixed
+
+| Gap | Fix |
+|-----|-----|
+| `completeSale` never called `createInvoice` | Added `createInvoice(order.id)` immediately after `createOrder` |
+| `completeSale` never wrote to session storage | Added `writePosLastOrderId(order.id)` before navigating |
+| Sale success was local inline state (`lastSale`) | Replaced with `router.push("/pos/success")` via `useRouter` |
+| Success page "Print Receipt" was a toast stub | Replaced with `window.print()` and actual `nx-receipt-*` DOM |
+| Success page `View Invoice` linked to list page | Fixed to link to `/invoices/${invoice.id}/document` |
+| Cart "Subtotal" showed `doc.subtotal` (gross) | Changed to `doc.net` with label "Net" (inclusive) or "Subtotal" (exclusive) |
+| Customer picker and payment modals used raw inline styles | Applied `nx-modal-scrim` / `nx-modal` / `nx-modal-head` / `nx-modal-body` classes |
+| Success page imported storage helpers directly from `@nexoraxs/shared` | Added `writePosLastOrderId`, `readPosLastOrderId`, `clearPosLastOrderId` to `@/lib/store` barrel; updated imports |
+
+### Shared Storage Exports Added
+
+`apps/commerce/lib/store/index.ts` now re-exports `writePosLastOrderId`, `readPosLastOrderId`, `clearPosLastOrderId` from `@nexoraxs/shared`, so no page or component needs to import directly from `@nexoraxs/shared`.
+
+### Files Changed
+
+- `apps/commerce/app/(commerce)/pos/page.tsx` — sale flow fixed; modals use `nx-modal-*`; totals label corrected
+- `apps/commerce/app/(commerce)/pos/success/page.tsx` — receipt rendered with `nx-receipt-*` CSS; print button calls `window.print()`; imports through `@/lib/store`
+- `apps/commerce/lib/store/index.ts` — POS session storage helpers added to barrel
+
+---
+
 ## Remaining Scope Not Yet Started
 
 | Area | Notes |
 |------|-------|
-| **POS (Point of Sale)** | Explicitly excluded from this pass. No POS screens have been touched. |
 | **Orders** | Orders list and order detail screens exist but were not part of this visual parity pass. |
 | **Reports** | Analytics and reporting screens are not yet ported. |
 | **Spec 042 manual QA tasks** | T061 (session persistence across routes), T062 (storage reset on localStorage clear), T065 (login `?reset=success` banner), T074 (final visual QA against prototype) are pending manual verification. |

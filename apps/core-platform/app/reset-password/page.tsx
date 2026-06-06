@@ -37,7 +37,6 @@ export default function ResetPasswordPage() {
           <label className="nx-field-label" htmlFor="password">New password</label>
           <PasswordInput
             id="password"
-            placeholder="At least 8 characters"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -48,7 +47,6 @@ export default function ResetPasswordPage() {
           <label className="nx-field-label" htmlFor="confirm">Confirm password</label>
           <PasswordInput
             id="confirm"
-            placeholder="Repeat password"
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
