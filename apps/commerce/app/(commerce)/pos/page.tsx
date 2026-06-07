@@ -3,12 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, ArrowLeft, ShoppingCart, Plus, Minus, Trash2, X, ScanBarcode, CreditCard, Wallet, Banknote } from "lucide-react";
+import {
+  Search, ArrowLeft, ShoppingCart, Plus, Minus, Trash2, X, ScanBarcode, CreditCard, Banknote, Smartphone, Lock,
+  Pill, UserPlus, Tag, Check, CircleAlert, User, Phone, Mail, Info,
+} from "lucide-react";
 import { useApp, computeDoc, writePosLastOrderId } from "@/lib/store";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
 
 export default function POSPage() {
   const router = useRouter();
-  const { products, customers, money, showToast, createOrder, createInvoice, updateProduct, getCommerceSetup } = useApp();
+  const { products, customers, money, showToast, createOrder, createInvoice, updateProduct, createCustomer, getCommerceSetup } = useApp();
   const setup = getCommerceSetup();
 
   const [cart, setCart] = useState<{ id: string; name: string; price: number; qty: number; sku: string; taxable: boolean; stock: number; category: string }[]>([]);
@@ -18,7 +23,12 @@ export default function POSPage() {
   const [custSearch, setCustSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id?: string; name: string; phone?: string } | null>(null);
   const [showCustPicker, setShowCustPicker] = useState(false);
+  const [custMode, setCustMode] = useState<"list" | "new">("list");
+  const [custForm, setCustForm] = useState({ name: "", phone: "", email: "" });
+  const [custErr, setCustErr] = useState("");
   const [showPayment, setShowPayment] = useState(false);
+  const [payMethod, setPayMethod] = useState<"cash" | "card" | "wallet">("cash");
+  const [tendered, setTendered] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
   const cats = ["All", ...Array.from(new Set(products.map((p) => p.category || "General")))];
@@ -44,7 +54,7 @@ export default function POSPage() {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === "/" && document.activeElement !== searchRef.current) { e.preventDefault(); searchRef.current?.focus(); }
-      if (e.key === "F2" && cart.length && !showPayment) { e.preventDefault(); setShowPayment(true); }
+      if (e.key === "F2" && cart.length && !showPayment) { e.preventDefault(); setPayMethod("cash"); setTendered(""); setShowPayment(true); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -70,235 +80,350 @@ export default function POSPage() {
     });
     writePosLastOrderId(order.id);
     setCart([]); setDiscount(0); setSelectedCustomer(null); setShowPayment(false);
+    setPayMethod("cash"); setTendered("");
     router.push("/pos/success");
   }
 
+  const change = payMethod === "cash" && tendered ? +tendered - doc.total : 0;
+
   const filteredCustomers = customers.filter((c) => c.name.toLowerCase().includes(custSearch.toLowerCase()) || (c.phone || "").includes(custSearch));
 
+  function openCustomerPicker() {
+    setCustMode("list"); setCustSearch(""); setCustForm({ name: "", phone: "", email: "" }); setCustErr("");
+    setShowCustPicker(true);
+  }
+
+  function saveNewCustomer() {
+    if (!custForm.name.trim()) { setCustErr("Customer name is required"); return; }
+    const c = createCustomer({ name: custForm.name.trim(), phone: custForm.phone.trim(), email: custForm.email.trim().toLowerCase(), notes: "" });
+    setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone });
+    setShowCustPicker(false);
+    setCustMode("list"); setCustSearch(""); setCustForm({ name: "", phone: "", email: "" }); setCustErr("");
+    showToast("Customer added and selected", "success");
+  }
+
+  const buName = setup.displayName || "Commerce";
+
   return (
-    <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+    <div className="nx-pos">
       {/* Left: product grid */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* POS topbar */}
-        <div style={{ padding: "12px 18px", borderBottom: "1px solid var(--border)", background: "var(--surface)", display: "flex", gap: 12, alignItems: "center" }}>
-          <Link href="/dashboard" style={{ color: "var(--text-2)", display: "grid", placeItems: "center" }}><ArrowLeft size={18} /></Link>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", color: "var(--accent)" }}>
-            <ScanBarcode size={18} />
-            <strong style={{ fontSize: 15 }}>Point of Sale</strong>
-          </div>
-          <div style={{ flex: 1, position: "relative" }}>
-            <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-3)" }} />
-            <input
-              ref={searchRef}
-              className="nx-input"
-              style={{ paddingLeft: 34, fontSize: 13 }}
-              placeholder="Search products… ( / )"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              autoFocus
-            />
+      <div className="nx-pos-left">
+        <div className="nx-pos-topbar">
+          <Link href="/dashboard" className="nx-icon-btn" aria-label="Back to dashboard"><ArrowLeft size={19} /></Link>
+          <div className="nx-row" style={{ gap: 8 }}>
+            <ScanBarcode size={18} style={{ color: "var(--accent)" }} />
+            <b style={{ fontSize: 15 }}>Point of Sale</b>
+            <Badge tone="neutral">{buName}</Badge>
           </div>
         </div>
-        {/* Category tabs */}
-        <div style={{ display: "flex", gap: 6, padding: "10px 16px", borderBottom: "1px solid var(--border)", background: "var(--surface)", overflowX: "auto" }}>
+        <div className="nx-pos-topbar" style={{ borderTop: "none", height: "auto", paddingBlock: 12 }}>
+          <div className="nx-pos-search">
+            <span className="nx-input-wrap">
+              <Search size={16} className="nx-input-icon" />
+              <input
+                ref={searchRef}
+                className="nx-input"
+                placeholder="Scan barcode or search products (/)"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                autoFocus
+              />
+            </span>
+          </div>
+        </div>
+        <div className="nx-pos-cats">
           {cats.map((c) => (
-            <button key={c} onClick={() => setCat(c)} style={{
-              padding: "6px 14px", borderRadius: "var(--r-sm)", border: "1px solid",
-              borderColor: cat === c ? "var(--accent)" : "var(--border)",
-              background: cat === c ? "var(--accent)" : "var(--surface-2)",
-              color: cat === c ? "#fff" : "var(--text-2)", fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap",
-            }}>{c}</button>
+            <button key={c} className={"nx-chip-filter" + (cat === c ? " on" : "")} onClick={() => setCat(c)}>{c}</button>
           ))}
         </div>
-        {/* Products */}
-        <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
-          {filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 48, color: "var(--text-3)" }}>
-              <Package size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
-              <div>No products found</div>
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))", gap: 12 }}>
-              {filtered.map((p) => {
-                const inCart = cart.find((i) => i.id === p.id);
-                const oos = (p.stock ?? 99) === 0;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => addToCart(p)}
-                    disabled={oos}
-                    style={{
-                      background: "var(--surface)", border: `1px solid ${inCart ? "var(--accent)" : "var(--border)"}`,
-                      borderRadius: "var(--r)", padding: "14px 12px",
-                      textAlign: "left", cursor: oos ? "not-allowed" : "pointer",
-                      opacity: oos ? 0.5 : 1, position: "relative",
-                      boxShadow: inCart ? "0 0 0 2px var(--accent-weak)" : "var(--sh-sm)",
-                    }}
-                  >
-                    {inCart && (
-                      <span style={{ position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, display: "grid", placeItems: "center", fontWeight: 700 }}>
-                        {inCart.qty}
-                      </span>
-                    )}
-                    <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 6 }}>{p.category || "General"}</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)", marginBottom: 6, lineHeight: 1.3 }}>{p.name}</div>
-                    <div style={{ fontWeight: 800, fontSize: 15, color: "var(--pos)" }}>{money(p.price)}</div>
-                    {p.stock != null && <div style={{ fontSize: 11, color: p.stock < 5 ? "var(--warn)" : "var(--text-3)", marginTop: 4 }}>{oos ? "Out of stock" : `${p.stock} in stock`}</div>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+        <div className="nx-pos-grid">
+          {filtered.map((p) => {
+            const oos = (p.stock ?? 99) === 0;
+            const low = oos ? false : (p.stock ?? 99) <= (p.lowStockThreshold || 5);
+            return (
+              <button key={p.id} className={"nx-pcard" + (oos ? " oos" : "")} onClick={() => addToCart(p)} disabled={oos}>
+                <div className="nx-pcard-img nx-thumb-stripe">
+                  {p.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image} alt="" />
+                  ) : (
+                    <Pill size={20} />
+                  )}
+                </div>
+                <div className="nx-pcard-name">{p.name}</div>
+                <div className="nx-pcard-foot">
+                  <span className="nx-pcard-price">{money(p.price)}</span>
+                  {oos
+                    ? <Badge tone="danger">Out</Badge>
+                    : low
+                      ? <Badge tone="warn">{p.stock}</Badge>
+                      : <span style={{ fontSize: 11, color: "var(--text-3)" }}>{p.stock ?? "—"} in stock</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="nx-pos-help">
+          <span><span className="nx-kbd">/</span> Focus search</span>
+          <span><span className="nx-kbd">Enter</span> Add exact match</span>
+          <span><span className="nx-kbd">F2</span> Checkout</span>
+          <span><span className="nx-kbd">Esc</span> Close modal</span>
         </div>
       </div>
 
       {/* Right: cart */}
-      <div style={{ width: 320, borderLeft: "1px solid var(--border)", display: "flex", flexDirection: "column", background: "var(--surface)" }}>
-        <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 700 }}>
-            <ShoppingCart size={17} />
-            Cart {itemCount > 0 && <span style={{ background: "var(--accent)", color: "#fff", borderRadius: "50%", width: 20, height: 20, display: "grid", placeItems: "center", fontSize: 11 }}>{itemCount}</span>}
+      <div className="nx-cart">
+        <div className="nx-cart-head">
+          <div className="nx-row" style={{ gap: 8 }}>
+            <ShoppingCart size={18} />
+            <b style={{ fontSize: 15 }}>Cart</b>
+            {itemCount > 0 && <Badge tone="accent">{itemCount}</Badge>}
           </div>
-          {cart.length > 0 && <button onClick={() => setCart([])} style={{ fontSize: 12, color: "var(--danger)", background: "none", border: "none", cursor: "pointer" }}>Clear</button>}
+          {cart.length > 0 && <button className="nx-link" style={{ color: "var(--danger)" }} onClick={() => setCart([])}>Clear</button>}
         </div>
 
         {/* Customer */}
-        <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)" }}>
-          {selectedCustomer ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{selectedCustomer.name}</div>
-              <button onClick={() => setSelectedCustomer(null)} style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}><X size={14} /></button>
-            </div>
-          ) : (
-            <button onClick={() => setShowCustPicker(true)} style={{ width: "100%", background: "none", border: "1px dashed var(--border)", borderRadius: "var(--r-sm)", padding: "8px 12px", color: "var(--text-3)", cursor: "pointer", fontSize: 12.5, textAlign: "left" }}>
-              + Add customer (optional)
-            </button>
-          )}
+        <div className="nx-cart-cust">
+          <button className="nx-sb-switch" style={{ background: "var(--surface)" }} onClick={openCustomerPicker}>
+            <Avatar name={selectedCustomer ? selectedCustomer.name : "Walk in"} size={30} />
+            <span className="nx-sb-switch-txt">
+              <span className="nx-sb-switch-name">{selectedCustomer ? selectedCustomer.name : "Walk-in customer"}</span>
+              <span className="nx-sb-switch-sub">{selectedCustomer ? (selectedCustomer.phone || "Saved customer") : "Customer · optional"}</span>
+            </span>
+            {selectedCustomer ? (
+              <span className="nx-icon-btn" style={{ width: 26, height: 26 }} onClick={(e) => { e.stopPropagation(); setSelectedCustomer(null); }}><X size={15} /></span>
+            ) : (
+              <UserPlus size={16} style={{ color: "var(--accent)" }} />
+            )}
+          </button>
         </div>
 
         {/* Items */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 16px" }}>
+        <div className="nx-cart-items">
           {cart.length === 0 ? (
-            <div style={{ padding: "40px 0", textAlign: "center", color: "var(--text-3)", fontSize: 13 }}>
-              <ShoppingCart size={28} style={{ opacity: 0.3, marginBottom: 8 }} />
-              <div>Cart is empty</div>
-              <div style={{ fontSize: 12, marginTop: 4 }}>Click products to add</div>
+            <div className="nx-empty" style={{ paddingTop: 50 }}>
+              <div className="nx-empty-ic"><ShoppingCart size={26} /></div>
+              <h3 className="nx-empty-title">Cart is empty</h3>
+              <p className="nx-empty-desc">Scan a barcode or tap a product to add it.</p>
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)", display: "flex", gap: 8, alignItems: "center" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{item.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{money(item.price)} each</div>
+              <div className="nx-citem" key={item.id}>
+                <span className="nx-thumb nx-thumb-stripe" style={{ width: 42, height: 42 }}><Pill size={16} /></span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{item.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>{money(item.price)} {!item.taxable && "· no VAT"}</div>
+                  <div className="nx-row" style={{ justifyContent: "space-between", marginTop: 8 }}>
+                    <div className="nx-qty">
+                      <button onClick={() => setQty(item.id, -1)}><Minus size={14} /></button>
+                      <span>{item.qty}</span>
+                      <button onClick={() => setQty(item.id, 1)}><Plus size={14} /></button>
+                    </div>
+                    <span className="num" style={{ fontWeight: 700, fontSize: 14 }}>{money(item.price * item.qty)}</span>
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                  <button onClick={() => setQty(item.id, -1)} style={{ width: 24, height: 24, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--surface-2)", cursor: "pointer", display: "grid", placeItems: "center" }}><Minus size={11} /></button>
-                  <span style={{ width: 24, textAlign: "center", fontWeight: 700, fontSize: 13 }}>{item.qty}</span>
-                  <button onClick={() => setQty(item.id, 1)} style={{ width: 24, height: 24, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--surface-2)", cursor: "pointer", display: "grid", placeItems: "center" }}><Plus size={11} /></button>
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 700, minWidth: 60, textAlign: "right" }}>{money(item.price * item.qty)}</div>
-                <button onClick={() => removeItem(item.id)} style={{ color: "var(--danger)", background: "none", border: "none", cursor: "pointer", padding: 2 }}><Trash2 size={13} /></button>
+                <button className="nx-icon-btn" style={{ width: 28, height: 28 }} onClick={() => removeItem(item.id)}><Trash2 size={15} /></button>
               </div>
             ))
           )}
         </div>
 
         {/* Totals */}
-        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
-            <label style={{ fontSize: 12.5, color: "var(--text-2)", flex: 1 }}>Discount (EGP)</label>
-            <input
-              className="nx-input"
-              type="number"
-              min={0}
-              value={discount || ""}
-              onChange={(e) => setDiscount(Math.max(0, +e.target.value))}
-              placeholder="0"
-              style={{ width: 80, textAlign: "right", fontSize: 13 }}
-            />
-          </div>
-          {([
-            [setup.pricesIncludeTax ? "Net" : "Subtotal", money(doc.net)],
-            ...(discount > 0 ? [["Discount", `-${money(discount)}`]] : []),
-            ...(setup.vatRegistered ? [[`${setup.taxLabel || "VAT"} (${doc.rate}%)`, money(doc.vat)]] : []),
-          ] as [string, string][]).map(([l, v]) => (
-            <div key={l} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text-2)", marginBottom: 4 }}>
-              <span>{l}</span><span>{v}</span>
+        <div className="nx-cart-foot">
+          {cart.length > 0 && (
+            <div className="nx-row" style={{ gap: 8, marginBottom: 12 }}>
+              <Tag size={15} style={{ color: "var(--text-3)" }} />
+              <span style={{ fontSize: 13, color: "var(--text-2)", flex: 1 }}>Discount</span>
+              <div style={{ width: 110 }}>
+                <input className="nx-input" type="number" min={0} value={discount || ""} onChange={(e) => setDiscount(Math.max(0, +e.target.value || 0))} placeholder="0.00" style={{ textAlign: "right" }} />
+              </div>
             </div>
-          ))}
-          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 17, color: "var(--text)", borderTop: "1px solid var(--border)", paddingTop: 8, marginTop: 6 }}>
-            <span>Total</span><span style={{ color: "var(--pos)" }}>{money(doc.total)}</span>
-          </div>
-
+          )}
+          <div className="nx-cart-line"><span>{setup.pricesIncludeTax ? "Net" : "Subtotal"}</span><span className="num">{money(doc.net)}</span></div>
+          {discount > 0 && <div className="nx-cart-line"><span>Discount</span><span className="num">−{money(discount)}</span></div>}
+          {setup.vatRegistered && <div className="nx-cart-line"><span>{setup.taxLabel || "VAT"} ({doc.rate}%)</span><span className="num">{money(doc.vat)}</span></div>}
+          <div className="nx-cart-line grand"><span>Total</span><span className="num">{money(doc.total)}</span></div>
           <button
-            className="nx-btn-primary"
-            onClick={() => setShowPayment(true)}
+            className="nx-btn nx-btn-primary nx-btn-md nx-btn-full"
             disabled={cart.length === 0}
-            style={{ width: "100%", marginTop: 14, padding: "12px", fontSize: 15, fontWeight: 700 }}
+            style={{ marginTop: 14, padding: "12px", fontSize: 15 }}
+            onClick={() => { setPayMethod("cash"); setTendered(""); setShowPayment(true); }}
           >
-            Charge {cart.length > 0 ? money(doc.total) : ""}
+            <CreditCard size={16} />
+            Checkout · <span className="nx-kbd" style={{ background: "rgba(255,255,255,.2)", color: "#fff", borderColor: "transparent" }}>F2</span>
           </button>
         </div>
       </div>
 
-      {/* Customer picker modal */}
-      {showCustPicker && (
+      {/* Checkout modal */}
+      {showPayment && (
         <div className="nx-modal-scrim">
-          <div className="nx-modal" style={{ maxWidth: 400 }}>
+          <div className="nx-modal" style={{ maxWidth: 440 }}>
             <div className="nx-modal-head">
-              <h3 style={{ fontWeight: 700 }}>Select customer</h3>
-              <button className="nx-icon-btn" onClick={() => setShowCustPicker(false)}><X size={16} /></button>
+              <div>
+                <h3 className="nx-modal-title">Complete sale</h3>
+                <p style={{ fontSize: 12.5, color: "var(--text-3)", marginTop: 2 }}>Payment method</p>
+              </div>
+              <button className="nx-icon-btn" onClick={() => setShowPayment(false)}><X size={16} /></button>
             </div>
-            <div className="nx-modal-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
-              <input className="nx-input" placeholder="Search customers…" value={custSearch} onChange={(e) => setCustSearch(e.target.value)} style={{ marginBottom: 12, width: "100%" }} autoFocus />
-              <button onClick={() => { setSelectedCustomer(null); setShowCustPicker(false); setCustSearch(""); }} style={{ width: "100%", padding: "10px 12px", textAlign: "left", background: "none", border: "1px dashed var(--border)", borderRadius: "var(--r-sm)", cursor: "pointer", marginBottom: 8, fontSize: 13, color: "var(--text-2)" }}>
-                Walk-in / Guest
+            <div className="nx-modal-body">
+              {/* Customer */}
+              <div className="nx-field-label" style={{ marginBottom: 8 }}>Customer</div>
+              <button className="nx-checkout-cust" onClick={openCustomerPicker}>
+                <Avatar name={selectedCustomer ? selectedCustomer.name : "Walk in"} size={34} />
+                <div style={{ flex: 1, textAlign: "start", minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>{selectedCustomer ? selectedCustomer.name : "Walk-in customer"}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)" }}>{selectedCustomer ? (selectedCustomer.phone || "Saved customer") : "Guest · no record created"}</div>
+                </div>
+                <span className="nx-link">{selectedCustomer ? "Change" : "Add"}</span>
               </button>
-              {filteredCustomers.map((c) => (
-                <button key={c.id} onClick={() => { setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone }); setShowCustPicker(false); setCustSearch(""); }} style={{ width: "100%", padding: "10px 12px", textAlign: "left", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", cursor: "pointer", marginBottom: 6, fontSize: 13 }}>
-                  <div style={{ fontWeight: 600 }}>{c.name}</div>
-                  {c.phone && <div style={{ fontSize: 12, color: "var(--text-3)" }}>{c.phone}</div>}
-                </button>
-              ))}
+              <hr className="nx-divider" style={{ margin: "16px 0" }} />
+
+              {/* Payment method cards */}
+              <div className="nx-pay-methods">
+                {([
+                  { method: "cash" as const, label: "Cash", icon: <Banknote size={19} /> },
+                  { method: "card" as const, label: "Card", icon: <CreditCard size={19} /> },
+                  { method: "wallet" as const, label: "Wallet", icon: <Smartphone size={19} /> },
+                ]).map(({ method, label, icon }) => (
+                  <button key={method} className={"nx-choice" + (payMethod === method ? " on" : "")} onClick={() => setPayMethod(method)}>
+                    <span className="nx-choice-ic">{icon}</span>
+                    <span style={{ fontWeight: 700, fontSize: 13 }}>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {payMethod === "cash" && (
+                <label className="nx-field" style={{ marginBottom: 18 }}>
+                  <span className="nx-field-label">Amount tendered</span>
+                  <input
+                    className="nx-input"
+                    type="number"
+                    value={tendered}
+                    onChange={(e) => setTendered(e.target.value)}
+                    placeholder={doc.total.toFixed(2)}
+                  />
+                  <span className="nx-field-hint">{change >= 0 && tendered ? `Change due: ${money(change)}` : "Optional — for change calculation"}</span>
+                </label>
+              )}
+
+              {/* Totals summary */}
+              <div className="nx-card" style={{ background: "var(--surface-2)", padding: 16, border: "1px solid var(--border)" }}>
+                <div className="nx-cart-line" style={{ padding: "3px 0" }}><span>Net</span><span className="num">{money(doc.net)}</span></div>
+                {discount > 0 && <div className="nx-cart-line" style={{ padding: "3px 0" }}><span>Discount</span><span className="num">−{money(discount)}</span></div>}
+                <div className="nx-cart-line" style={{ padding: "3px 0" }}><span>VAT</span><span className="num">{money(doc.vat)}</span></div>
+                <div className="nx-cart-line grand" style={{ fontSize: 17, borderTopStyle: "solid" }}><span>Total</span><span className="num">{money(doc.total)}</span></div>
+              </div>
+
+              <p className="nx-note" style={{ marginTop: 14, justifyContent: "center" }}><Lock size={13} />One payment method per sale in this MVP.</p>
+            </div>
+            <div className="nx-modal-foot">
+              <button className="nx-btn nx-btn-primary nx-btn-lg nx-btn-full" onClick={() => completeSale(payMethod)}>
+                Complete Sale · {money(doc.total)}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Payment modal */}
-      {showPayment && (
+      {/* Customer picker modal */}
+      {showCustPicker && (
         <div className="nx-modal-scrim">
-          <div className="nx-modal" style={{ maxWidth: 360 }}>
+          <div className="nx-modal" style={{ maxWidth: 460 }}>
             <div className="nx-modal-head">
-              <h3 style={{ fontWeight: 700 }}>Payment method</h3>
-              <button className="nx-icon-btn" onClick={() => setShowPayment(false)}><X size={16} /></button>
-            </div>
-            <div className="nx-modal-body">
-              <div style={{ fontSize: 30, fontWeight: 800, textAlign: "center", color: "var(--pos)", marginBottom: 20 }}>{money(doc.total)}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {([
-                  { method: "cash" as const, label: "Cash", icon: <Banknote size={20} /> },
-                  { method: "card" as const, label: "Card", icon: <CreditCard size={20} /> },
-                  { method: "wallet" as const, label: "Mobile Wallet", icon: <Wallet size={20} /> },
-                ]).map(({ method, label, icon }) => (
-                  <button key={method} onClick={() => completeSale(method)} style={{
-                    display: "flex", gap: 14, alignItems: "center", padding: "14px 18px",
-                    background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r)",
-                    cursor: "pointer", fontSize: 15, fontWeight: 600,
-                  }}>
-                    <span style={{ color: "var(--accent)" }}>{icon}</span>
-                    {label}
-                  </button>
-                ))}
+              <div>
+                <h3 className="nx-modal-title">{custMode === "new" ? "Add new customer" : "Customer"}</h3>
+                <p style={{ fontSize: 12.5, color: "var(--text-3)", marginTop: 2 }}>
+                  {custMode === "new" ? "Saved to this business unit and linked to the sale." : "Attach a customer or continue as guest."}
+                </p>
               </div>
+              <button className="nx-icon-btn" onClick={() => setShowCustPicker(false)}><X size={16} /></button>
+            </div>
+            <div className="nx-modal-body" style={{ maxHeight: "64vh", overflowY: "auto" }}>
+              {custMode === "list" ? (
+                <div>
+                  <button className={"nx-cust-row" + (!selectedCustomer ? " on" : "")} onClick={() => { setSelectedCustomer(null); setShowCustPicker(false); }}>
+                    <span className="nx-choice-ic" style={{ width: 38, height: 38 }}><User size={18} /></span>
+                    <span style={{ flex: 1, textAlign: "left" }}>
+                      <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>Walk-in customer</span>
+                      <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }}>Guest · fast checkout, no record created</span>
+                    </span>
+                    {!selectedCustomer && <Check size={17} style={{ color: "var(--accent)" }} />}
+                  </button>
+
+                  <div className="nx-row" style={{ gap: 8, margin: "16px 0 10px" }}>
+                    <span style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                    <span style={{ fontSize: 11.5, color: "var(--text-3)", fontWeight: 600 }}>OR SELECT EXISTING</span>
+                    <span style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                  </div>
+
+                  <span className="nx-input-wrap">
+                    <Search size={16} className="nx-input-icon" />
+                    <input className="nx-input" placeholder="Search name, phone or email..." value={custSearch} onChange={(e) => setCustSearch(e.target.value)} autoFocus />
+                  </span>
+                  <div style={{ maxHeight: 230, overflowY: "auto", marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {filteredCustomers.length === 0 && (
+                      <div style={{ textAlign: "center", padding: "22px 0", color: "var(--text-3)", fontSize: 13 }}>
+                        {customers.length === 0 ? "No saved customers yet." : "No customers match your search."}
+                      </div>
+                    )}
+                    {filteredCustomers.map((c) => {
+                      const sel = selectedCustomer?.id === c.id;
+                      return (
+                        <button key={c.id} className={"nx-cust-row" + (sel ? " on" : "")} onClick={() => { setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone }); setShowCustPicker(false); }}>
+                          <Avatar name={c.name} size={36} />
+                          <span style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+                            <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>{c.name}</span>
+                            <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }}>{c.phone || c.email || "No contact"}</span>
+                          </span>
+                          {sel && <Check size={17} style={{ color: "var(--accent)", marginInlineStart: 6 }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button type="button" className="nx-btn nx-btn-secondary nx-btn-md nx-btn-full" style={{ marginTop: 14 }} onClick={() => { setCustForm({ name: custSearch, phone: "", email: "" }); setCustErr(""); setCustMode("new"); }}>
+                    <UserPlus size={15} />Add new customer
+                  </button>
+                </div>
+              ) : (
+                <div className="nx-form-grid">
+                  <label className="nx-field">
+                    <span className="nx-field-label">Customer name</span>
+                    <span className="nx-input-wrap">
+                      <User size={16} className="nx-input-icon" />
+                      <input className="nx-input" placeholder="e.g. Aya Hassan" value={custForm.name} onChange={(e) => { setCustForm((f) => ({ ...f, name: e.target.value })); setCustErr(""); }} autoFocus />
+                    </span>
+                    {custErr && <span className="nx-field-error"><CircleAlert size={13} />{custErr}</span>}
+                  </label>
+                  <div className="nx-form-grid cols-2">
+                    <label className="nx-field">
+                      <span className="nx-field-label">Phone<span className="nx-field-optional">Optional</span></span>
+                      <span className="nx-input-wrap">
+                        <Phone size={16} className="nx-input-icon" />
+                        <input className="nx-input" placeholder="+20 100 123 4567" value={custForm.phone} onChange={(e) => setCustForm((f) => ({ ...f, phone: e.target.value }))} />
+                      </span>
+                    </label>
+                    <label className="nx-field">
+                      <span className="nx-field-label">Email<span className="nx-field-optional">Optional</span></span>
+                      <span className="nx-input-wrap">
+                        <Mail size={16} className="nx-input-icon" />
+                        <input className="nx-input" placeholder="name@email.com" value={custForm.email} onChange={(e) => setCustForm((f) => ({ ...f, email: e.target.value }))} />
+                      </span>
+                    </label>
+                  </div>
+                  <div className="nx-row" style={{ gap: 10, marginTop: 4 }}>
+                    <button type="button" className="nx-btn nx-btn-ghost nx-btn-md" onClick={() => setCustMode("list")}>Cancel</button>
+                    <span className="nx-spacer" />
+                    <button type="button" className="nx-btn nx-btn-primary nx-btn-md" onClick={saveNewCustomer}><Check size={15} />Save customer</button>
+                  </div>
+                  <p className="nx-note"><Info size={14} />The record is created when you save.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function Package({ size, style }: { size: number; style?: React.CSSProperties }) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>;
 }

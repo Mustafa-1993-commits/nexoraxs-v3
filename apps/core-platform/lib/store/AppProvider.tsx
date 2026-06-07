@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, t
 import { STORAGE_KEYS, PLAN_CATALOG, DEFAULT_SETUP, planIdFor } from "@nexoraxs/shared";
 import {
   uid, nowISO, normalizeEmail, getUserDisplayName,
-  readCollection, writeCollection, readSession, writeSession, clearAllStorage,
+  readCollection, writeCollection, readSession, writeSession,
   seedDB,
 } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
@@ -323,8 +323,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.users]);
 
   const logoutUser = useCallback(() => {
-    clearAllStorage();
-    setState(loadState());
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(STORAGE_KEYS.currentUserId);
+    }
+    setState((prev) => ({ ...prev, currentUserId: null }));
   }, []);
 
   // ---- workspace ----
