@@ -2,7 +2,7 @@ export { AppProvider, useApp } from "./AppProvider";
 export type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember, TeamMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer,
-  OrderItem, Toast, CommercePlanInfo, OnboardingState,
+  OrderItem, Toast, CommercePlanInfo, OnboardingState, CommerceIdentity,
 } from "./AppProvider";
 export { STORAGE_KEYS } from "@nexoraxs/shared";
 export {

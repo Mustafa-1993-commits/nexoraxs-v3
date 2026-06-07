@@ -10,10 +10,12 @@ import {
 import { useApp, computeDoc, writePosLastOrderId } from "@/lib/store";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { BrandMark } from "@/components/ui/BrandMark";
+import { BranchPill } from "@/components/dashboard/BranchPill";
 
 export default function POSPage() {
   const router = useRouter();
-  const { products, customers, money, showToast, createOrder, createInvoice, updateProduct, createCustomer, getCommerceSetup } = useApp();
+  const { products, customers, money, showToast, createOrder, createInvoice, updateProduct, createCustomer, getCommerceSetup, commerceIdentity } = useApp();
   const setup = getCommerceSetup();
 
   const [cart, setCart] = useState<{ id: string; name: string; price: number; qty: number; sku: string; taxable: boolean; stock: number; category: string }[]>([]);
@@ -102,18 +104,22 @@ export default function POSPage() {
     showToast("Customer added and selected", "success");
   }
 
-  const buName = setup.displayName || "Commerce";
-
   return (
     <div className="nx-pos">
       {/* Left: product grid */}
       <div className="nx-pos-left">
         <div className="nx-pos-topbar">
           <Link href="/dashboard" className="nx-icon-btn" aria-label="Back to dashboard"><ArrowLeft size={19} /></Link>
-          <div className="nx-row" style={{ gap: 8 }}>
+          <div className="nx-row nx-pos-title-row" style={{ gap: 8 }}>
             <ScanBarcode size={18} style={{ color: "var(--accent)" }} />
             <b style={{ fontSize: 15 }}>Point of Sale</b>
-            <Badge tone="neutral">{buName}</Badge>
+            <Badge tone="neutral" className="nx-pos-business-badge">
+              <BrandMark name={commerceIdentity.name} logo={commerceIdentity.logo} variant="badge" />
+              {commerceIdentity.name}
+            </Badge>
+            <span className="nx-pos-title-branch">
+              <BranchPill variant="header" />
+            </span>
           </div>
         </div>
         <div className="nx-pos-topbar" style={{ borderTop: "none", height: "auto", paddingBlock: 12 }}>

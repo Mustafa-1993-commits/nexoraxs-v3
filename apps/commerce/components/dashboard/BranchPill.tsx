@@ -4,7 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { GitBranch, ChevronDown, Check } from "lucide-react";
 import { useApp } from "@/lib/store";
 
-export function BranchPill() {
+interface BranchPillProps {
+  variant?: "topbar" | "header";
+}
+
+export function BranchPill({ variant = "topbar" }: BranchPillProps) {
   const { currentBranch, BRANCHES, setCurrent } = useApp();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -21,10 +25,10 @@ export function BranchPill() {
 
   return (
     <div ref={ref} className="nx-pop-wrap">
-      <button className="nx-branch-pill" onClick={() => setOpen((o) => !o)}>
-        <GitBranch size={13} style={{ color: "#a5b4fc" }} />
+      <button className={`nx-branch-pill ${variant === "header" ? "header" : ""}`} onClick={() => setOpen((o) => !o)}>
+        <GitBranch size={13} style={{ color: variant === "header" ? "#4f46e5" : "#a5b4fc" }} />
         <span>{currentBranch.name}</span>
-        <ChevronDown size={12} style={{ color: "#7b8294" }} />
+        <ChevronDown size={12} style={{ color: variant === "header" ? "#4b5563" : "#7b8294" }} />
       </button>
 
       {open && BRANCHES.length > 1 && (

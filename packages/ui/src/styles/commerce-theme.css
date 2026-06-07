@@ -246,11 +246,16 @@ html[data-theme="dark"] .nx-sb-user:hover { background: var(--surface-3); }
 .nx-langswitch button.on { background: rgba(255,255,255,.16); color: #fff; }
 .nx-branch-pill { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); font-size: 13px; font-weight: 600; color: #e9eaee; cursor: pointer; transition: background .15s; }
 .nx-branch-pill:hover { background: rgba(255,255,255,.12); }
+.nx-branch-pill.header { min-width: 96px; height: 34px; border-color: rgba(15, 23, 42, .14); background: #fff; color: #111827; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.nx-branch-pill.header:hover { background: #f8fafc; border-color: rgba(15, 23, 42, .22); }
 .nx-dd { position: absolute; inset-block-start: calc(100% + 6px); inset-inline-end: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--sh-lg); min-width: 230px; padding: 7px; z-index: 50; }
 .nx-dd.left { inset-inline-start: 0; inset-inline-end: auto; }
 .nx-dd-item { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px; font-size: 13.5px; font-weight: 500; color: var(--text); width: 100%; background: none; border: none; text-align: start; cursor: pointer; text-decoration: none; }
 .nx-dd-item:hover { background: var(--surface-3); }
 .nx-dd-item.danger { color: var(--danger); }
+.nx-dd-item-text { flex: 1; min-width: 0; text-align: start; display: flex; flex-direction: column; gap: 2px; }
+.nx-dd-item-main { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nx-dd-item-sub { font-size: 11.5px; font-weight: 500; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nx-dd-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); padding: 8px 11px 4px; }
 .nx-dd-sep { height: 1px; background: var(--border); margin: 6px 0; }
 .nx-notif-dot { position: absolute; top: 8px; inset-inline-end: 8px; width: 7px; height: 7px; border-radius: 10px; background: #f87171; border: 1.5px solid #15171e; }
@@ -321,6 +326,12 @@ html[data-theme="dark"] .nx-sb-user:hover { background: var(--surface-3); }
 /* NexoraXS badge */
 .nx-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 20px; line-height: 1.3; border: 1px solid transparent; white-space: nowrap; }
 .nx-badge-dot { width: 6px; height: 6px; border-radius: 10px; background: currentColor; }
+.nx-brand-mark { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; background: #fff; border: 1px solid rgba(15, 23, 42, .08); }
+.nx-brand-mark img { display: block; width: auto; height: auto; object-fit: contain; opacity: 1; filter: none; flex-shrink: 0; }
+.nx-pos-title-row { flex-wrap: wrap; min-width: 0; }
+.nx-pos-business-badge { height: 32px; gap: 6px; padding: 0 10px 0 4px; border-radius: 8px; color: #111827; font-size: 13px; font-weight: 700; background: #fff; border-color: rgba(15, 23, 42, .14); box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.nx-pos-title-branch { display: inline-flex; align-items: center; }
+.nx-pos-title-branch .nx-branch-pill { display: inline-flex; }
 .tone-neutral { background: var(--surface-3); color: var(--text-2); border-color: var(--border); }
 .tone-accent { background: var(--accent-weak); color: var(--accent-600); }
 .tone-pos { background: var(--pos-weak); color: var(--pos); }

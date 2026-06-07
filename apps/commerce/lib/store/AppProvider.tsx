@@ -36,6 +36,12 @@ export interface OnboardingState {
   completedOS: string[];
 }
 
+export interface CommerceIdentity {
+  name: string;
+  logo: string | null;
+  subtitle: string;
+}
+
 interface AppContextType {
   isHydrated: boolean;
   // session
@@ -60,6 +66,7 @@ interface AppContextType {
   isCommerceSetupComplete: boolean;
   hasCommerceSetupContext: boolean;
   currentUserDisplayName: string;
+  commerceIdentity: CommerceIdentity;
   BUSINESS_UNITS: BusinessUnit[];
   BRANCHES: Branch[];
   COMMERCE_PLAN: CommercePlanInfo | null;
@@ -304,6 +311,26 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   localStorage.setItem(STORAGE_KEYS.theme, data.theme);
 }
 
+function isPersistableProductImage(image: string | null | undefined): image is string {
+  return !!image && !image.startsWith("data:") && !image.startsWith("blob:");
+}
+
+function sanitizeProductForStorage(product: CommerceProduct): CommerceProduct {
+  const sanitized: CommerceProduct = { ...product };
+  if (!isPersistableProductImage(sanitized.image)) {
+    delete sanitized.image;
+  }
+  return sanitized;
+}
+
+function sanitizeProductPatch(data: Partial<CommerceProduct>): Partial<CommerceProduct> {
+  if (!("image" in data)) return data;
+  return {
+    ...data,
+    image: isPersistableProductImage(data.image) ? data.image : null,
+  };
+}
+
 // ---- AppProvider ----
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RuntimeState>(emptyRuntimeState);
@@ -367,9 +394,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     && !!state.currentBusinessUnitId
     && state.currentOSId === "commerce"
     && !!state.currentOSSubscriptionId;
-  const isCommerceSetupComplete = !!state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId);
+  const currentCommerceSetup = useMemo(
+    () => state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId) ?? null,
+    [state.commerceSetups, state.currentBusinessUnitId]
+  );
+  const isCommerceSetupComplete = !!currentCommerceSetup;
 
   const currentUserDisplayName = getUserDisplayName(currentUser);
+  const commerceIdentity = useMemo((): CommerceIdentity => {
+    const fallbackName = currentBU?.name || currentWorkspace?.name || "Commerce Business";
+    const name = currentCommerceSetup?.displayName?.trim()
+      || currentCommerceSetup?.legalName?.trim()
+      || fallbackName;
+    const subtitle = currentBranch?.name ? `${currentBranch.name} · Commerce OS` : "Commerce OS";
+
+    return {
+      name,
+      logo: currentCommerceSetup?.logo || null,
+      subtitle,
+    };
+  }, [currentCommerceSetup, currentBU, currentWorkspace, currentBranch]);
 
   const COMMERCE_PLAN = useMemo((): CommercePlanInfo | null => {
     if (!currentOSSubscription) return null;
@@ -533,25 +577,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- products ----
   const addProduct = useCallback((data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt">): CommerceProduct => {
-    const product: CommerceProduct = {
+    const product = sanitizeProductForStorage({
       id: uid("p"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
       branchId: state.currentBranchId!, osSubscriptionId: state.currentOSSubscriptionId!,
       createdAt: nowISO(), updatedAt: nowISO(), ...data,
-    };
-    const newProducts = [...state.products, product];
-    writeCollection(STORAGE_KEYS.products, newProducts);
-    setState((prev) => ({ ...prev, products: newProducts }));
+    });
+    const newProducts = [...state.products, product].map(sanitizeProductForStorage);
+    try {
+      writeCollection(STORAGE_KEYS.products, newProducts);
+      setState((prev) => ({ ...prev, products: newProducts }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save product.";
+      showToast(message, "error");
+      throw error;
+    }
     return product;
-  }, [state.products, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.currentOSSubscriptionId]);
+  }, [state.products, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.currentOSSubscriptionId, showToast]);
 
   const updateProduct = useCallback((id: string, data: Partial<CommerceProduct>) => {
-    const newProducts = state.products.map((p) => p.id === id ? { ...p, ...data, updatedAt: nowISO() } : p);
-    writeCollection(STORAGE_KEYS.products, newProducts);
-    setState((prev) => ({ ...prev, products: newProducts }));
-  }, [state.products]);
+    const patch = sanitizeProductPatch(data);
+    const newProducts = state.products
+      .map((p) => p.id === id ? sanitizeProductForStorage({ ...p, ...patch, updatedAt: nowISO() }) : sanitizeProductForStorage(p));
+    try {
+      writeCollection(STORAGE_KEYS.products, newProducts);
+      setState((prev) => ({ ...prev, products: newProducts }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save product.";
+      showToast(message, "error");
+      throw error;
+    }
+  }, [state.products, showToast]);
 
   const deleteProduct = useCallback((id: string) => {
-    const newProducts = state.products.filter((p) => p.id !== id);
+    const newProducts = state.products.filter((p) => p.id !== id).map(sanitizeProductForStorage);
     writeCollection(STORAGE_KEYS.products, newProducts);
     setState((prev) => ({ ...prev, products: newProducts }));
   }, [state.products]);
@@ -633,7 +691,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     lang: state.lang, setLang, theme: state.theme, toggleTheme,
     toasts, showToast, dismissToast,
     isAuthenticated, isOnboardingComplete, isCommerceOSActive, isCommerceSetupComplete, hasCommerceSetupContext,
-    currentUserDisplayName, BUSINESS_UNITS, BRANCHES, COMMERCE_PLAN,
+    currentUserDisplayName, commerceIdentity, BUSINESS_UNITS, BRANCHES, COMMERCE_PLAN,
     money: memoMoney, t: memoT,
     createUser, loginUser, logoutUser,
     createWorkspace, setLocale, createBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,

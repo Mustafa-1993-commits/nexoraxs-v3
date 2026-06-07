@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft, ScanBarcode, Lock, ImageUp, Upload, RefreshCw, Check, CircleAlert,
@@ -58,12 +58,22 @@ function NewProductForm() {
 
   const upd = (p: Partial<ProductForm>) => setForm((f) => ({ ...f, ...p }));
 
+  useEffect(() => {
+    const image = form.image;
+    return () => {
+      if (image?.startsWith("blob:")) URL.revokeObjectURL(image);
+    };
+  }, [form.image]);
+
+  function persistableImage(image: string | null): string | null {
+    if (!image || image.startsWith("data:") || image.startsWith("blob:")) return null;
+    return image;
+  }
+
   function onImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => upd({ image: reader.result as string });
-    reader.readAsDataURL(file);
+    upd({ image: URL.createObjectURL(file) });
   }
 
   function handleSave() {
@@ -80,17 +90,21 @@ function NewProductForm() {
       price: +form.price || 0, cost: +form.cost || 0, taxable: form.taxable,
       stock: form.stock !== "" ? +form.stock : null, unit: form.unit || "Piece",
       lowStockThreshold: +form.lowStockThreshold || 5, expiry: form.expiry.trim(),
-      notes: form.notes.trim(), image: form.image, isActive: true,
+      notes: form.notes.trim(), image: persistableImage(form.image), isActive: true,
     };
     setTimeout(() => {
-      if (editing) {
-        updateProduct(editing.id, data as Partial<CommerceProduct>);
-        showToast("Product updated", "success");
-      } else {
-        addProduct(data as Parameters<typeof addProduct>[0]);
-        showToast("Product added — now available in POS", "success");
+      try {
+        if (editing) {
+          updateProduct(editing.id, data as Partial<CommerceProduct>);
+          showToast("Product updated", "success");
+        } else {
+          addProduct(data as Parameters<typeof addProduct>[0]);
+          showToast("Product added — now available in POS", "success");
+        }
+        router.push("/products");
+      } catch {
+        setSaving(false);
       }
-      router.push("/products");
     }, 250);
   }
 

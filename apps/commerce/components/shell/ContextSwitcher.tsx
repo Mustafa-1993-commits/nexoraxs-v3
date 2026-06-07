@@ -10,7 +10,7 @@ interface ContextSwitcherProps {
 }
 
 export function ContextSwitcher({ mode }: ContextSwitcherProps) {
-  const { currentWorkspace, currentBU, currentBranch, BUSINESS_UNITS, BRANCHES, setCurrent } = useApp();
+  const { currentWorkspace, currentBU, currentBranch, commerceIdentity, BUSINESS_UNITS, BRANCHES, setCurrent } = useApp();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -22,8 +22,8 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const name = mode === "commerce" ? (currentBU?.name ?? "Commerce OS") : (currentWorkspace?.name ?? "Workspace");
-  const sub = mode === "commerce" ? `${currentBranch?.name ?? ""} · Commerce OS` : "Workspace";
+  const name = mode === "commerce" ? commerceIdentity.name : (currentWorkspace?.name ?? "Workspace");
+  const sub = mode === "commerce" ? commerceIdentity.subtitle : "Workspace";
 
   return (
     <div ref={ref} className="nx-sb-context">
@@ -33,7 +33,7 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
             <Building2 size={17} />
           </span>
         ) : (
-          <BrandMark name={name} size={34} radius={9} />
+          <BrandMark name={name} logo={commerceIdentity.logo} variant="selector" />
         )}
         <span className="nx-sb-switch-txt">
           <span className="nx-sb-switch-name">{name}</span>
@@ -54,19 +54,32 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
           {mode === "commerce" && BUSINESS_UNITS.length > 0 && (
             <>
               <div className="nx-dd-label">Business unit</div>
-              {BUSINESS_UNITS.map((bu) => (
-                <button
-                  key={bu.id}
-                  className="nx-dd-item"
-                  onClick={() => { setCurrent({ currentBusinessUnitId: bu.id }); setOpen(false); }}
-                >
-                  <span className="nx-choice-ic" style={{ width: 28, height: 28, background: "var(--accent-weak)", color: "var(--accent)" }}>
-                    <Store size={14} />
-                  </span>
-                  <span style={{ flex: 1, textAlign: "start" }}>{bu.name}</span>
-                  {bu.id === currentBU?.id && <Check size={15} style={{ color: "var(--accent)" }} />}
-                </button>
-              ))}
+              {BUSINESS_UNITS.map((bu) => {
+                const isCurrent = bu.id === currentBU?.id;
+                const buName = isCurrent ? commerceIdentity.name : bu.name;
+                const buMeta = isCurrent ? `${bu.name} · Commerce OS` : "Commerce OS";
+
+                return (
+                  <button
+                    key={bu.id}
+                    className="nx-dd-item"
+                    onClick={() => { setCurrent({ currentBusinessUnitId: bu.id }); setOpen(false); }}
+                  >
+                    {isCurrent ? (
+                      <BrandMark name={commerceIdentity.name} logo={commerceIdentity.logo} variant="selector" />
+                    ) : (
+                      <span className="nx-choice-ic" style={{ width: 32, height: 32, background: "var(--accent-weak)", color: "var(--accent)" }}>
+                        <Store size={15} />
+                      </span>
+                    )}
+                    <span className="nx-dd-item-text">
+                      <span className="nx-dd-item-main">{buName}</span>
+                      <span className="nx-dd-item-sub">{buMeta}</span>
+                    </span>
+                    {isCurrent && <Check size={15} style={{ color: "var(--accent)" }} />}
+                  </button>
+                );
+              })}
             </>
           )}
           {mode === "commerce" && BRANCHES.length > 0 && (

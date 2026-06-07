@@ -44,6 +44,7 @@ export function Shell({ mode, navGroups, children }: ShellProps) {
   const pathname = usePathname();
   const { currentUserDisplayName, logoutUser } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const showBranchPill = mode === "commerce" && pathname !== "/pos";
 
   function handleLogout() {
     logoutUser();
@@ -88,7 +89,7 @@ export function Shell({ mode, navGroups, children }: ShellProps) {
 
         {/* Right controls */}
         <div style={{ display: "flex", alignItems: "center", gap: 4, marginInlineStart: "auto" }}>
-          {mode === "commerce" && <BranchPill />}
+          {showBranchPill && <BranchPill />}
           <LocaleToggle />
           <ThemeToggle />
           <NotificationsDropdown />

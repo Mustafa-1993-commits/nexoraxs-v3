@@ -16,7 +16,19 @@ export function readCollection<T>(key: string): T[] {
 
 export function writeCollection<T>(key: string, data: T[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    if (error instanceof DOMException && (
+      error.name === "QuotaExceededError"
+      || error.name === "NS_ERROR_DOM_QUOTA_REACHED"
+      || error.code === 22
+      || error.code === 1014
+    )) {
+      throw new Error("Storage is full. Large uploaded images are not saved in demo mode.");
+    }
+    throw error;
+  }
 }
 
 export function readSession<T>(key: string, fallback: T): T {
