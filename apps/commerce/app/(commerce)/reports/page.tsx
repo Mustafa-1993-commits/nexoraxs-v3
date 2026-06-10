@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart2, TrendingUp, ShoppingBag, Users, Package } from "lucide-react";
+import { BarChart2, TrendingUp, RotateCcw, ShoppingBag, Users, Package } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { nxRevenue, nxOrdersForPeriod, nxBestSellers, nxGroupSales, nxNewCustomers } from "@/lib/store";
+import { nxRevenue, nxOrdersForPeriod, nxBestSellers, nxGroupSales, nxNewCustomers, nxReturnsForPeriod, nxNetSales } from "@/lib/store";
 
 type Period = "today" | "week" | "month";
 
 export default function ReportsPage() {
-  const { orders, products, customers, money, getCommerceSetup, currentBranch } = useApp();
+  const { orders, products, customers, commerceReturns, money, getCommerceSetup, currentBranch, t } = useApp();
   const [period, setPeriod] = useState<Period>("month");
   const setup = getCommerceSetup();
 
   const periodOrders = nxOrdersForPeriod(orders, period);
   const rev = nxRevenue(periodOrders);
+  const periodReturns = nxReturnsForPeriod(commerceReturns, period);
+  const netSales = nxNetSales(periodOrders, periodReturns);
   const bestSellers = nxBestSellers(periodOrders, products, 5);
   const newCusts = nxNewCustomers(customers, period);
   const salesGroup = nxGroupSales(periodOrders, period);
@@ -54,8 +56,9 @@ export default function ReportsPage() {
         {/* KPI cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
           {([
-            { label: "Gross Revenue", value: money(rev.gross), icon: <TrendingUp size={18} />, color: "var(--accent)" },
-            { label: "Net Revenue", value: money(rev.net), icon: <TrendingUp size={18} />, color: "var(--pos)" },
+            { label: t("gross_sales"), value: money(rev.gross), icon: <TrendingUp size={18} />, color: "var(--accent)" },
+            { label: t("returns_refunds"), value: money(netSales.returns), icon: <RotateCcw size={18} />, color: "var(--danger)" },
+            { label: t("net_sales"), value: money(netSales.net), icon: <TrendingUp size={18} />, color: "var(--pos)" },
             ...(setup.vatRegistered ? [{ label: setup.taxLabel || "VAT Collected", value: money(rev.vat), icon: <BarChart2 size={18} />, color: "var(--text-2)" }] : []),
             { label: "Orders", value: String(rev.count), icon: <ShoppingBag size={18} />, color: "var(--text-2)" },
             { label: "Avg Ticket", value: money(avgTicket), icon: <TrendingUp size={18} />, color: "var(--text-2)" },

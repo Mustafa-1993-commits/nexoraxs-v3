@@ -1,13 +1,23 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, FileText } from "lucide-react";
-import { useApp } from "@/lib/store";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, FileText, RotateCcw, X } from "lucide-react";
+import { useApp, type RefundMethod } from "@/lib/store";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { allOrders, allInvoices, customers, currentBranch, BRANCHES, money, t } = useApp();
+  const router = useRouter();
+  const {
+    allOrders, allInvoices, allCommerceReturns, customers, currentBranch, BRANCHES,
+    money, t, createReturn, showToast,
+  } = useApp();
+  const [showReturn, setShowReturn] = useState(false);
+  const [returnQtys, setReturnQtys] = useState<Record<string, string>>({});
+  const [reason, setReason] = useState("");
+  const [refundMethod, setRefundMethod] = useState<RefundMethod>("original");
+  const [restock, setRestock] = useState(true);
 
   const order = allOrders.find((o) => o.id === id);
   if (!order) {
@@ -26,6 +36,47 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const isOtherBranch = order.branchId !== currentBranch?.id;
   const orderBranchName = BRANCHES.find((b) => b.id === order.branchId)?.name || order.branchId;
 
+  // already-returned qty per product across all returns for this order
+  const returnedQtyByProduct: Record<string, number> = {};
+  allCommerceReturns
+    .filter((r) => r.orderId === order.id)
+    .forEach((r) => r.items.forEach((it) => {
+      returnedQtyByProduct[it.productId] = (returnedQtyByProduct[it.productId] || 0) + it.qty;
+    }));
+
+  const returnableItems = order.items
+    .map((item) => {
+      const key = item.productId || item.id || "";
+      const remaining = item.qty - (returnedQtyByProduct[key] || 0);
+      return { key, name: item.name, qty: item.qty, remaining };
+    })
+    .filter((item) => item.key && item.remaining > 0);
+
+  const returnStatus = order.returnStatus || "none";
+
+  function openReturnModal() {
+    setReturnQtys({});
+    setReason("");
+    setRefundMethod("original");
+    setRestock(true);
+    setShowReturn(true);
+  }
+
+  function handleSubmitReturn() {
+    const items = returnableItems
+      .map((ri) => ({ productId: ri.key, qty: +(returnQtys[ri.key] || 0) }))
+      .filter((ri) => ri.qty > 0);
+    if (items.length === 0) return;
+
+    const result = createReturn({ orderId: id, items, reason, refundMethod, restock });
+    if (!result.ok) {
+      showToast(t(result.error), "error");
+      return;
+    }
+    setShowReturn(false);
+    router.push(`/returns/${result.return.id}/document`);
+  }
+
   return (
     <div className="nx-main-scroll">
       <div style={{ padding: "24px 28px", maxWidth: 860, margin: "0 auto" }}>
@@ -42,6 +93,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               {isOtherBranch && (
                 <span className="nx-badge tone-neutral">{t("branch")}: {orderBranchName}</span>
               )}
+              {returnStatus !== "none" && (
+                <span className={`nx-badge ${returnStatus === "returned" ? "tone-danger" : "tone-warn"}`}>
+                  {returnStatus === "returned" ? t("returned") : t("partially_returned")}
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>
               {new Date(order.createdAt).toLocaleString("en-GB")}
@@ -52,6 +108,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <Link href={`/invoices/${invoice.id}`} className="nx-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none", fontSize: 12, padding: "7px 12px" }}>
                 <FileText size={13} />View Invoice
               </Link>
+            )}
+            {returnableItems.length > 0 && (
+              <button
+                className="nx-btn nx-btn-secondary"
+                style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, padding: "7px 12px" }}
+                onClick={openReturnModal}
+              >
+                <RotateCcw size={13} />{t("return")}
+              </button>
             )}
           </div>
         </div>
@@ -89,20 +154,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}>
-                {["Product", "Qty", "Unit price", "Line total"].map((h) => (
+                {["Product", "Qty", "Unit price", "Line total", t("remaining_returnable")].map((h) => (
                   <th key={h} style={{ padding: "9px 16px", textAlign: "left", fontSize: 11.5, fontWeight: 600, color: "var(--text-2)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {order.items.map((item, i) => (
-                <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
-                  <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 600 }}>{item.name}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{item.qty}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13 }}>{money(item.price)}</td>
-                  <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 700 }}>{money(item.price * item.qty)}</td>
-                </tr>
-              ))}
+              {order.items.map((item, i) => {
+                const key = item.productId || item.id || "";
+                const remaining = item.qty - (returnedQtyByProduct[key] || 0);
+                return (
+                  <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 600 }}>{item.name}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{item.qty}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13 }}>{money(item.price)}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 700 }}>{money(item.price * item.qty)}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{remaining}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -124,9 +194,71 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "var(--text)", borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 4 }}>
               <span>Total</span><span style={{ color: "var(--pos)" }}>{money(order.total)}</span>
             </div>
+            {(order.returnedTotal || 0) > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--danger)" }}>
+                <span>{t("returns_refunds")}</span><span>−{money(order.returnedTotal || 0)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {showReturn && (
+        <div style={{ position: "fixed", inset: 0, background: "#0006", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+          <div style={{ background: "var(--surface)", borderRadius: "var(--r-lg)", padding: 28, width: 440, maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 18 }}>
+              <h3 style={{ fontWeight: 700 }}>{t("process_return")}</h3>
+              <button onClick={() => setShowReturn(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} /></button>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              {returnableItems.map((ri) => (
+                <div key={ri.key} className="nx-row" style={{ justifyContent: "space-between", marginBottom: 10, gap: 10 }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{ri.name}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--text-3)" }}>{t("remaining_returnable")}: {ri.remaining}</div>
+                  </div>
+                  <input
+                    className="nx-input"
+                    type="number"
+                    min={0}
+                    max={ri.remaining}
+                    style={{ width: 80 }}
+                    value={returnQtys[ri.key] || ""}
+                    onChange={(e) => setReturnQtys((prev) => ({ ...prev, [ri.key]: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="nx-field" style={{ marginBottom: 14 }}>
+              <label className="nx-field-label">Reason</label>
+              <input className="nx-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Customer changed mind" />
+            </div>
+
+            <div className="nx-field" style={{ marginBottom: 14 }}>
+              <label className="nx-field-label">{t("refund_method")}</label>
+              <select className="nx-input" value={refundMethod} onChange={(e) => setRefundMethod(e.target.value as RefundMethod)}>
+                <option value="original">Original payment method</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="wallet">Wallet</option>
+              </select>
+            </div>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 22, cursor: "pointer" }}>
+              <input type="checkbox" checked={restock} onChange={(e) => setRestock(e.target.checked)} />
+              {t("restock")}
+            </label>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button className="nx-btn" onClick={() => setShowReturn(false)}>Cancel</button>
+              <button className="nx-btn-primary" onClick={handleSubmitReturn}>{t("process_return")}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

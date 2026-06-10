@@ -3,12 +3,12 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  TrendingUp, Package, AlertTriangle, Landmark, ScanBarcode, Globe,
-  PackagePlus, UserPlus, SlidersHorizontal, ReceiptText, Check,
+  TrendingUp, TrendingDown, Package, AlertTriangle, Landmark, ScanBarcode, Globe,
+  PackagePlus, UserPlus, SlidersHorizontal, ReceiptText, Check, RotateCcw,
   ArrowRight, ChevronRight, Zap, Download, Plus,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { nxRevenue, nxOrdersForPeriod, nxBestSellers, nxOrderDate } from "@/lib/store";
+import { nxRevenue, nxOrdersForPeriod, nxBestSellers, nxOrderDate, nxReturnsForPeriod, nxNetSales } from "@/lib/store";
 
 type Period = "today" | "week" | "month";
 const PERIOD_LABELS: Record<Period, string> = { today: "Today", week: "Week", month: "Month" };
@@ -33,7 +33,7 @@ function KpiCard({
 }
 
 export default function CommerceDashboardPage() {
-  const { orders, products, customers, invoices, money, currentBranch, getCommerceSetup, subscriptions, showToast, workspaceStorageUsage, storageUsageLabel, t } = useApp();
+  const { orders, products, customers, invoices, commerceReturns, money, currentBranch, getCommerceSetup, subscriptions, showToast, workspaceStorageUsage, storageUsageLabel, t } = useApp();
   const [period, setPeriod] = useState<Period>("today");
 
   const setup = getCommerceSetup();
@@ -49,6 +49,8 @@ export default function CommerceDashboardPage() {
 
   const periodOrders = useMemo(() => nxOrdersForPeriod(orders, period), [orders, period]);
   const revenue = useMemo(() => nxRevenue(periodOrders), [periodOrders]);
+  const periodReturns = useMemo(() => nxReturnsForPeriod(commerceReturns, period), [commerceReturns, period]);
+  const netSales = useMemo(() => nxNetSales(periodOrders, periodReturns), [periodOrders, periodReturns]);
   const lowStockList = useMemo(
     () => products.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= (p.lowStockThreshold ?? 5)).sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0)),
     [products]
@@ -169,6 +171,20 @@ export default function CommerceDashboardPage() {
             icon={<TrendingUp size={16} />}
             tint="#4f46e5"
             sub={`${revenue.count} ${revenue.count === 1 ? "order" : "orders"} · ${branchName}`}
+          />
+          <KpiCard
+            label={t("returns_refunds")}
+            value={money(netSales.returns)}
+            icon={<RotateCcw size={16} />}
+            tint="#dc2626"
+            sub={`${periodReturns.length} ${periodReturns.length === 1 ? "return" : "returns"} · ${branchName}`}
+          />
+          <KpiCard
+            label={t("net_sales")}
+            value={money(netSales.net)}
+            icon={<TrendingDown size={16} />}
+            tint="#16a34a"
+            sub={`${t("gross_sales")}: ${money(netSales.gross)}`}
           />
           <KpiCard
             label="Products"

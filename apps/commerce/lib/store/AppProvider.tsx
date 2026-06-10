@@ -7,15 +7,16 @@ import {
   readCollection, writeCollection, readSession, writeSession, clearAllStorage,
   seedDB, storageUsagePercent, formatBytes,
   compressImageToThumbnail, canAttachMedia, buildMediaAsset, applyUsageDelta,
-  effectiveStockFor, buildStockMovement, buildStockTransfer,
+  effectiveStockFor, buildStockMovement, buildStockTransfer, buildCommerceReturn,
 } from "@nexoraxs/shared";
+import { computeReturnTotals } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
 import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
   WorkspaceStorageUsage, MediaAsset, MediaOwnerType,
-  BranchInventory, StockMovement, StockTransfer, CommerceReturn,
+  BranchInventory, StockMovement, StockTransfer, CommerceReturn, CommerceReturnItem, RefundMethod,
 } from "@nexoraxs/types";
 
 // ---- types ----
@@ -100,6 +101,7 @@ interface AppContextType {
   // business-scoped only (not branch-filtered) — for cross-branch direct-by-id resolution
   allOrders: CommerceOrder[];
   allInvoices: CommerceInvoice[];
+  allCommerceReturns: CommerceReturn[];
   customers: CommerceCustomer[];
   branchInventory: BranchInventory[];
   stockMovements: StockMovement[];
@@ -126,6 +128,13 @@ interface AppContextType {
     items: { productId: string; qty: number }[];
     note?: string;
   }) => { ok: true; transfer: StockTransfer } | { ok: false; error: string };
+  createReturn: (data: {
+    orderId: string;
+    items: { productId: string; qty: number }[];
+    reason: string;
+    refundMethod: RefundMethod;
+    restock: boolean;
+  }) => { ok: true; return: CommerceReturn } | { ok: false; error: string };
   createOrder: (data: {
     items: OrderItem[];
     customerId: string | null;
@@ -501,8 +510,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }), [state.products, state.currentBusinessUnitId, state.currentBranchId, state.branchInventory]);
   const allOrders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
   const allInvoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
+  const allCommerceReturns = useMemo(() => state.commerceReturns.filter((r) => r.businessUnitId === state.currentBusinessUnitId), [state.commerceReturns, state.currentBusinessUnitId]);
   const orders = useMemo(() => allOrders.filter((o) => o.branchId === state.currentBranchId), [allOrders, state.currentBranchId]);
   const invoices = useMemo(() => allInvoices.filter((i) => i.branchId === state.currentBranchId), [allInvoices, state.currentBranchId]);
+  const commerceReturns = useMemo(() => allCommerceReturns.filter((r) => r.branchId === state.currentBranchId), [allCommerceReturns, state.currentBranchId]);
   const customers = useMemo(() => state.customers.filter((c) => c.businessUnitId === state.currentBusinessUnitId), [state.customers, state.currentBusinessUnitId]);
 
   const workspaceStorageUsage = useMemo(
@@ -902,6 +913,123 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { ok: true, transfer };
   }, [state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, state.branches, state.products, state.branchInventory, state.stockMovements, state.stockTransfers, currentUser]);
 
+  // ---- returns ----
+  const createReturn = useCallback((data: {
+    orderId: string; items: { productId: string; qty: number }[]; reason: string;
+    refundMethod: RefundMethod; restock: boolean;
+  }): { ok: true; return: CommerceReturn } | { ok: false; error: string } => {
+    const order = state.orders.find((o) => o.id === data.orderId);
+    if (!order || order.workspaceId !== state.currentWorkspaceId || order.businessUnitId !== state.currentBusinessUnitId) {
+      return { ok: false, error: "return_rejected" };
+    }
+    if (!data.items || data.items.length === 0) {
+      return { ok: false, error: "return_rejected" };
+    }
+
+    const existingReturns = state.commerceReturns.filter((r) => r.orderId === order.id);
+    const returnedQtyByProduct: Record<string, number> = {};
+    existingReturns.forEach((r) => {
+      r.items.forEach((it) => {
+        returnedQtyByProduct[it.productId] = (returnedQtyByProduct[it.productId] || 0) + it.qty;
+      });
+    });
+
+    for (const item of data.items) {
+      if (!Number.isInteger(item.qty) || item.qty <= 0) return { ok: false, error: "return_rejected" };
+      const orderItem = order.items.find((oi) => oi.productId === item.productId || oi.id === item.productId);
+      if (!orderItem) return { ok: false, error: "return_rejected" };
+      const remaining = orderItem.qty - (returnedQtyByProduct[item.productId] || 0);
+      if (item.qty > remaining) return { ok: false, error: "return_rejected" };
+    }
+
+    const totals = computeReturnTotals(order, data.items);
+    const returnItems: CommerceReturnItem[] = totals.lines.map((line) => {
+      const orderItem = order.items.find((oi) => oi.productId === line.productId || oi.id === line.productId);
+      return {
+        productId: line.productId, name: line.name, sku: orderItem?.sku,
+        qty: line.qty, price: line.price, taxable: orderItem?.taxable !== false,
+      };
+    });
+
+    const invoice = state.invoices.find((i) => i.orderId === order.id) ?? null;
+    const buReturns = state.commerceReturns.filter((r) => r.businessUnitId === state.currentBusinessUnitId);
+    const returnNumber = `RET-${String(buReturns.length + 1).padStart(4, "0")}`;
+    const newReturn = buildCommerceReturn({
+      returnNumber, workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
+      branchId: order.branchId, orderId: order.id, invoiceId: invoice?.id ?? null,
+      items: returnItems, reason: data.reason, refundMethod: data.refundMethod, restock: data.restock,
+      totals: { subtotal: totals.subtotal, vat: totals.vat, total: totals.total },
+      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
+    });
+
+    let nextBranchInventory = state.branchInventory;
+    const newMovements: StockMovement[] = [];
+    if (data.restock) {
+      for (const item of data.items) {
+        const product = state.products.find((p) => p.id === item.productId);
+        if (!product) continue;
+        const eff = effectiveStockFor(product, order.branchId, nextBranchInventory);
+        const existing = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === order.branchId);
+        const newQty = eff.qty + item.qty;
+        if (existing) {
+          nextBranchInventory = nextBranchInventory.map((bi) =>
+            bi.id === existing.id ? { ...bi, qty: newQty, updatedAt: nowISO() } : bi
+          );
+        } else {
+          nextBranchInventory = [...nextBranchInventory, {
+            id: uid("bi"), workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
+            branchId: order.branchId, productId: product.id, qty: newQty, lowStockThreshold: eff.lowStockThreshold, updatedAt: nowISO(),
+          }];
+        }
+        newMovements.push(buildStockMovement({
+          workspaceId: order.workspaceId, businessUnitId: order.businessUnitId, branchId: order.branchId,
+          productId: product.id, qtyChange: item.qty, reason: "return",
+          reference: { type: "return", id: newReturn.id },
+          performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Cashier",
+        }));
+      }
+    }
+
+    let fullyReturned = true;
+    for (const oi of order.items) {
+      const key = oi.productId || oi.id || "";
+      const returnedAfter = (returnedQtyByProduct[key] || 0) + (data.items.find((i) => i.productId === key)?.qty || 0);
+      if (returnedAfter < oi.qty) { fullyReturned = false; break; }
+    }
+
+    const newOrders = state.orders.map((o) => o.id === order.id ? {
+      ...o,
+      returnStatus: (fullyReturned ? "returned" : "partial") as "returned" | "partial",
+      returnedTotal: (o.returnedTotal || 0) + totals.total,
+      returnIds: [...(o.returnIds || []), newReturn.id],
+    } : o);
+    writeCollection(STORAGE_KEYS.orders, newOrders);
+
+    let newInvoices = state.invoices;
+    if (invoice) {
+      newInvoices = state.invoices.map((i) => i.id === invoice.id ? { ...i, returnIds: [...(i.returnIds || []), newReturn.id] } : i);
+      writeCollection(STORAGE_KEYS.invoices, newInvoices);
+    }
+
+    const newReturns = [...state.commerceReturns, newReturn];
+    writeCollection(STORAGE_KEYS.commerceReturns, newReturns);
+
+    if (data.restock) {
+      writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
+      writeCollection(STORAGE_KEYS.stockMovements, [...state.stockMovements, ...newMovements]);
+    }
+
+    setState((prev) => ({
+      ...prev,
+      orders: newOrders,
+      invoices: newInvoices,
+      commerceReturns: newReturns,
+      branchInventory: data.restock ? nextBranchInventory : prev.branchInventory,
+      stockMovements: data.restock ? [...prev.stockMovements, ...newMovements] : prev.stockMovements,
+    }));
+    return { ok: true, return: newReturn };
+  }, [state.orders, state.invoices, state.commerceReturns, state.products, state.branchInventory, state.stockMovements, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser]);
+
   // ---- orders ----
   const createOrder = useCallback((data: {
     items: OrderItem[]; customerId: string | null; payment: "cash" | "card" | "wallet";
@@ -1033,11 +1161,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     createUser, loginUser, logoutUser,
     createWorkspace, setLocale, createBranch, addBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
     saveCommerceSetup, getCommerceSetup,
-    products, orders, invoices, allOrders, allInvoices, customers, subscriptions: state.subscriptions,
+    products, orders, invoices, allOrders, allInvoices, allCommerceReturns, customers, subscriptions: state.subscriptions,
     branchInventory: state.branchInventory, stockMovements: state.stockMovements,
-    stockTransfers: state.stockTransfers, commerceReturns: state.commerceReturns,
+    stockTransfers: state.stockTransfers, commerceReturns,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
-    addProduct, updateProduct, deleteProduct, adjustStock, transferStock, createOrder, createInvoice, createCustomer, updateCustomer,
+    addProduct, updateProduct, deleteProduct, adjustStock, transferStock, createReturn, createOrder, createInvoice, createCustomer, updateCustomer,
     attachMedia,
     setCurrent,
   };

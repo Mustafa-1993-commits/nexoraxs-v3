@@ -7,7 +7,7 @@ import { useApp, computeDoc } from "@/lib/store";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { allInvoices, allOrders, customers, currentBranch, BRANCHES, money, getCommerceSetup, showToast, t } = useApp();
+  const { allInvoices, allOrders, allCommerceReturns, customers, currentBranch, BRANCHES, money, getCommerceSetup, showToast, t } = useApp();
 
   const invoice = allInvoices.find((inv) => inv.id === id);
   if (!invoice) {
@@ -27,6 +27,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const d = computeDoc(order?.items ?? invoice.items, setup, invoice.discount);
   const isOtherBranch = invoice.branchId !== currentBranch?.id;
   const invoiceBranchName = BRANCHES.find((b) => b.id === invoice.branchId)?.name || invoice.branchId;
+  const returns = (invoice.returnIds || [])
+    .map((rid) => allCommerceReturns.find((r) => r.id === rid))
+    .filter((r): r is NonNullable<typeof r> => !!r);
 
   return (
     <div className="nx-main-scroll">
@@ -67,6 +70,21 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             </button>
           </div>
         </div>
+
+        {returns.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+            {returns.map((r) => (
+              <Link
+                key={r.id}
+                href={`/returns/${r.id}/document`}
+                className="nx-badge tone-warn"
+                style={{ textDecoration: "none" }}
+              >
+                {t("return")} issued — {r.returnNumber}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Business + customer info */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
