@@ -15,7 +15,15 @@ export type { Lang } from "@nexoraxs/shared";
 export {
   money, taxBreak, nxOrdersForPeriod, nxRevenue, nxBestSellers,
   nxGroupSales, nxNewCustomers, nxOrderDate, nxOrderTotal, computeDoc, fmtDate,
+  nxBranchInventoryMap, nxReturnsForPeriod, nxNetSales, computeReturnTotals,
 } from "@nexoraxs/shared";
 export type { SalesBucket, SalesGroup } from "@nexoraxs/shared";
 export { uid, nowISO, normalizeEmail, getUserDisplayName } from "@nexoraxs/shared";
+export {
+  effectiveStockFor, buildStockMovement, buildStockTransfer, buildCommerceReturn,
+} from "@nexoraxs/shared";
+export type {
+  BranchInventory, StockMovement, StockMovementReason, StockTransfer,
+  CommerceReturn, CommerceReturnItem, RefundMethod,
+} from "@nexoraxs/types";
 export { writePosLastOrderId, readPosLastOrderId, clearPosLastOrderId } from "@nexoraxs/shared";

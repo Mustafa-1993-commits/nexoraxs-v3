@@ -80,6 +80,7 @@ export default function CommerceDashboardPage() {
             <div className="nx-row" style={{ gap: 10, marginTop: 4 }}>
               <h1 className="nx-page-title" style={{ fontSize: 26 }}>Commerce Dashboard</h1>
               <span className="nx-badge tone-accent"><Zap size={11} />{subStatus}</span>
+              <span className="nx-badge tone-neutral">{t("branch")}: {branchName}</span>
             </div>
             <p className="nx-page-sub">
               {todayStr} · {branchName}

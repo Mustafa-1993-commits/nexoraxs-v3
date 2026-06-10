@@ -7,9 +7,9 @@ import { useApp } from "@/lib/store";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { orders, customers, invoices, money, t } = useApp();
+  const { allOrders, allInvoices, customers, currentBranch, BRANCHES, money, t } = useApp();
 
-  const order = orders.find((o) => o.id === id);
+  const order = allOrders.find((o) => o.id === id);
   if (!order) {
     return (
       <div className="nx-main-scroll">
@@ -22,7 +22,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const customer = order.customerId ? customers.find((c) => c.id === order.customerId) : null;
-  const invoice = invoices.find((inv) => inv.orderId === id);
+  const invoice = allInvoices.find((inv) => inv.orderId === id);
+  const isOtherBranch = order.branchId !== currentBranch?.id;
+  const orderBranchName = BRANCHES.find((b) => b.id === order.branchId)?.name || order.branchId;
 
   return (
     <div className="nx-main-scroll">
@@ -35,7 +37,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{order.orderNumber}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{order.orderNumber}</h1>
+              {isOtherBranch && (
+                <span className="nx-badge tone-neutral">{t("branch")}: {orderBranchName}</span>
+              )}
+            </div>
             <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>
               {new Date(order.createdAt).toLocaleString("en-GB")}
             </div>

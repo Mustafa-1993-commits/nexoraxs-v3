@@ -8,7 +8,7 @@ import { nxRevenue, nxOrdersForPeriod, nxBestSellers, nxGroupSales, nxNewCustome
 type Period = "today" | "week" | "month";
 
 export default function ReportsPage() {
-  const { orders, products, customers, money, getCommerceSetup } = useApp();
+  const { orders, products, customers, money, getCommerceSetup, currentBranch } = useApp();
   const [period, setPeriod] = useState<Period>("month");
   const setup = getCommerceSetup();
 
@@ -41,7 +41,7 @@ export default function ReportsPage() {
     <div className="nx-main-scroll">
       <div style={{ padding: "24px 28px", maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>Reports</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>Reports — {currentBranch?.name}</h1>
           <div className="nx-seg">
             {(["today", "week", "month"] as Period[]).map((p) => (
               <button key={p} className={period === p ? "on" : ""} onClick={() => setPeriod(p)}>

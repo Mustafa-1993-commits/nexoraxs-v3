@@ -14,6 +14,7 @@ import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
   WorkspaceStorageUsage, MediaAsset, MediaOwnerType,
+  BranchInventory, StockMovement, StockTransfer, CommerceReturn,
 } from "@nexoraxs/types";
 
 // ---- types ----
@@ -95,7 +96,14 @@ interface AppContextType {
   products: CommerceProduct[];
   orders: CommerceOrder[];
   invoices: CommerceInvoice[];
+  // business-scoped only (not branch-filtered) — for cross-branch direct-by-id resolution
+  allOrders: CommerceOrder[];
+  allInvoices: CommerceInvoice[];
   customers: CommerceCustomer[];
+  branchInventory: BranchInventory[];
+  stockMovements: StockMovement[];
+  stockTransfers: StockTransfer[];
+  commerceReturns: CommerceReturn[];
   subscriptions: OSSubscription[];
   mediaAssets: MediaAsset[];
   workspaceStorageUsage: WorkspaceStorageUsage | null;
@@ -153,6 +161,10 @@ interface RuntimeState {
   orders: CommerceOrder[];
   customers: CommerceCustomer[];
   invoices: CommerceInvoice[];
+  branchInventory: BranchInventory[];
+  stockMovements: StockMovement[];
+  stockTransfers: StockTransfer[];
+  commerceReturns: CommerceReturn[];
   mediaAssets: MediaAsset[];
   workspaceStorageUsage: WorkspaceStorageUsage[];
 }
@@ -168,6 +180,7 @@ function emptyRuntimeState(): RuntimeState {
     teamMembers: [], commerceSetups: [],
     products: [], orders: [],
     customers: [], invoices: [],
+    branchInventory: [], stockMovements: [], stockTransfers: [], commerceReturns: [],
     mediaAssets: [], workspaceStorageUsage: [],
   };
 }
@@ -305,6 +318,10 @@ function loadState(): RuntimeState {
     orders: readCollection<CommerceOrder>(STORAGE_KEYS.orders),
     customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
     invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
+    branchInventory: readCollection<BranchInventory>(STORAGE_KEYS.branchInventory),
+    stockMovements: readCollection<StockMovement>(STORAGE_KEYS.stockMovements),
+    stockTransfers: readCollection<StockTransfer>(STORAGE_KEYS.stockTransfers),
+    commerceReturns: readCollection<CommerceReturn>(STORAGE_KEYS.commerceReturns),
     mediaAssets: readCollection<MediaAsset>(STORAGE_KEYS.mediaAssets),
     workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
   };
@@ -464,8 +481,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [currentOSSubscription]);
 
   const products = useMemo(() => state.products.filter((p) => p.businessUnitId === state.currentBusinessUnitId), [state.products, state.currentBusinessUnitId]);
-  const orders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
-  const invoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
+  const allOrders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
+  const allInvoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
+  const orders = useMemo(() => allOrders.filter((o) => o.branchId === state.currentBranchId), [allOrders, state.currentBranchId]);
+  const invoices = useMemo(() => allInvoices.filter((i) => i.branchId === state.currentBranchId), [allInvoices, state.currentBranchId]);
   const customers = useMemo(() => state.customers.filter((c) => c.businessUnitId === state.currentBusinessUnitId), [state.customers, state.currentBusinessUnitId]);
 
   const workspaceStorageUsage = useMemo(
@@ -809,7 +828,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     createUser, loginUser, logoutUser,
     createWorkspace, setLocale, createBranch, addBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
     saveCommerceSetup, getCommerceSetup,
-    products, orders, invoices, customers, subscriptions: state.subscriptions,
+    products, orders, invoices, allOrders, allInvoices, customers, subscriptions: state.subscriptions,
+    branchInventory: state.branchInventory, stockMovements: state.stockMovements,
+    stockTransfers: state.stockTransfers, commerceReturns: state.commerceReturns,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
     addProduct, updateProduct, deleteProduct, createOrder, createInvoice, createCustomer, updateCustomer,
     attachMedia,

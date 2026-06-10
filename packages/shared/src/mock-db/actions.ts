@@ -1,4 +1,8 @@
-import type { MediaAsset, MediaOwnerType, WorkspaceStorageUsage } from "@nexoraxs/types";
+import type {
+  MediaAsset, MediaOwnerType, WorkspaceStorageUsage,
+  CommerceProduct, BranchInventory, StockMovement, StockMovementReason,
+  StockTransfer, CommerceReturn, CommerceReturnItem, RefundMethod,
+} from "@nexoraxs/types";
 
 let __idseq = 0;
 
@@ -116,5 +120,94 @@ export function applyUsageDelta(usage: WorkspaceStorageUsage, deltaBytes: number
     ...usage,
     usedBytes: Math.max(0, usage.usedBytes + deltaBytes),
     updatedAt: nowISO(),
+  };
+}
+
+// ---- branch inventory / stock movements / transfers / returns ----
+
+/**
+ * Read-side merge: returns the BranchInventory record for (product.id, branchId) if one
+ * exists (hasRecord: true), otherwise a virtual record derived from the Product's legacy
+ * `stock`/`lowStockThreshold` fields (hasRecord: false). Pure — never persists anything.
+ */
+export function effectiveStockFor(
+  product: CommerceProduct,
+  branchId: string,
+  branchInventory: BranchInventory[],
+): { qty: number; lowStockThreshold: number; updatedAt: string; hasRecord: boolean } {
+  const record = (branchInventory || []).find(
+    (bi) => bi.productId === product.id && bi.branchId === branchId,
+  );
+  if (record) {
+    return { qty: record.qty, lowStockThreshold: record.lowStockThreshold, updatedAt: record.updatedAt, hasRecord: true };
+  }
+  return {
+    qty: product.stock ?? 0,
+    lowStockThreshold: product.lowStockThreshold ?? 0,
+    updatedAt: product.updatedAt,
+    hasRecord: false,
+  };
+}
+
+export function buildStockMovement(input: {
+  workspaceId: string;
+  businessUnitId: string;
+  branchId: string;
+  productId: string;
+  qtyChange: number;
+  reason: StockMovementReason;
+  reference: { type: "order" | "return" | "transfer" | "adjustment"; id: string };
+  performedBy: string;
+  performedByName: string;
+}): StockMovement {
+  return {
+    id: uid("sm"),
+    ...input,
+    createdAt: nowISO(),
+  };
+}
+
+export function buildStockTransfer(input: {
+  transferNumber: string;
+  workspaceId: string;
+  businessUnitId: string;
+  fromBranchId: string;
+  toBranchId: string;
+  items: { productId: string; name: string; qty: number }[];
+  performedBy: string;
+  performedByName: string;
+  note?: string;
+}): StockTransfer {
+  return {
+    id: uid("st"),
+    ...input,
+    status: "completed",
+    createdAt: nowISO(),
+  };
+}
+
+export function buildCommerceReturn(input: {
+  returnNumber: string;
+  workspaceId: string;
+  businessUnitId: string;
+  branchId: string;
+  orderId: string;
+  invoiceId: string | null;
+  items: CommerceReturnItem[];
+  reason: string;
+  refundMethod: RefundMethod;
+  restock: boolean;
+  totals: { subtotal: number; vat: number; total: number };
+  cashierId: string;
+  cashierName: string;
+}): CommerceReturn {
+  const { totals, ...rest } = input;
+  return {
+    id: uid("ret"),
+    ...rest,
+    subtotal: totals.subtotal,
+    vat: totals.vat,
+    total: totals.total,
+    createdAt: nowISO(),
   };
 }
