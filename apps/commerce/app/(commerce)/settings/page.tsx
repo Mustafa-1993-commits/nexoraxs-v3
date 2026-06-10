@@ -1,13 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Settings, Building2, FileText, Tag, Ruler, Printer, ArrowRight } from "lucide-react";
+import { Settings, Building2, FileText, Tag, Ruler, Printer, ArrowRight, MapPin, Plus, Check, X, CircleAlert } from "lucide-react";
 import { useApp } from "@/lib/store";
 
 export default function CommerceSettingsPage() {
-  const { getCommerceSetup, currentBU, currentWorkspace, workspaceStorageUsage, storageUsagePercent, storageUsageLabel, t } = useApp();
+  const { getCommerceSetup, currentBU, currentWorkspace, currentBranch, BRANCHES, addBranch, setCurrent, workspaceStorageUsage, storageUsagePercent, storageUsageLabel, showToast, t } = useApp();
   const setup = getCommerceSetup();
   const presetLabel = setup.preset || setup.presetId || "retail";
+
+  const [showAddBranch, setShowAddBranch] = useState(false);
+  const [branchName, setBranchName] = useState("");
+  const [branchCity, setBranchCity] = useState("");
+  const [branchErr, setBranchErr] = useState("");
+
+  function saveBranch() {
+    const name = branchName.trim();
+    if (!name) {
+      setBranchErr("Branch name is required.");
+      return;
+    }
+    addBranch({ name, city: branchCity.trim() || undefined });
+    showToast(`Branch "${name}" added.`, "success");
+    setBranchName("");
+    setBranchCity("");
+    setBranchErr("");
+    setShowAddBranch(false);
+  }
 
   const sections = [
     { icon: <Building2 size={20} />, title: "Business Identity", desc: "Display name, legal name, contact info and address.", href: "/setup" },
@@ -56,6 +76,72 @@ export default function CommerceSettingsPage() {
               <span style={{ width: `${storageUsagePercent}%`, background: storageUsagePercent > 85 ? "var(--warn)" : undefined }} />
             </div>
             <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>{Math.round(storageUsagePercent)}% used</div>
+          </div>
+        )}
+
+        <div style={{ marginTop: 16, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "16px 18px", boxShadow: "var(--sh-sm)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontWeight: 600, fontSize: 13.5 }}>Branches</div>
+            <button
+              className="nx-btn nx-btn-secondary nx-btn-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              onClick={() => { setBranchName(""); setBranchCity(""); setBranchErr(""); setShowAddBranch(true); }}
+            >
+              <Plus size={14} />Add Branch
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {BRANCHES.map((br) => (
+              <button
+                key={br.id}
+                className={"nx-cust-row" + (br.id === currentBranch?.id ? " on" : "")}
+                onClick={() => setCurrent({ currentBranchId: br.id })}
+              >
+                <span className="nx-choice-ic" style={{ width: 32, height: 32 }}><MapPin size={15} /></span>
+                <span style={{ flex: 1, textAlign: "left" }}>
+                  <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>{br.name}{br.isMain ? " · Main" : ""}</span>
+                  {br.city && <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }}>{br.city}</span>}
+                </span>
+                {br.id === currentBranch?.id && <Check size={16} style={{ color: "var(--accent)" }} />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showAddBranch && (
+          <div className="nx-modal-scrim">
+            <div className="nx-modal" style={{ maxWidth: 420 }}>
+              <div className="nx-modal-head">
+                <div>
+                  <h3 className="nx-modal-title">Add Branch</h3>
+                  <p style={{ fontSize: 12.5, color: "var(--text-3)", marginTop: 2 }}>Adds a new branch to {currentBU?.name}.</p>
+                </div>
+                <button className="nx-icon-btn" onClick={() => setShowAddBranch(false)}><X size={16} /></button>
+              </div>
+              <div className="nx-modal-body">
+                <div className="nx-form-grid">
+                  <label className="nx-field">
+                    <span className="nx-field-label">Branch name</span>
+                    <span className="nx-input-wrap">
+                      <MapPin size={16} className="nx-input-icon" />
+                      <input className="nx-input" placeholder="e.g. Nasr City" value={branchName} onChange={(e) => { setBranchName(e.target.value); setBranchErr(""); }} autoFocus />
+                    </span>
+                    {branchErr && <span className="nx-field-error"><CircleAlert size={13} />{branchErr}</span>}
+                  </label>
+                  <label className="nx-field">
+                    <span className="nx-field-label">City<span className="nx-field-optional">Optional</span></span>
+                    <span className="nx-input-wrap">
+                      <input className="nx-input" placeholder="e.g. Cairo" value={branchCity} onChange={(e) => setBranchCity(e.target.value)} />
+                    </span>
+                  </label>
+                  <div className="nx-row" style={{ gap: 10, marginTop: 4 }}>
+                    <button type="button" className="nx-btn nx-btn-ghost nx-btn-md" onClick={() => setShowAddBranch(false)}>Cancel</button>
+                    <span className="nx-spacer" />
+                    <button type="button" className="nx-btn nx-btn-primary nx-btn-md" onClick={saveBranch}><Check size={15} />Save branch</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

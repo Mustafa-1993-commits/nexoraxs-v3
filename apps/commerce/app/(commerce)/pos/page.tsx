@@ -344,7 +344,7 @@ export default function POSPage() {
               <div>
                 <h3 className="nx-modal-title">{custMode === "new" ? "Add new customer" : "Customer"}</h3>
                 <p style={{ fontSize: 12.5, color: "var(--text-3)", marginTop: 2 }}>
-                  {custMode === "new" ? "Saved to this business unit and linked to the sale." : "Attach a customer or continue as guest."}
+                  {custMode === "new" ? "Saved to this business and linked to the sale." : "Attach a customer or continue as guest."}
                 </p>
               </div>
               <button className="nx-icon-btn" onClick={() => setShowCustPicker(false)}><X size={16} /></button>

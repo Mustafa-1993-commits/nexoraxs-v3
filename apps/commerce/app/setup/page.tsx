@@ -759,7 +759,7 @@ function PresetStep({
     <div>
       <h2 className="nx-onb-h">Confirm your Commerce OS preset</h2>
       <p className="nx-onb-sub">
-        We pre-selected <strong style={{ color: "var(--text)" }}>{presetLabel}</strong> from your business unit.
+        We pre-selected <strong style={{ color: "var(--text)" }}>{presetLabel}</strong> for your business.
         This applies smart defaults for categories, products, taxes, receipts and reports.
         You can change it before continuing.
       </p>
@@ -773,10 +773,10 @@ function PresetStep({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="nx-row" style={{ gap: 8, flexWrap: "wrap" }}>
               <span style={{ fontWeight: 800, fontSize: 16 }}>{currentPreset.label}</span>
-              <span className="nx-badge tone-accent">From business unit</span>
+              <span className="nx-badge tone-accent">From your business</span>
             </div>
             <div style={{ fontSize: 12.5, color: "var(--text-2)", marginTop: 3 }}>
-              {currentPreset.desc ?? "Synced with your business unit type · one shared value"}
+              {currentPreset.desc ?? "Synced with your business type · one shared value"}
             </div>
           </div>
           <button
@@ -819,7 +819,7 @@ function PresetStep({
           </div>
           <div className="nx-note" style={{ marginTop: 12 }}>
             <Info size={14} />
-            Changing this also updates your business unit type — there is only ever one value.
+            Changing this also updates your business type — there is only ever one value.
           </div>
         </div>
       )}

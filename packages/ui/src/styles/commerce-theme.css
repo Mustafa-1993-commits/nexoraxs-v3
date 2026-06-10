@@ -699,6 +699,7 @@ html[data-theme="dark"] .nx-sb-user:hover { background: var(--surface-3); }
 @media print {
   .nx-doc-topbar { display: none !important; }
   .nx-invoice, .nx-receipt { box-shadow: none !important; border-radius: 0 !important; }
+  .nx-print-hide { display: none !important; }
 }
 
 /* ---- Commerce setup wizard split layout ---- */

@@ -265,7 +265,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const currentOSSubscription = useMemo(() => state.subscriptions.find((s) => s.id === state.currentOSSubscriptionId) ?? null, [state.subscriptions, state.currentOSSubscriptionId]);
 
   const BUSINESS_UNITS = useMemo(() => state.businessUnits.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.businessUnits, state.currentWorkspaceId]);
-  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.branches, state.currentWorkspaceId]);
+  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId && b.businessUnitId === state.currentBusinessUnitId), [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId]);
 
   const isAuthenticated = !!state.currentUserId && !!currentUser;
   const isOnboardingComplete = state.onboardingState.completedOS.includes("commerce") && !!currentWorkspace;
@@ -567,7 +567,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
-    setState((prev) => ({ ...prev, ...data }));
+    setState((prev) => {
+      const next = { ...prev, ...data };
+      if (data.currentBusinessUnitId && data.currentBusinessUnitId !== prev.currentBusinessUnitId && !data.currentBranchId) {
+        const stillValid = prev.branches.some((b) => b.id === prev.currentBranchId && b.businessUnitId === data.currentBusinessUnitId);
+        if (!stillValid) {
+          const fallback = prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId && b.isMain)
+            ?? prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId);
+          next.currentBranchId = fallback?.id ?? null;
+        }
+      }
+      return next;
+    });
   }, []);
 
   // ---- toggles ----

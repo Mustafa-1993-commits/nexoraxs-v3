@@ -83,6 +83,7 @@ interface AppContextType {
   // onboarding
   setLocale: (locale: Lang) => void;
   createBranch: (data: { name: string; country?: string; currency?: string; isMain: boolean }) => Branch;
+  addBranch: (data: { name: string; city?: string }) => Branch;
   selectOS: (osId: string) => void;
   selectPlan: (planKey: "starter" | "pro" | "business") => void;
   createBusinessUnit: (data: { name: string; preset: string; osId: string }) => BusinessUnit;
@@ -196,7 +197,7 @@ function applyCommerceHandoffFromUrl(): void {
   const userName = params.get("userName") || "Workspace Owner";
   const userEmail = params.get("userEmail") || "owner@nexoraxs.local";
   const branchName = params.get("branchName") || "Main Branch";
-  const businessUnitName = params.get("businessUnitName") || "Commerce Business Unit";
+  const businessUnitName = params.get("businessUnitName") || "Commerce Business";
   const preset = params.get("businessPreset") || "retail";
   const plan = params.get("plan") || "starter";
   const planId = params.get("planId") || "commerce_starter";
@@ -416,7 +417,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const currentOSSubscription = useMemo(() => state.subscriptions.find((s) => s.id === state.currentOSSubscriptionId) ?? null, [state.subscriptions, state.currentOSSubscriptionId]);
 
   const BUSINESS_UNITS = useMemo(() => state.businessUnits.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.businessUnits, state.currentWorkspaceId]);
-  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.branches, state.currentWorkspaceId]);
+  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId && b.businessUnitId === state.currentBusinessUnitId), [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId]);
 
   const isAuthenticated = !!state.currentUserId && !!currentUser;
   const isOnboardingComplete = state.onboardingState.completedOS.includes("commerce") && !!currentWorkspace;
@@ -573,6 +574,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, branches: newBranches, currentBranchId: branch.id }));
     return branch;
   }, [state.branches, state.currentWorkspaceId, currentWorkspace]);
+
+  const addBranch = useCallback((data: { name: string; city?: string }): Branch => {
+    const branch: Branch = {
+      id: uid("br"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
+      name: data.name, city: data.city || undefined,
+      country: currentWorkspace?.country, currency: currentWorkspace?.currency,
+      isMain: false, createdAt: nowISO(),
+    };
+    const newBranches = [...state.branches, branch];
+    writeCollection(STORAGE_KEYS.branches, newBranches);
+    setState((prev) => ({ ...prev, branches: newBranches, currentBranchId: branch.id }));
+    return branch;
+  }, [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId, currentWorkspace]);
 
   const selectOS = useCallback((osId: string) => {
     setState((prev) => ({ ...prev, currentOSId: osId }));
@@ -761,7 +775,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
-    setState((prev) => ({ ...prev, ...data }));
+    setState((prev) => {
+      const next = { ...prev, ...data };
+      if (data.currentBusinessUnitId && data.currentBusinessUnitId !== prev.currentBusinessUnitId && !data.currentBranchId) {
+        const stillValid = prev.branches.some((b) => b.id === prev.currentBranchId && b.businessUnitId === data.currentBusinessUnitId);
+        if (!stillValid) {
+          const fallback = prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId && b.isMain)
+            ?? prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId);
+          next.currentBranchId = fallback?.id ?? null;
+        }
+      }
+      return next;
+    });
   }, []);
 
   // ---- toggles ----
@@ -782,7 +807,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     currentUserDisplayName, commerceIdentity, BUSINESS_UNITS, BRANCHES, COMMERCE_PLAN,
     money: memoMoney, t: memoT,
     createUser, loginUser, logoutUser,
-    createWorkspace, setLocale, createBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
+    createWorkspace, setLocale, createBranch, addBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
     saveCommerceSetup, getCommerceSetup,
     products, orders, invoices, customers, subscriptions: state.subscriptions,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,

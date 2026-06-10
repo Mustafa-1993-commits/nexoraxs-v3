@@ -134,7 +134,7 @@ export function InviteUserModal({ open, onClose, onInvite }: Props) {
             {/* BU + Branch row */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div className="nx-field">
-                <label className="nx-field-label">Business unit</label>
+                <label className="nx-field-label">Business</label>
                 <select className="nx-input" value={form.buAccess} onChange={(e) => upd({ buAccess: e.target.value })}>
                   <option value="All">All</option>
                   {buName && <option value={buName}>{buName}</option>}

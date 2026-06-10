@@ -53,7 +53,7 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
           </button>
           {mode === "commerce" && BUSINESS_UNITS.length > 0 && (
             <>
-              <div className="nx-dd-label">Business unit</div>
+              <div className="nx-dd-label">Business</div>
               {BUSINESS_UNITS.map((bu) => {
                 const isCurrent = bu.id === currentBU?.id;
                 const buName = isCurrent ? commerceIdentity.name : bu.name;
