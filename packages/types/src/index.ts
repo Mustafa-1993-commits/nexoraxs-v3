@@ -6,6 +6,9 @@ export type {
   OSSubscription,
   WorkspaceMember,
   TeamMember,
+  WorkspaceStorageUsage,
+  MediaAsset,
+  MediaOwnerType,
 } from "./core";
 
 export type {

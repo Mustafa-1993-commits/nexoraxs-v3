@@ -5,13 +5,15 @@ import { STORAGE_KEYS, PLAN_CATALOG, DEFAULT_SETUP, planIdFor } from "@nexoraxs/
 import {
   uid, nowISO, normalizeEmail, getUserDisplayName,
   readCollection, writeCollection, readSession, writeSession, clearAllStorage,
-  seedDB,
+  seedDB, storageUsagePercent, formatBytes,
+  compressImageToThumbnail, canAttachMedia, buildMediaAsset, applyUsageDelta,
 } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
 import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
+  WorkspaceStorageUsage, MediaAsset, MediaOwnerType,
 } from "@nexoraxs/types";
 
 // ---- types ----
@@ -81,6 +83,7 @@ interface AppContextType {
   // onboarding
   setLocale: (locale: Lang) => void;
   createBranch: (data: { name: string; country?: string; currency?: string; isMain: boolean }) => Branch;
+  addBranch: (data: { name: string; city?: string }) => Branch;
   selectOS: (osId: string) => void;
   selectPlan: (planKey: "starter" | "pro" | "business") => void;
   createBusinessUnit: (data: { name: string; preset: string; osId: string }) => BusinessUnit;
@@ -94,9 +97,14 @@ interface AppContextType {
   invoices: CommerceInvoice[];
   customers: CommerceCustomer[];
   subscriptions: OSSubscription[];
+  mediaAssets: MediaAsset[];
+  workspaceStorageUsage: WorkspaceStorageUsage | null;
+  storageUsagePercent: number;
+  storageUsageLabel: string;
   // commerce actions
-  addProduct: (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt">) => CommerceProduct;
-  updateProduct: (id: string, data: Partial<CommerceProduct>) => void;
+  attachMedia: (input: { file: File; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => Promise<{ asset: MediaAsset; reference: { mediaAssetId: string; thumbnailUrl: string } } | null>;
+  addProduct: (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt"> & { imageFile?: File | null }) => Promise<CommerceProduct>;
+  updateProduct: (id: string, data: Partial<CommerceProduct> & { imageFile?: File | null }) => Promise<void>;
   deleteProduct: (id: string) => void;
   createOrder: (data: {
     items: OrderItem[];
@@ -145,6 +153,8 @@ interface RuntimeState {
   orders: CommerceOrder[];
   customers: CommerceCustomer[];
   invoices: CommerceInvoice[];
+  mediaAssets: MediaAsset[];
+  workspaceStorageUsage: WorkspaceStorageUsage[];
 }
 
 function emptyRuntimeState(): RuntimeState {
@@ -158,6 +168,7 @@ function emptyRuntimeState(): RuntimeState {
     teamMembers: [], commerceSetups: [],
     products: [], orders: [],
     customers: [], invoices: [],
+    mediaAssets: [], workspaceStorageUsage: [],
   };
 }
 
@@ -186,7 +197,7 @@ function applyCommerceHandoffFromUrl(): void {
   const userName = params.get("userName") || "Workspace Owner";
   const userEmail = params.get("userEmail") || "owner@nexoraxs.local";
   const branchName = params.get("branchName") || "Main Branch";
-  const businessUnitName = params.get("businessUnitName") || "Commerce Business Unit";
+  const businessUnitName = params.get("businessUnitName") || "Commerce Business";
   const preset = params.get("businessPreset") || "retail";
   const plan = params.get("plan") || "starter";
   const planId = params.get("planId") || "commerce_starter";
@@ -216,6 +227,15 @@ function applyCommerceHandoffFromUrl(): void {
       status: "trialing" as const, startedAt: created,
       trialEndsAt: params.get("trialEndsAt") || undefined,
       renewsAt: params.get("renewsAt") || undefined,
+    }]);
+  }
+
+  const usageRows = readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage);
+  if (!usageRows.some((u) => u.workspaceId === currentWorkspaceId)) {
+    const planMeta = PLAN_CATALOG.find((p) => p.id === planId);
+    const limitBytes = planMeta?.limits.storageLimitBytes ?? 500 * 1024 * 1024;
+    writeCollection(STORAGE_KEYS.workspaceStorageUsage, [...usageRows, {
+      workspaceId: currentWorkspaceId, usedBytes: 0, limitBytes, updatedAt: created,
     }]);
   }
 
@@ -285,6 +305,8 @@ function loadState(): RuntimeState {
     orders: readCollection<CommerceOrder>(STORAGE_KEYS.orders),
     customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
     invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
+    mediaAssets: readCollection<MediaAsset>(STORAGE_KEYS.mediaAssets),
+    workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
   };
 }
 
@@ -300,6 +322,8 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   writeCollection(STORAGE_KEYS.orders, data.commerceOrders);
   writeCollection(STORAGE_KEYS.customers, data.commerceCustomers);
   writeCollection(STORAGE_KEYS.invoices, data.commerceInvoices);
+  writeCollection(STORAGE_KEYS.mediaAssets, data.mediaAssets);
+  writeCollection(STORAGE_KEYS.workspaceStorageUsage, data.workspaceStorageUsage);
   if (data.currentUserId) writeSession(STORAGE_KEYS.currentUserId, data.currentUserId);
   if (data.currentWorkspaceId) writeSession(STORAGE_KEYS.currentWorkspaceId, data.currentWorkspaceId);
   if (data.currentOSId) writeSession(STORAGE_KEYS.currentOSId, data.currentOSId);
@@ -311,8 +335,16 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   localStorage.setItem(STORAGE_KEYS.theme, data.theme);
 }
 
+// attachMedia()-produced thumbnails are quota-checked data URLs capped at ~60KB binary
+// (~90KB once base64-encoded); blob: URLs are ephemeral object URLs that never survive
+// a reload, so those — and any oversized data URL — must still be stripped before persisting.
+const MAX_PERSISTABLE_IMAGE_CHARS = 90 * 1024;
+
 function isPersistableProductImage(image: string | null | undefined): image is string {
-  return !!image && !image.startsWith("data:") && !image.startsWith("blob:");
+  if (!image) return false;
+  if (image.startsWith("blob:")) return false;
+  if (image.startsWith("data:")) return image.length <= MAX_PERSISTABLE_IMAGE_CHARS;
+  return true;
 }
 
 function sanitizeProductForStorage(product: CommerceProduct): CommerceProduct {
@@ -385,7 +417,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const currentOSSubscription = useMemo(() => state.subscriptions.find((s) => s.id === state.currentOSSubscriptionId) ?? null, [state.subscriptions, state.currentOSSubscriptionId]);
 
   const BUSINESS_UNITS = useMemo(() => state.businessUnits.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.businessUnits, state.currentWorkspaceId]);
-  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.branches, state.currentWorkspaceId]);
+  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId && b.businessUnitId === state.currentBusinessUnitId), [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId]);
 
   const isAuthenticated = !!state.currentUserId && !!currentUser;
   const isOnboardingComplete = state.onboardingState.completedOS.includes("commerce") && !!currentWorkspace;
@@ -436,6 +468,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const invoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
   const customers = useMemo(() => state.customers.filter((c) => c.businessUnitId === state.currentBusinessUnitId), [state.customers, state.currentBusinessUnitId]);
 
+  const workspaceStorageUsage = useMemo(
+    () => state.workspaceStorageUsage.find((u) => u.workspaceId === state.currentWorkspaceId) ?? null,
+    [state.workspaceStorageUsage, state.currentWorkspaceId],
+  );
+  const storageUsagePct = useMemo(() => storageUsagePercent(workspaceStorageUsage), [workspaceStorageUsage]);
+  const storageUsageLabel = useMemo(() => {
+    if (!workspaceStorageUsage) return "";
+    return `${formatBytes(workspaceStorageUsage.usedBytes, state.lang)} / ${formatBytes(workspaceStorageUsage.limitBytes, state.lang)}`;
+  }, [workspaceStorageUsage, state.lang]);
+
   const memoMoney = useCallback((n: number) => moneyFn(n, state.lang), [state.lang]);
   const memoT = useCallback((key: string) => tFn(key, state.lang), [state.lang]);
 
@@ -449,6 +491,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  // ---- media ----
+  const attachMedia = useCallback(async (input: { file: File; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => {
+    const compressed = await compressImageToThumbnail(input.file);
+    if (!compressed) {
+      showToast(memoT("image_too_large"), "error");
+      return null;
+    }
+    if (!canAttachMedia(workspaceStorageUsage, compressed.sizeBytes)) {
+      showToast(memoT("storage_limit_reached"), "error");
+      return null;
+    }
+    const asset = buildMediaAsset({
+      workspaceId: state.currentWorkspaceId ?? "",
+      businessUnitId: state.currentBusinessUnitId,
+      branchId: state.currentBranchId,
+      ownerType: input.ownerType,
+      ownerId: input.ownerId ?? null,
+      fileName: input.fileName,
+      compressed,
+    });
+    const newAssets = [...state.mediaAssets, asset];
+    writeCollection(STORAGE_KEYS.mediaAssets, newAssets);
+
+    const newUsage = workspaceStorageUsage
+      ? state.workspaceStorageUsage.map((u) => (u.workspaceId === workspaceStorageUsage.workspaceId ? applyUsageDelta(u, asset.sizeBytes) : u))
+      : state.workspaceStorageUsage;
+    writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
+
+    setState((prev) => ({ ...prev, mediaAssets: newAssets, workspaceStorageUsage: newUsage }));
+
+    return { asset, reference: { mediaAssetId: asset.id, thumbnailUrl: asset.thumbnailUrl ?? asset.url } };
+  }, [state.mediaAssets, state.workspaceStorageUsage, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, workspaceStorageUsage, showToast, memoT]);
 
   // ---- auth ----
   const createUser = useCallback((data: { fullName: string; email: string; password: string }): "success" | "email_taken" => {
@@ -499,6 +574,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, branches: newBranches, currentBranchId: branch.id }));
     return branch;
   }, [state.branches, state.currentWorkspaceId, currentWorkspace]);
+
+  const addBranch = useCallback((data: { name: string; city?: string }): Branch => {
+    const branch: Branch = {
+      id: uid("br"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
+      name: data.name, city: data.city || undefined,
+      country: currentWorkspace?.country, currency: currentWorkspace?.currency,
+      isMain: false, createdAt: nowISO(),
+    };
+    const newBranches = [...state.branches, branch];
+    writeCollection(STORAGE_KEYS.branches, newBranches);
+    setState((prev) => ({ ...prev, branches: newBranches, currentBranchId: branch.id }));
+    return branch;
+  }, [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId, currentWorkspace]);
 
   const selectOS = useCallback((osId: string) => {
     setState((prev) => ({ ...prev, currentOSId: osId }));
@@ -576,11 +664,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.commerceSetups, state.currentBusinessUnitId, state.currentWorkspaceId, state.currentOSSubscriptionId]);
 
   // ---- products ----
-  const addProduct = useCallback((data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt">): CommerceProduct => {
+  const addProduct = useCallback(async (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt"> & { imageFile?: File | null }): Promise<CommerceProduct> => {
+    const { imageFile, ...rest } = data;
+    const id = uid("p");
+    let image = rest.image ?? null;
+    if (imageFile) {
+      const result = await attachMedia({ file: imageFile, ownerType: "product_image", ownerId: id, fileName: imageFile.name });
+      image = result ? result.reference.thumbnailUrl : null;
+    }
     const product = sanitizeProductForStorage({
-      id: uid("p"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
+      id, workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
       branchId: state.currentBranchId!, osSubscriptionId: state.currentOSSubscriptionId!,
-      createdAt: nowISO(), updatedAt: nowISO(), ...data,
+      createdAt: nowISO(), updatedAt: nowISO(), ...rest, image,
     });
     const newProducts = [...state.products, product].map(sanitizeProductForStorage);
     try {
@@ -592,10 +687,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw error;
     }
     return product;
-  }, [state.products, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.currentOSSubscriptionId, showToast]);
+  }, [state.products, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.currentOSSubscriptionId, showToast, attachMedia]);
 
-  const updateProduct = useCallback((id: string, data: Partial<CommerceProduct>) => {
-    const patch = sanitizeProductPatch(data);
+  const updateProduct = useCallback(async (id: string, data: Partial<CommerceProduct> & { imageFile?: File | null }) => {
+    const { imageFile, ...rest } = data;
+    let patch = sanitizeProductPatch(rest);
+    if (imageFile) {
+      const result = await attachMedia({ file: imageFile, ownerType: "product_image", ownerId: id, fileName: imageFile.name });
+      patch = { ...patch, image: result ? result.reference.thumbnailUrl : null };
+    }
     const newProducts = state.products
       .map((p) => p.id === id ? sanitizeProductForStorage({ ...p, ...patch, updatedAt: nowISO() }) : sanitizeProductForStorage(p));
     try {
@@ -606,7 +706,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showToast(message, "error");
       throw error;
     }
-  }, [state.products, showToast]);
+  }, [state.products, showToast, attachMedia]);
 
   const deleteProduct = useCallback((id: string) => {
     const newProducts = state.products.filter((p) => p.id !== id).map(sanitizeProductForStorage);
@@ -625,13 +725,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const order: CommerceOrder = {
       id: uid("ord"), orderNumber: orderNum, workspaceId: state.currentWorkspaceId!,
       businessUnitId: state.currentBusinessUnitId!, branchId: state.currentBranchId!,
+      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
       createdAt: nowISO(), ...data,
     };
     const newOrders = [...existingOrders, order];
     writeCollection(STORAGE_KEYS.orders, newOrders);
     setState((prev) => ({ ...prev, orders: newOrders }));
     return order;
-  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId]);
+  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, currentUser]);
 
   // ---- invoices ----
   const createInvoice = useCallback((orderId: string): CommerceInvoice => {
@@ -645,7 +746,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       id: uid("inv"), invoiceNumber: invNum, orderId, workspaceId: order.workspaceId,
       businessUnitId: order.businessUnitId, branchId: order.branchId, customerId: order.customerId,
       items: order.items, subtotal: order.subtotal, discount: order.discount,
-      vat: order.vat, total: order.total, net: order.net, createdAt: nowISO(),
+      vat: order.vat, total: order.total, net: order.net,
+      cashierId: order.cashierId, cashierName: order.cashierName, createdAt: nowISO(),
     };
     const newInvoices = [...existingInvoices, invoice];
     writeCollection(STORAGE_KEYS.invoices, newInvoices);
@@ -673,7 +775,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
-    setState((prev) => ({ ...prev, ...data }));
+    setState((prev) => {
+      const next = { ...prev, ...data };
+      if (data.currentBusinessUnitId && data.currentBusinessUnitId !== prev.currentBusinessUnitId && !data.currentBranchId) {
+        const stillValid = prev.branches.some((b) => b.id === prev.currentBranchId && b.businessUnitId === data.currentBusinessUnitId);
+        if (!stillValid) {
+          const fallback = prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId && b.isMain)
+            ?? prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId);
+          next.currentBranchId = fallback?.id ?? null;
+        }
+      }
+      return next;
+    });
   }, []);
 
   // ---- toggles ----
@@ -694,10 +807,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     currentUserDisplayName, commerceIdentity, BUSINESS_UNITS, BRANCHES, COMMERCE_PLAN,
     money: memoMoney, t: memoT,
     createUser, loginUser, logoutUser,
-    createWorkspace, setLocale, createBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
+    createWorkspace, setLocale, createBranch, addBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
     saveCommerceSetup, getCommerceSetup,
     products, orders, invoices, customers, subscriptions: state.subscriptions,
+    mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
     addProduct, updateProduct, deleteProduct, createOrder, createInvoice, createCustomer, updateCustomer,
+    attachMedia,
     setCurrent,
   };
 

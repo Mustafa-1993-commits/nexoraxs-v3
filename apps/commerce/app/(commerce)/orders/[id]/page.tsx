@@ -7,7 +7,7 @@ import { useApp } from "@/lib/store";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { orders, customers, invoices, money } = useApp();
+  const { orders, customers, invoices, money, t } = useApp();
 
   const order = orders.find((o) => o.id === id);
   if (!order) {
@@ -68,6 +68,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "18px 20px" }}>
             <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 12 }}>Payment</div>
             <div style={{ fontSize: 13, color: "var(--text)" }}>{order.payment}</div>
+            {order.cashierName && (
+              <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 8 }}>
+                {t("cashier")}: <span style={{ fontWeight: 600, color: "var(--text)" }}>{order.cashierName}</span>
+              </div>
+            )}
           </div>
         </div>
 

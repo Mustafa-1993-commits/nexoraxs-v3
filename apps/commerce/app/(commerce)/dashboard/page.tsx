@@ -33,7 +33,7 @@ function KpiCard({
 }
 
 export default function CommerceDashboardPage() {
-  const { orders, products, customers, invoices, money, currentBranch, getCommerceSetup, subscriptions, showToast } = useApp();
+  const { orders, products, customers, invoices, money, currentBranch, getCommerceSetup, subscriptions, showToast, workspaceStorageUsage, storageUsageLabel, t } = useApp();
   const [period, setPeriod] = useState<Period>("today");
 
   const setup = getCommerceSetup();
@@ -81,7 +81,10 @@ export default function CommerceDashboardPage() {
               <h1 className="nx-page-title" style={{ fontSize: 26 }}>Commerce Dashboard</h1>
               <span className="nx-badge tone-accent"><Zap size={11} />{subStatus}</span>
             </div>
-            <p className="nx-page-sub">{todayStr} · {branchName}</p>
+            <p className="nx-page-sub">
+              {todayStr} · {branchName}
+              {workspaceStorageUsage && <> · {t("storage_used")}: {storageUsageLabel}</>}
+            </p>
           </div>
           <div className="nx-row" style={{ gap: 10, flexWrap: "wrap" }}>
             <div className="nx-seg">

@@ -93,7 +93,17 @@ export default function InventoryPage() {
                   const low = stock != null && stock > 0 && stock <= (p.lowStockThreshold || 5);
                   return (
                     <tr key={p.id}>
-                      <td style={{ fontWeight: 600 }}>{p.name}</td>
+                      <td>
+                        <div className="nx-row" style={{ gap: 11 }}>
+                          {p.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.image} alt="" style={{ width: 38, height: 38, borderRadius: 9, objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }} />
+                          ) : (
+                            <span className="nx-thumb nx-thumb-stripe" style={{ width: 38, height: 38 }} />
+                          )}
+                          <span style={{ fontWeight: 600 }}>{p.name}</span>
+                        </div>
+                      </td>
                       <td className="num" style={{ color: "var(--text-3)" }}>{p.sku || "—"}</td>
                       <td style={{ color: "var(--text-2)", fontSize: 13 }}>{p.category || "General"}</td>
                       <td style={{ fontWeight: 600 }}>{money(p.price)}</td>

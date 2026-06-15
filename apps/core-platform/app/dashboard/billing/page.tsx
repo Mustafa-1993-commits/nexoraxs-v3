@@ -22,6 +22,10 @@ export default function BillingPage() {
     showToast,
     getCommerceSetup,
     money,
+    workspaceStorageUsage,
+    storageUsagePercent,
+    storageUsageLabel,
+    t,
   } = useApp();
 
   const setup = getCommerceSetup();
@@ -126,7 +130,7 @@ export default function BillingPage() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
                 {[
-                  { label: "Business units", icon: <Building2 size={15} />, used: buUsed, max: lim.businessUnits },
+                  { label: "Businesses", icon: <Building2 size={15} />, used: buUsed, max: lim.businessUnits },
                   { label: "Branches", icon: <MapPin size={15} />, used: brUsed, max: lim.branches },
                   { label: "Team users", icon: <Users size={15} />, used: usersUsed, max: lim.users },
                 ].map(({ label, icon, used, max }) => {
@@ -152,9 +156,21 @@ export default function BillingPage() {
                 })}
               </div>
               <div className="nx-helper" style={{ marginTop: 18 }}>
-                <ArrowUpCircle size={16} />Need more business units or branches? Upgrade to <b style={{ margin: "0 4px" }}>Commerce Business</b> for custom limits and advanced permissions.
+                <ArrowUpCircle size={16} />Need more businesses or branches? Upgrade to <b style={{ margin: "0 4px" }}>Commerce Business</b> for custom limits and advanced permissions.
               </div>
             </div>
+
+            {workspaceStorageUsage && (
+              <div className="nx-card nx-card-pad" style={{ marginBottom: 20 }}>
+                <div className="nx-row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+                  <div className="nx-section-title">{t("storage_used")}</div>
+                  <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "var(--mono)" }}>{storageUsageLabel}</span>
+                </div>
+                <div className="nx-progress">
+                  <span style={{ width: `${storageUsagePercent}%`, background: storageUsagePercent > 85 ? "var(--warn)" : "var(--accent)" }} />
+                </div>
+              </div>
+            )}
 
             {/* Add more OS */}
             <div className="nx-section-title" style={{ marginBottom: 12 }}>Add more operating systems</div>

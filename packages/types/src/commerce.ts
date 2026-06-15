@@ -89,6 +89,8 @@ export interface CommerceOrder {
   subtotal: number;
   total: number;
   net: number;
+  cashierId: string;
+  cashierName: string;
   createdAt: string;
 }
 
@@ -106,6 +108,8 @@ export interface CommerceInvoice {
   vat: number;
   total: number;
   net: number;
+  cashierId: string;
+  cashierName: string;
   createdAt: string;
 }
 

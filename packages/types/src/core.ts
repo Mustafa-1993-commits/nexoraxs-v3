@@ -75,3 +75,36 @@ export interface WorkspaceMember {
 
 /** @deprecated use WorkspaceMember */
 export type TeamMember = WorkspaceMember;
+
+export interface WorkspaceStorageUsage {
+  workspaceId: string;
+  usedBytes: number;
+  limitBytes: number;
+  updatedAt: string;
+}
+
+export type MediaOwnerType =
+  | "business_logo"
+  | "product_image"
+  | "category_image"
+  | "store_banner"
+  | "document_asset"
+  | "other";
+
+export interface MediaAsset {
+  id: string;
+  workspaceId: string;
+  businessUnitId: string | null;
+  branchId: string | null;
+  ownerType: MediaOwnerType;
+  ownerId: string | null;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+  url: string;
+  thumbnailUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

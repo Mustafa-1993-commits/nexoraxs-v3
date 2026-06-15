@@ -25,7 +25,17 @@ export {
   clearPosLastOrderId,
 } from "./storage";
 
-export { uid, nowISO, normalizeEmail, getUserDisplayName } from "./actions";
+export {
+  uid,
+  nowISO,
+  normalizeEmail,
+  getUserDisplayName,
+  compressImageToThumbnail,
+  canAttachMedia,
+  buildMediaAsset,
+  applyUsageDelta,
+} from "./actions";
+export type { CompressedImage } from "./actions";
 
 export { DEFAULT_SETUP, emptyDB, seedDB } from "./seed";
 
@@ -41,5 +51,8 @@ export {
   nxNewCustomers,
   computeDoc,
   fmtDate,
+  storageUsagePercent,
+  formatBytes,
+  remainingBytes,
 } from "./selectors";
 export type { SalesBucket, SalesGroup } from "./selectors";

@@ -12,7 +12,7 @@ type ProductForm = {
   name: string; category: string; brand: string; sku: string; barcode: string;
   price: string; cost: string; taxable: boolean;
   stock: string; unit: string; lowStockThreshold: string; expiry: string;
-  notes: string; image: string | null;
+  notes: string; image: string | null; imageFile: File | null;
 };
 
 function Field({
@@ -45,12 +45,12 @@ function NewProductForm() {
     price: String(editing.price || ""), cost: String(editing.cost || ""), taxable: editing.taxable ?? true,
     stock: editing.stock != null ? String(editing.stock) : "", unit: editing.unit || units[0] || "Piece",
     lowStockThreshold: String(editing.lowStockThreshold || 5), expiry: editing.expiry || "",
-    notes: editing.notes || "", image: editing.image ?? null,
+    notes: editing.notes || "", image: editing.image ?? null, imageFile: null,
   } : {
     name: "", category: categories[0] || "General", brand: "", sku: "", barcode: "",
     price: "", cost: "", taxable: true,
     stock: "", unit: units[0] || "Piece", lowStockThreshold: "5", expiry: "",
-    notes: "", image: null,
+    notes: "", image: null, imageFile: null,
   });
   const [errors, setErrors] = useState<{ name?: string; price?: string }>({});
   const [saving, setSaving] = useState(false);
@@ -73,10 +73,10 @@ function NewProductForm() {
   function onImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    upd({ image: URL.createObjectURL(file) });
+    upd({ image: URL.createObjectURL(file), imageFile: file });
   }
 
-  function handleSave() {
+  async function handleSave() {
     const err: { name?: string; price?: string } = {};
     if (!form.name.trim() || form.name.trim().length < 3) err.name = "Enter a real product name";
     if (!form.price || +form.price <= 0) err.price = "Enter a valid price";
@@ -90,22 +90,20 @@ function NewProductForm() {
       price: +form.price || 0, cost: +form.cost || 0, taxable: form.taxable,
       stock: form.stock !== "" ? +form.stock : null, unit: form.unit || "Piece",
       lowStockThreshold: +form.lowStockThreshold || 5, expiry: form.expiry.trim(),
-      notes: form.notes.trim(), image: persistableImage(form.image), isActive: true,
+      notes: form.notes.trim(), image: persistableImage(form.image), imageFile: form.imageFile, isActive: true,
     };
-    setTimeout(() => {
-      try {
-        if (editing) {
-          updateProduct(editing.id, data as Partial<CommerceProduct>);
-          showToast("Product updated", "success");
-        } else {
-          addProduct(data as Parameters<typeof addProduct>[0]);
-          showToast("Product added — now available in POS", "success");
-        }
-        router.push("/products");
-      } catch {
-        setSaving(false);
+    try {
+      if (editing) {
+        await updateProduct(editing.id, data as Partial<CommerceProduct> & { imageFile?: File | null });
+        showToast("Product updated", "success");
+      } else {
+        await addProduct(data as Parameters<typeof addProduct>[0]);
+        showToast("Product added — now available in POS", "success");
       }
-    }, 250);
+      router.push("/products");
+    } catch {
+      setSaving(false);
+    }
   }
 
   return (
@@ -231,7 +229,7 @@ function NewProductForm() {
                 {form.image ? "Replace image" : "Upload image"}
               </button>
               {form.image && (
-                <button type="button" className="nx-link" style={{ display: "block", margin: "10px auto 0", color: "var(--danger)" }} onClick={() => upd({ image: null })}>
+                <button type="button" className="nx-link" style={{ display: "block", margin: "10px auto 0", color: "var(--danger)" }} onClick={() => upd({ image: null, imageFile: null })}>
                   Remove image
                 </button>
               )}

@@ -92,7 +92,7 @@ export default function ProductHubPage() {
           <div>
             <h1 className="nx-page-title">Welcome back, {currentUserDisplayName || "User"}</h1>
             <p className="nx-page-sub">
-              {currentWorkspace?.name} · {BUSINESS_UNITS.length} business unit{BUSINESS_UNITS.length !== 1 ? "s" : ""} · {BRANCHES.length} branch{BRANCHES.length !== 1 ? "es" : ""} · {currentWorkspace?.timezone ?? "UTC"}
+              {currentWorkspace?.name} · {BUSINESS_UNITS.length} business{BUSINESS_UNITS.length !== 1 ? "es" : ""} · {BRANCHES.length} branch{BRANCHES.length !== 1 ? "es" : ""} · {currentWorkspace?.timezone ?? "UTC"}
             </p>
           </div>
           <div className="nx-row" style={{ gap: 10 }}>
@@ -125,7 +125,7 @@ export default function ProductHubPage() {
                 </div>
               </div>
               {[
-                { label: "Business units", used: buUsed, max: lim.businessUnits },
+                { label: "Businesses", used: buUsed, max: lim.businessUnits },
                 { label: "Branches", used: brUsed, max: lim.branches },
                 { label: "Users", used: usersUsed, max: lim.users },
               ].map(({ label, used, max }) => (

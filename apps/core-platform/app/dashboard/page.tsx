@@ -25,6 +25,10 @@ export default function DashboardPage() {
     currentOSSubscription,
     isCommerceOSActive,
     isCommerceSetupComplete,
+    workspaceStorageUsage,
+    storageUsagePercent,
+    storageUsageLabel,
+    t,
   } = useApp();
   const setupHref = commerceSetupUrl({
     user: currentUser,
@@ -94,6 +98,22 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
+
+        {workspaceStorageUsage && (
+          <div style={{
+            background: "var(--surface)", border: "1px solid var(--border)",
+            borderRadius: "var(--r-lg)", padding: "16px 18px", boxShadow: "var(--sh-sm)",
+            display: "flex", flexDirection: "column", gap: 10, maxWidth: 380,
+          }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: ".07em" }}>
+              {t("storage_used")}
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{storageUsageLabel}</div>
+            <div style={{ height: 6, borderRadius: 999, background: "var(--surface-2)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${storageUsagePercent}%`, background: "var(--accent)", borderRadius: 999 }} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

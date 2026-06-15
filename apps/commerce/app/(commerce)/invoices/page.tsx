@@ -8,7 +8,7 @@ import { type CommerceInvoice } from "@/lib/store";
 import { fmtDate, computeDoc } from "@/lib/store";
 
 export default function InvoicesPage() {
-  const { invoices, orders, money, currentWorkspace, getCommerceSetup } = useApp();
+  const { invoices, orders, money, currentWorkspace, getCommerceSetup, t } = useApp();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<CommerceInvoice | null>(null);
   const setup = getCommerceSetup();
@@ -18,6 +18,11 @@ export default function InvoicesPage() {
   function orderNumber(orderId: string): string {
     const o = orders.find((x) => x.id === orderId);
     return o ? o.orderNumber : orderId.slice(0, 8);
+  }
+
+  function cashierName(orderId: string): string {
+    const o = orders.find((x) => x.id === orderId);
+    return o?.cashierName || "—";
   }
 
   return (
@@ -40,7 +45,7 @@ export default function InvoicesPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}>
-                  {["Invoice", "Order", "Date", "Net", setup.vatRegistered ? (setup.taxLabel || "VAT") : null, "Total", ""].filter(Boolean).map((h) => (
+                  {["Invoice", "Order", t("cashier"), "Date", "Net", setup.vatRegistered ? (setup.taxLabel || "VAT") : null, "Total", ""].filter(Boolean).map((h) => (
                     <th key={h!} style={{ padding: "10px 14px", textAlign: "left", fontSize: 12, fontWeight: 600, color: "var(--text-2)" }}>{h}</th>
                   ))}
                 </tr>
@@ -54,6 +59,7 @@ export default function InvoicesPage() {
                       <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--accent)", fontFamily: "var(--mono)" }}>
                         <Link href={`/orders/${inv.orderId}`} style={{ color: "var(--accent)", textDecoration: "none" }}>{orderNumber(inv.orderId)}</Link>
                       </td>
+                      <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{cashierName(inv.orderId)}</td>
                       <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{fmtDate(inv.createdAt)}</td>
                       <td style={{ padding: "11px 14px", fontSize: 13, color: "var(--text-2)" }}>{money(doc.net)}</td>
                       {setup.vatRegistered && <td style={{ padding: "11px 14px", fontSize: 13, color: "var(--text-2)" }}>{money(doc.vat)}</td>}
@@ -84,7 +90,10 @@ export default function InvoicesPage() {
               <button className="nx-icon-btn" onClick={() => setSelected(null)}><X size={18} /></button>
             </div>
             <div className="nx-modal-body">
-              <div style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 14 }}>{fmtDate(selected.createdAt)}</div>
+              <div style={{ fontSize: 13, color: "var(--text-2)", marginBottom: 14 }}>
+                {fmtDate(selected.createdAt)}
+                {cashierName(selected.orderId) !== "—" && <> · {t("cashier")}: <span style={{ fontWeight: 600, color: "var(--text)" }}>{cashierName(selected.orderId)}</span></>}
+              </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{setup.displayName || currentWorkspace?.name || "Business"}</div>
                 {setup.address && <div style={{ fontSize: 12.5, color: "var(--text-2)", marginTop: 2 }}>{setup.address}{setup.city ? `, ${setup.city}` : ""}</div>}

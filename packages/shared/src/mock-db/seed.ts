@@ -1,5 +1,6 @@
 import type {
   User, Workspace, BusinessUnit, Branch, OSSubscription, WorkspaceMember,
+  MediaAsset, WorkspaceStorageUsage,
 } from "@nexoraxs/types";
 import type {
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceCustomer, CommerceInvoice,
@@ -43,6 +44,8 @@ export function emptyDB(locale = "en", theme = "light") {
     commerceOrders: [] as CommerceOrder[],
     commerceCustomers: [] as CommerceCustomer[],
     commerceInvoices: [] as CommerceInvoice[],
+    mediaAssets: [] as MediaAsset[],
+    workspaceStorageUsage: [] as WorkspaceStorageUsage[],
     onboardingState: { phase: null as string | null, step: 0, completedOS: [] as string[] },
   };
 }
@@ -125,6 +128,13 @@ export function seedDB(locale = "en", theme = "light") {
     commerceOrders: [] as CommerceOrder[],
     commerceCustomers: [] as CommerceCustomer[],
     commerceInvoices: [] as CommerceInvoice[],
+    mediaAssets: [] as MediaAsset[],
+    workspaceStorageUsage: [{
+      workspaceId: wsId,
+      usedBytes: 0,
+      limitBytes: PLAN_CATALOG.find((p) => p.id === "commerce_starter")?.limits.storageLimitBytes ?? 500 * 1024 * 1024,
+      updatedAt: created,
+    }] as WorkspaceStorageUsage[],
     onboardingState: { phase: null as string | null, step: 0, completedOS: ["commerce"] },
   };
 }

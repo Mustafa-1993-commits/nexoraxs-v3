@@ -5,13 +5,14 @@ import { STORAGE_KEYS, PLAN_CATALOG, DEFAULT_SETUP, planIdFor } from "@nexoraxs/
 import {
   uid, nowISO, normalizeEmail, getUserDisplayName,
   readCollection, writeCollection, readSession, writeSession,
-  seedDB,
+  seedDB, storageUsagePercent, formatBytes,
 } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
 import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
+  WorkspaceStorageUsage,
 } from "@nexoraxs/types";
 
 // ---- types ----
@@ -62,6 +63,9 @@ interface AppContextType {
   BUSINESS_UNITS: BusinessUnit[];
   BRANCHES: Branch[];
   COMMERCE_PLAN: CommercePlanInfo | null;
+  workspaceStorageUsage: WorkspaceStorageUsage | null;
+  storageUsagePercent: number;
+  storageUsageLabel: string;
   money: (n: number) => string;
   t: (key: string) => string;
   // auth actions
@@ -138,6 +142,7 @@ function emptyRuntimeState() {
     orders: [] as CommerceOrder[],
     customers: [] as CommerceCustomer[],
     invoices: [] as CommerceInvoice[],
+    workspaceStorageUsage: [] as WorkspaceStorageUsage[],
   };
 }
 
@@ -175,6 +180,7 @@ function loadState(): ReturnType<typeof emptyRuntimeState> {
     orders: readCollection<CommerceOrder>(STORAGE_KEYS.orders),
     customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
     invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
+    workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
   };
 }
 
@@ -190,6 +196,7 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   writeCollection(STORAGE_KEYS.orders, data.commerceOrders);
   writeCollection(STORAGE_KEYS.customers, data.commerceCustomers);
   writeCollection(STORAGE_KEYS.invoices, data.commerceInvoices);
+  writeCollection(STORAGE_KEYS.workspaceStorageUsage, data.workspaceStorageUsage);
   if (data.currentUserId) writeSession(STORAGE_KEYS.currentUserId, data.currentUserId);
   if (data.currentWorkspaceId) writeSession(STORAGE_KEYS.currentWorkspaceId, data.currentWorkspaceId);
   if (data.currentOSId) writeSession(STORAGE_KEYS.currentOSId, data.currentOSId);
@@ -258,7 +265,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const currentOSSubscription = useMemo(() => state.subscriptions.find((s) => s.id === state.currentOSSubscriptionId) ?? null, [state.subscriptions, state.currentOSSubscriptionId]);
 
   const BUSINESS_UNITS = useMemo(() => state.businessUnits.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.businessUnits, state.currentWorkspaceId]);
-  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.branches, state.currentWorkspaceId]);
+  const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId && b.businessUnitId === state.currentBusinessUnitId), [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId]);
 
   const isAuthenticated = !!state.currentUserId && !!currentUser;
   const isOnboardingComplete = state.onboardingState.completedOS.includes("commerce") && !!currentWorkspace;
@@ -288,6 +295,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const orders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
   const invoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
   const customers = useMemo(() => state.customers.filter((c) => c.businessUnitId === state.currentBusinessUnitId), [state.customers, state.currentBusinessUnitId]);
+
+  const workspaceStorageUsage = useMemo(
+    () => state.workspaceStorageUsage.find((u) => u.workspaceId === state.currentWorkspaceId) ?? null,
+    [state.workspaceStorageUsage, state.currentWorkspaceId],
+  );
+  const storageUsagePct = useMemo(() => storageUsagePercent(workspaceStorageUsage), [workspaceStorageUsage]);
+  const storageUsageLabel = useMemo(() => {
+    if (!workspaceStorageUsage) return "";
+    return `${formatBytes(workspaceStorageUsage.usedBytes, state.lang)} / ${formatBytes(workspaceStorageUsage.limitBytes, state.lang)}`;
+  }, [workspaceStorageUsage, state.lang]);
 
   const memoMoney = useCallback((n: number) => moneyFn(n, state.lang), [state.lang]);
   const memoT = useCallback((key: string) => tFn(key, state.lang), [state.lang]);
@@ -335,9 +352,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newWS = [...state.workspaces, ws];
     writeCollection(STORAGE_KEYS.workspaces, newWS);
     writeSession(STORAGE_KEYS.currentWorkspaceId, ws.id);
-    setState((prev) => ({ ...prev, workspaces: newWS, currentWorkspaceId: ws.id }));
+    const starterLimit = PLAN_CATALOG.find((p) => p.id === "commerce_starter")?.limits.storageLimitBytes ?? 500 * 1024 * 1024;
+    const usage: WorkspaceStorageUsage = { workspaceId: ws.id, usedBytes: 0, limitBytes: starterLimit, updatedAt: nowISO() };
+    const newUsage = [...state.workspaceStorageUsage, usage];
+    writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
+    setState((prev) => ({ ...prev, workspaces: newWS, currentWorkspaceId: ws.id, workspaceStorageUsage: newUsage }));
     return ws;
-  }, [state.workspaces, state.currentUserId, state.lang]);
+  }, [state.workspaces, state.currentUserId, state.lang, state.workspaceStorageUsage]);
 
   // ---- onboarding ----
   const setLocale = useCallback((locale: Lang) => {
@@ -377,8 +398,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newSubs = [...state.subscriptions, sub];
     writeCollection(STORAGE_KEYS.osSubscriptions, newSubs);
     writeSession(STORAGE_KEYS.currentOSSubscriptionId, sub.id);
-    setState((prev) => ({ ...prev, subscriptions: newSubs, currentOSSubscriptionId: sub.id }));
-  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId]);
+
+    const planMeta = PLAN_CATALOG.find((p) => p.id === planId);
+    const limitBytes = planMeta?.limits.storageLimitBytes;
+    let newUsage = state.workspaceStorageUsage;
+    if (limitBytes && workspaceId) {
+      newUsage = state.workspaceStorageUsage.map((u) =>
+        u.workspaceId === workspaceId ? { ...u, limitBytes, updatedAt: nowISO() } : u,
+      );
+      writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
+    }
+    setState((prev) => ({ ...prev, subscriptions: newSubs, currentOSSubscriptionId: sub.id, workspaceStorageUsage: newUsage }));
+  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId, state.workspaceStorageUsage]);
 
   const createBusinessUnit = useCallback((data: { name: string; preset: string; osId: string }): BusinessUnit => {
     const workspaceId = state.currentWorkspaceId || readSession<string | null>(STORAGE_KEYS.currentWorkspaceId, null) || "";
@@ -486,13 +517,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const order: CommerceOrder = {
       id: uid("ord"), orderNumber: orderNum, workspaceId: state.currentWorkspaceId!,
       businessUnitId: state.currentBusinessUnitId!, branchId: state.currentBranchId!,
+      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
       createdAt: nowISO(), ...data,
     };
     const newOrders = [...existingOrders, order];
     writeCollection(STORAGE_KEYS.orders, newOrders);
     setState((prev) => ({ ...prev, orders: newOrders }));
     return order;
-  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId]);
+  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, currentUser]);
 
   // ---- invoices ----
   const createInvoice = useCallback((orderId: string): CommerceInvoice => {
@@ -506,7 +538,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       id: uid("inv"), invoiceNumber: invNum, orderId, workspaceId: order.workspaceId,
       businessUnitId: order.businessUnitId, branchId: order.branchId, customerId: order.customerId,
       items: order.items, subtotal: order.subtotal, discount: order.discount,
-      vat: order.vat, total: order.total, net: order.net, createdAt: nowISO(),
+      vat: order.vat, total: order.total, net: order.net,
+      cashierId: order.cashierId, cashierName: order.cashierName, createdAt: nowISO(),
     };
     const newInvoices = [...existingInvoices, invoice];
     writeCollection(STORAGE_KEYS.invoices, newInvoices);
@@ -534,7 +567,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
-    setState((prev) => ({ ...prev, ...data }));
+    setState((prev) => {
+      const next = { ...prev, ...data };
+      if (data.currentBusinessUnitId && data.currentBusinessUnitId !== prev.currentBusinessUnitId && !data.currentBranchId) {
+        const stillValid = prev.branches.some((b) => b.id === prev.currentBranchId && b.businessUnitId === data.currentBusinessUnitId);
+        if (!stillValid) {
+          const fallback = prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId && b.isMain)
+            ?? prev.branches.find((b) => b.businessUnitId === data.currentBusinessUnitId);
+          next.currentBranchId = fallback?.id ?? null;
+        }
+      }
+      return next;
+    });
   }, []);
 
   // ---- toggles ----
@@ -553,6 +597,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toasts, showToast, dismissToast,
     isAuthenticated, isOnboardingComplete, isCommerceOSActive, isCommerceSetupComplete,
     currentUserDisplayName, BUSINESS_UNITS, BRANCHES, COMMERCE_PLAN,
+    workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
     money: memoMoney, t: memoT,
     createUser, loginUser, logoutUser,
     createWorkspace, setLocale, createBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,

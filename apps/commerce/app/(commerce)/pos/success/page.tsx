@@ -7,7 +7,7 @@ import { useApp, computeDoc, fmtDate, readPosLastOrderId, clearPosLastOrderId } 
 import type { CommerceOrder, CommerceInvoice } from "@/lib/store";
 
 export default function POSSuccessPage() {
-  const { orders, invoices, money, getCommerceSetup } = useApp();
+  const { orders, invoices, customers, money, getCommerceSetup, currentBranch, t } = useApp();
   const setup = getCommerceSetup();
   const businessName = setup.displayName || setup.legalName || "Commerce Business";
   const [order, setOrder] = useState<CommerceOrder | null>(null);
@@ -46,17 +46,17 @@ export default function POSSuccessPage() {
     <div className="nx-main-scroll">
       <div style={{ padding: "40px 28px", maxWidth: 520, margin: "0 auto", textAlign: "center" }}>
         {/* Success icon */}
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--success)", color: "#fff", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
+        <div className="nx-print-hide" style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--success)", color: "#fff", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
           <CheckCircle2 size={36} />
         </div>
 
-        <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>Sale Complete!</h1>
-        <p style={{ fontSize: 14, color: "var(--text-2)", marginBottom: 28 }}>
+        <h1 className="nx-print-hide" style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>Sale Complete!</h1>
+        <p className="nx-print-hide" style={{ fontSize: 14, color: "var(--text-2)", marginBottom: 28 }}>
           Order {order.orderNumber} has been recorded successfully.
         </p>
 
         {/* Order summary card */}
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "20px 22px", marginBottom: 20, textAlign: "left" }}>
+        <div className="nx-print-hide" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-lg)", padding: "20px 22px", marginBottom: 20, textAlign: "left" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
             <div style={{ fontSize: 12, color: "var(--text-3)" }}>Order number</div>
             <div style={{ fontWeight: 700, fontFamily: "var(--mono)", fontSize: 13 }}>{order.orderNumber}</div>
@@ -82,7 +82,7 @@ export default function POSSuccessPage() {
         </div>
 
         {/* Actions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="nx-print-hide" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Link
             href="/pos"
             className="nx-btn-primary"
@@ -114,13 +114,19 @@ export default function POSSuccessPage() {
         {/* Receipt */}
         {doc && (
           <div style={{ marginTop: 32, textAlign: "left" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 14 }}>
+            <div className="nx-print-hide" style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 14 }}>
               Receipt
             </div>
             <div className="nx-receipt" style={{ margin: "0 auto" }}>
               <div className="nx-receipt-head">
-                <div className="nx-receipt-logo ph">{businessName.charAt(0)}</div>
+                {setup.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={setup.logo} alt={businessName} style={{ height: 40, maxWidth: 120, objectFit: "contain", margin: "0 auto 6px" }} />
+                ) : (
+                  <div className="nx-receipt-logo ph">{businessName.charAt(0)}</div>
+                )}
                 <div className="nx-receipt-biz">{businessName}</div>
+                {currentBranch?.name && <div className="nx-receipt-muted">{currentBranch.name}</div>}
                 {setup.address && <div className="nx-receipt-muted">{setup.address}</div>}
                 {setup.phone && <div className="nx-receipt-muted">Tel: {setup.phone}</div>}
                 {setup.vatRegistered && setup.taxNumber && (
@@ -133,6 +139,11 @@ export default function POSSuccessPage() {
                 <div><span>Order</span><b>{order.orderNumber}</b></div>
                 <div><span>Date</span><b>{fmtDate(order.createdAt)}</b></div>
                 <div><span>Payment</span><b style={{ textTransform: "capitalize" }}>{order.payment}</b></div>
+                {order.cashierName && <div><span>{t("cashier")}</span><b>{order.cashierName}</b></div>}
+                {order.customerId && (() => {
+                  const customer = customers.find((c) => c.id === order.customerId);
+                  return customer ? <div><span>{t("customer")}</span><b>{customer.name}</b></div> : null;
+                })()}
               </div>
               <div className="nx-receipt-rule dashed" />
               <table className="nx-receipt-items">

@@ -43,7 +43,7 @@ const STEP_LABELS: Record<StepKey, string> = {
   branch: "Main Branch",
   chooseos: "Operating System",
   plan: "Plan",
-  bu: "Business Unit",
+  bu: "Business Profile",
 };
 
 interface FormState {
@@ -399,22 +399,22 @@ export default function OnboardingPage() {
             </>
           )}
 
-          {/* ── Step: Business Unit ── */}
+          {/* ── Step: Business Profile ── */}
           {cur === "bu" && (
             <>
-              <span className="nx-eyebrow">First business unit</span>
-              <h1 className="nx-onb-h" style={{ marginTop: 8 }}>Create a business unit for {osName}</h1>
-              <p className="nx-onb-sub">A business unit is one activity or business line inside your workspace.</p>
+              <span className="nx-eyebrow">Business profile</span>
+              <h1 className="nx-onb-h" style={{ marginTop: 8 }}>Tell us about your business</h1>
+              <p className="nx-onb-sub">This helps us tailor {osName} to how your business works.</p>
               <div className="nx-form-grid" style={{ marginTop: 22 }}>
                 <div className="nx-field">
-                  <label className="nx-field-label">Business unit name</label>
+                  <label className="nx-field-label">Business name</label>
                   <div className="nx-input-wrap">
                     <Briefcase size={16} className="nx-input-icon" />
                     <input
                       className="nx-input has-icon"
                       value={f.buName}
                       onChange={(e) => upd({ buName: e.target.value })}
-                      placeholder={presets[0] ? "e.g. " + presets[0].label : "Business unit name"}
+                      placeholder={presets[0] ? "e.g. " + presets[0].label : "Business name"}
                     />
                   </div>
                 </div>
@@ -445,8 +445,8 @@ export default function OnboardingPage() {
                   <Info size={16} style={{ color: "var(--accent)", flexShrink: 0, marginTop: 1 }} />
                   <span style={{ fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.5 }}>
                     {f.chosenOS === "commerce"
-                      ? "This connects Commerce OS to your workspace. You can add more business units and operating systems later."
-                      : `This sets up ${osName} for your workspace. You can add more business units later.`}
+                      ? "This connects Commerce OS to your workspace. You can set up more operating systems later."
+                      : `This sets up ${osName} for your workspace. You can set up more operating systems later.`}
                   </span>
                 </div>
               </div>

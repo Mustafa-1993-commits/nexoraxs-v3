@@ -1082,5 +1082,5 @@ If unsure, do not expand the architecture. Create a small spec and keep the MVP 
 ---
 
 <!-- SPECKIT START -->
-Active plan: specs/042-claude-prototype-local-port/plan.md
+Active plan: specs/043-mvp-end-to-end-flow/plan.md
 <!-- SPECKIT END -->

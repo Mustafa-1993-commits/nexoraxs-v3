@@ -10,7 +10,7 @@ type Period = "all" | "today" | "week" | "month";
 type PaymentFilter = "all" | "cash" | "card" | "wallet";
 
 export default function OrdersPage() {
-  const { orders, invoices, money } = useApp();
+  const { orders, invoices, money, t } = useApp();
   const [q, setQ] = useState("");
   const [period, setPeriod] = useState<Period>("all");
   const [payFilter, setPayFilter] = useState<PaymentFilter>("all");
@@ -66,7 +66,7 @@ export default function OrdersPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}>
-                  {["Order", "Date", "Items", "Payment", "Invoice", "Total", ""].map((h) => (
+                  {["Order", "Date", "Items", t("cashier"), "Payment", "Invoice", "Total", ""].map((h) => (
                     <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 12, fontWeight: 600, color: "var(--text-2)" }}>{h}</th>
                   ))}
                 </tr>
@@ -79,6 +79,7 @@ export default function OrdersPage() {
                       <td style={{ padding: "11px 14px", fontWeight: 600, fontSize: 13, fontFamily: "var(--mono)" }}>{o.orderNumber}</td>
                       <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{fmtDate(o.createdAt)}</td>
                       <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{o.items.reduce((s, i) => s + i.qty, 0)} items</td>
+                      <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{o.cashierName || "—"}</td>
                       <td style={{ padding: "11px 14px" }}>
                         <span className="nx-badge tone-neutral" style={{ fontSize: 11 }}>{o.payment}</span>
                       </td>

@@ -79,6 +79,7 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
                 <span>Invoice #</span><b>{invoice.invoiceNumber}</b>
                 {order && <><span>Order #</span><b>{order.orderNumber}</b></>}
                 <span>Date</span><b>{fmtDate(invoice.createdAt)}</b>
+                <span>Salesperson</span><b>{invoice.cashierName || order?.cashierName || "Cashier"}</b>
                 {setup.vatRegistered && setup.taxNumber && (
                   <><span>{setup.taxLabel || "VAT"} No.</span><b>{setup.taxNumber}</b></>
                 )}

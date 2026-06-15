@@ -1,4 +1,4 @@
-import type { CommerceCustomer, CommerceOrder, CommerceProduct } from "@nexoraxs/types";
+import type { CommerceCustomer, CommerceOrder, CommerceProduct, WorkspaceStorageUsage } from "@nexoraxs/types";
 import type { Lang } from "./schema";
 
 export function money(n: number, lang: Lang = "en"): string {
@@ -143,6 +143,30 @@ export function nxNewCustomers(customers: CommerceCustomer[], period: string, no
     const d = new Date(c.createdAt);
     return !isNaN(d.getTime()) && inP(d);
   }).length;
+}
+
+export function storageUsagePercent(usage: WorkspaceStorageUsage | null): number {
+  if (!usage || !usage.limitBytes) return 0;
+  const pct = (usage.usedBytes / usage.limitBytes) * 100;
+  return Math.max(0, Math.min(100, pct));
+}
+
+export function formatBytes(bytes: number, lang: Lang = "en"): string {
+  const safe = Math.max(0, bytes || 0);
+  const units = lang === "ar" ? ["بايت", "كيلوبايت", "ميجابايت", "جيجابايت"] : ["B", "KB", "MB", "GB"];
+  let value = safe;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  const rounded = unitIndex === 0 ? Math.round(value) : Math.round(value * 10) / 10;
+  return `${rounded} ${units[unitIndex]}`;
+}
+
+export function remainingBytes(usage: WorkspaceStorageUsage | null): number {
+  if (!usage) return 0;
+  return Math.max(0, usage.limitBytes - usage.usedBytes);
 }
 
 export { computeDoc, fmtDate } from "../commerce/documents";

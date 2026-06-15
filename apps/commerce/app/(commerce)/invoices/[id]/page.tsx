@@ -3,11 +3,11 @@
 import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer, FileText } from "lucide-react";
-import { useApp } from "@/lib/store";
+import { useApp, computeDoc } from "@/lib/store";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { invoices, orders, customers, money, getCommerceSetup, showToast } = useApp();
+  const { invoices, orders, customers, money, getCommerceSetup, showToast, t } = useApp();
 
   const invoice = invoices.find((inv) => inv.id === id);
   if (!invoice) {
@@ -24,6 +24,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const order = orders.find((o) => o.id === invoice.orderId);
   const customer = order?.customerId ? customers.find((c) => c.id === order.customerId) : null;
   const setup = getCommerceSetup();
+  const d = computeDoc(order?.items ?? invoice.items, setup, invoice.discount);
 
   return (
     <div className="nx-main-scroll">
@@ -39,6 +40,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{invoice.invoiceNumber}</h1>
             <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>
               {new Date(invoice.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+              {order?.cashierName && <> · {t("cashier")}: <span style={{ fontWeight: 600, color: "var(--text)" }}>{order.cashierName}</span></>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -94,20 +96,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 </tr>
               </thead>
               <tbody>
-                {order.items.map((item, i) => {
-                  const lineTotal = item.price * item.qty;
-                  const vatRate = setup.vatRate || 14;
-                  const vatAmt = item.taxable !== false ? +(lineTotal * vatRate / (100 + vatRate)).toFixed(2) : 0;
-                  return (
-                    <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 600 }}>{item.name}</td>
-                      <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{item.qty}</td>
-                      <td style={{ padding: "11px 16px", fontSize: 13 }}>{money(item.price)}</td>
-                      <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{money(vatAmt)}</td>
-                      <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 700 }}>{money(lineTotal)}</td>
-                    </tr>
-                  );
-                })}
+                {d.lines.map((item, i) => (
+                  <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 600 }}>{item.name}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{item.qty}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13 }}>{money(item.price)}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{money(item.vat)}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 700 }}>{money(item.total)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -25,6 +25,8 @@ export const STORAGE_KEYS = {
   orders: "nexoraxs.db.commerceOrders",
   customers: "nexoraxs.db.commerceCustomers",
   invoices: "nexoraxs.db.commerceInvoices",
+  mediaAssets: "nexoraxs.db.mediaAssets",
+  workspaceStorageUsage: "nexoraxs.db.workspaceStorageUsage",
   // ui (localStorage)
   theme: "nexoraxs.ui.theme",
 } as const;
@@ -55,7 +57,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     choose_os: "Choose an operating system", available: "Available", coming_soon: "Coming Soon",
     setup_required: "Setup required", set_up: "Set up Commerce OS",
     language: "Language", english: "English", arabic: "العربية",
-    product_hub: "Product Hub", branch: "Branch", business_unit: "Business unit",
+    product_hub: "Product Hub", branch: "Branch", business_unit: "Business",
     walk_in: "Walk-in", no_customer: "No customer", add_customer: "Add / select customer",
     name: "Name", email: "Email", phone: "Phone", address: "Address", city: "City", country: "Country",
     tax_number: "Tax Number", registration_number: "Registration Number", logo: "Logo",
@@ -82,6 +84,10 @@ const DICT: Record<Lang, Record<string, string>> = {
     lifetime_spend: "Lifetime Spend", total_orders: "Total Orders",
     first_order: "First Order", last_order: "Last Order", purchase_history: "Purchase History",
     edit: "Edit", delete: "Delete", update: "Update",
+    storage_used: "Storage used", media_storage_used: "Media storage used",
+    image_too_large: "This image is too large to use — try a smaller photo.",
+    storage_limit_reached: "Storage limit reached — the item was saved without an image.",
+    cashier: "Cashier",
   },
   ar: {
     platform: "المنصة", operating_systems: "الأنظمة التشغيلية", pricing: "التسعير", faq: "الأسئلة الشائعة",
@@ -104,7 +110,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     choose_os: "اختر نظاماً تشغيلياً", available: "متاح", coming_soon: "قريباً",
     setup_required: "الإعداد مطلوب", set_up: "إعداد Commerce OS",
     language: "اللغة", english: "English", arabic: "العربية",
-    product_hub: "مركز المنتجات", branch: "الفرع", business_unit: "وحدة الأعمال",
+    product_hub: "مركز المنتجات", branch: "الفرع", business_unit: "النشاط التجاري",
     walk_in: "عميل عابر", no_customer: "بدون عميل", add_customer: "إضافة / اختيار عميل",
     name: "الاسم", email: "البريد الإلكتروني", phone: "الهاتف", address: "العنوان",
     city: "المدينة", country: "الدولة",
@@ -132,6 +138,10 @@ const DICT: Record<Lang, Record<string, string>> = {
     lifetime_spend: "إجمالي الإنفاق", total_orders: "إجمالي الطلبات",
     first_order: "أول طلب", last_order: "آخر طلب", purchase_history: "سجل المشتريات",
     edit: "تعديل", delete: "حذف", update: "تحديث",
+    storage_used: "التخزين المستخدم", media_storage_used: "تخزين الوسائط المستخدم",
+    image_too_large: "هذه الصورة كبيرة جداً — جرّب صورة أصغر.",
+    storage_limit_reached: "تم بلوغ حد التخزين — تم حفظ العنصر بدون صورة.",
+    cashier: "الكاشير",
   },
 };
 
@@ -186,15 +196,15 @@ export const OPERATING_SYSTEMS = [
 export const PLAN_CATALOG = [
   {
     id: "commerce_starter", osId: "commerce", tier: "Starter", price: 0, currency: "EGP",
-    limits: { businessUnits: 1, branches: 1, users: 3 },
+    limits: { businessUnits: 1, branches: 1, users: 3, storageLimitBytes: 500 * 1024 * 1024 },
   },
   {
     id: "commerce_pro", osId: "commerce", tier: "Pro", price: 1400, currency: "EGP",
-    limits: { businessUnits: 3, branches: 5, users: 10 },
+    limits: { businessUnits: 3, branches: 5, users: 10, storageLimitBytes: 5 * 1024 * 1024 * 1024 },
   },
   {
     id: "commerce_business", osId: "commerce", tier: "Business", price: null, currency: "EGP",
-    limits: { businessUnits: 99, branches: 99, users: 99 },
+    limits: { businessUnits: 99, branches: 99, users: 99, storageLimitBytes: 50 * 1024 * 1024 * 1024 },
   },
 ];
 
@@ -218,7 +228,7 @@ export const ONB_PLANS = [
     name: "Starter",
     price: "Free",
     tagline: "Perfect for trying out",
-    features: ["1 business unit", "1 branch", "Up to 3 users", "Core Commerce features", "Community support"],
+    features: ["1 business", "1 branch", "Up to 3 users", "Core Commerce features", "Community support"],
     popular: false,
   },
   {
@@ -226,7 +236,7 @@ export const ONB_PLANS = [
     name: "Pro",
     price: "1,400 EGP/mo",
     tagline: "For growing businesses",
-    features: ["3 business units", "5 branches", "Up to 10 users", "All Commerce features", "Priority support", "Advanced reports"],
+    features: ["3 businesses", "5 branches", "Up to 10 users", "All Commerce features", "Priority support", "Advanced reports"],
     popular: true,
   },
   {
@@ -234,7 +244,7 @@ export const ONB_PLANS = [
     name: "Business",
     price: "Custom",
     tagline: "Enterprise-grade scale",
-    features: ["Unlimited business units", "Unlimited branches", "Unlimited users", "Dedicated support", "Custom integrations", "SLA guarantee"],
+    features: ["Unlimited businesses", "Unlimited branches", "Unlimited users", "Dedicated support", "Custom integrations", "SLA guarantee"],
     popular: false,
   },
 ];
