@@ -7,9 +7,9 @@ import { useApp, computeDoc } from "@/lib/store";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { invoices, orders, customers, money, getCommerceSetup, showToast, t } = useApp();
+  const { allInvoices, allOrders, allCommerceReturns, customers, currentBranch, BRANCHES, money, getCommerceSetup, showToast, t } = useApp();
 
-  const invoice = invoices.find((inv) => inv.id === id);
+  const invoice = allInvoices.find((inv) => inv.id === id);
   if (!invoice) {
     return (
       <div className="nx-main-scroll">
@@ -21,10 +21,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const order = orders.find((o) => o.id === invoice.orderId);
+  const order = allOrders.find((o) => o.id === invoice.orderId);
   const customer = order?.customerId ? customers.find((c) => c.id === order.customerId) : null;
   const setup = getCommerceSetup();
   const d = computeDoc(order?.items ?? invoice.items, setup, invoice.discount);
+  const isOtherBranch = invoice.branchId !== currentBranch?.id;
+  const invoiceBranchName = BRANCHES.find((b) => b.id === invoice.branchId)?.name || invoice.branchId;
+  const returns = (invoice.returnIds || [])
+    .map((rid) => allCommerceReturns.find((r) => r.id === rid))
+    .filter((r): r is NonNullable<typeof r> => !!r);
 
   return (
     <div className="nx-main-scroll">
@@ -37,7 +42,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{invoice.invoiceNumber}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{invoice.invoiceNumber}</h1>
+              {isOtherBranch && (
+                <span className="nx-badge tone-neutral">{t("branch")}: {invoiceBranchName}</span>
+              )}
+            </div>
             <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>
               {new Date(invoice.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               {order?.cashierName && <> · {t("cashier")}: <span style={{ fontWeight: 600, color: "var(--text)" }}>{order.cashierName}</span></>}
@@ -60,6 +70,21 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             </button>
           </div>
         </div>
+
+        {returns.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+            {returns.map((r) => (
+              <Link
+                key={r.id}
+                href={`/returns/${r.id}/document`}
+                className="nx-badge tone-warn"
+                style={{ textDecoration: "none" }}
+              >
+                {t("return")} issued — {r.returnNumber}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Business + customer info */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>

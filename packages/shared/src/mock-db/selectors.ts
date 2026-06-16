@@ -1,4 +1,7 @@
-import type { CommerceCustomer, CommerceOrder, CommerceProduct, WorkspaceStorageUsage } from "@nexoraxs/types";
+import type {
+  CommerceCustomer, CommerceOrder, CommerceProduct, WorkspaceStorageUsage,
+  BranchInventory, CommerceReturn,
+} from "@nexoraxs/types";
 import type { Lang } from "./schema";
 
 export function money(n: number, lang: Lang = "en"): string {
@@ -136,6 +139,39 @@ export function nxGroupSales(orders: CommerceOrder[], period: string, now?: Date
   return { buckets, axis: ["1", String(Math.ceil(daysIn / 2)), String(daysIn)], kind: "day" };
 }
 
+export function nxBranchInventoryMap(
+  branchInventory: BranchInventory[],
+  branchId: string,
+): Record<string, BranchInventory> {
+  const map: Record<string, BranchInventory> = {};
+  (branchInventory || []).forEach((bi) => {
+    if (bi.branchId === branchId) map[bi.productId] = bi;
+  });
+  return map;
+}
+
+export function nxReturnsForPeriod(returns: CommerceReturn[], period: string, now?: Date): CommerceReturn[] {
+  const inP = nxPeriodFilter(period, now);
+  return (returns || []).filter((r) => {
+    const d = r.createdAt ? new Date(r.createdAt) : null;
+    return d && !isNaN(d.getTime()) ? inP(d) : period === "month" || period === "week";
+  });
+}
+
+export function nxNetSales(
+  periodOrders: CommerceOrder[],
+  periodReturns: CommerceReturn[],
+): { gross: number; returns: number; net: number; vat: number; vatRefunded: number; count: number } {
+  const { gross, vat, count } = nxRevenue(periodOrders);
+  let returnsTotal = 0;
+  let vatRefunded = 0;
+  (periodReturns || []).forEach((r) => {
+    returnsTotal += r.total || 0;
+    vatRefunded += r.vat || 0;
+  });
+  return { gross, returns: returnsTotal, net: gross - returnsTotal, vat, vatRefunded, count };
+}
+
 export function nxNewCustomers(customers: CommerceCustomer[], period: string, now?: Date): number {
   const inP = nxPeriodFilter(period, now);
   return (customers || []).filter((c) => {
@@ -169,4 +205,4 @@ export function remainingBytes(usage: WorkspaceStorageUsage | null): number {
   return Math.max(0, usage.limitBytes - usage.usedBytes);
 }
 
-export { computeDoc, fmtDate } from "../commerce/documents";
+export { computeDoc, fmtDate, computeReturnTotals } from "../commerce/documents";

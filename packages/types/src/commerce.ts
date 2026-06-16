@@ -92,6 +92,9 @@ export interface CommerceOrder {
   cashierId: string;
   cashierName: string;
   createdAt: string;
+  returnStatus?: "none" | "partial" | "returned";
+  returnedTotal?: number;
+  returnIds?: string[];
 }
 
 export interface CommerceInvoice {
@@ -111,6 +114,7 @@ export interface CommerceInvoice {
   cashierId: string;
   cashierName: string;
   createdAt: string;
+  returnIds?: string[];
 }
 
 export interface CommerceCustomer {
@@ -124,4 +128,77 @@ export interface CommerceCustomer {
   notes: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BranchInventory {
+  id: string;
+  workspaceId: string;
+  businessUnitId: string;
+  branchId: string;
+  productId: string;
+  qty: number;
+  lowStockThreshold: number;
+  updatedAt: string;
+}
+
+export type StockMovementReason = "sale" | "return" | "transfer_out" | "transfer_in" | "adjustment";
+
+export interface StockMovement {
+  id: string;
+  workspaceId: string;
+  businessUnitId: string;
+  branchId: string;
+  productId: string;
+  qtyChange: number;
+  reason: StockMovementReason;
+  reference: { type: "order" | "return" | "transfer" | "adjustment"; id: string };
+  performedBy: string;
+  performedByName: string;
+  createdAt: string;
+}
+
+export interface StockTransfer {
+  id: string;
+  transferNumber: string;
+  workspaceId: string;
+  businessUnitId: string;
+  fromBranchId: string;
+  toBranchId: string;
+  items: { productId: string; name: string; qty: number }[];
+  performedBy: string;
+  performedByName: string;
+  note?: string;
+  status: "completed";
+  createdAt: string;
+}
+
+export interface CommerceReturnItem {
+  productId: string;
+  name: string;
+  sku?: string;
+  qty: number;
+  price: number;
+  taxable: boolean;
+}
+
+export type RefundMethod = "cash" | "card" | "wallet" | "original";
+
+export interface CommerceReturn {
+  id: string;
+  returnNumber: string;
+  workspaceId: string;
+  businessUnitId: string;
+  branchId: string;
+  orderId: string;
+  invoiceId: string | null;
+  items: CommerceReturnItem[];
+  reason: string;
+  refundMethod: RefundMethod;
+  restock: boolean;
+  subtotal: number;
+  vat: number;
+  total: number;
+  cashierId: string;
+  cashierName: string;
+  createdAt: string;
 }

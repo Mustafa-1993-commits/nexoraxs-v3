@@ -8,9 +8,9 @@ import { computeDoc, fmtDate } from "@/lib/store";
 
 export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { invoices, orders, customers, money, getCommerceSetup, currentBU } = useApp();
+  const { allInvoices, allOrders, customers, allCommerceReturns, money, getCommerceSetup, currentBU, t } = useApp();
 
-  const invoice = invoices.find((inv) => inv.id === id);
+  const invoice = allInvoices.find((inv) => inv.id === id);
   if (!invoice) {
     return (
       <div style={{ minHeight: "100vh", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -27,13 +27,16 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
 
   const setup = getCommerceSetup();
   const businessName = setup.displayName || setup.legalName || currentBU?.name || "Commerce Business";
-  const order = orders.find((o) => o.id === invoice.orderId);
+  const order = allOrders.find((o) => o.id === invoice.orderId);
   const customer = invoice.customerId ? customers.find((c) => c.id === invoice.customerId) : null;
   const payment = order?.payment || "Cash";
   const isPaid = order ? (order as { paid?: boolean }).paid !== false : true;
 
   // recompute from line items for accuracy
   const d = computeDoc(invoice.items, setup, invoice.discount);
+  const returns = (invoice.returnIds || [])
+    .map((rid) => allCommerceReturns.find((r) => r.id === rid))
+    .filter((r): r is NonNullable<typeof r> => !!r);
 
   return (
     <div style={{ minHeight: "100vh", background: "#e5e7eb", display: "flex", flexDirection: "column" }}>
@@ -46,12 +49,25 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
           <span style={{ color: "#555" }}>›</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{invoice.invoiceNumber}</span>
         </div>
-        <button
-          onClick={() => window.print()}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "var(--accent, #4f46e5)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-        >
-          <Printer size={14} />Print
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {returns.map((r) => (
+            <Link
+              key={r.id}
+              href={`/returns/${r.id}/document`}
+              className="nx-print-hide"
+              style={{ color: "#fbbf24", display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, textDecoration: "none" }}
+            >
+              {t("return")} issued — {r.returnNumber}
+            </Link>
+          ))}
+          <button
+            onClick={() => window.print()}
+            className="nx-print-hide"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "var(--accent, #4f46e5)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+          >
+            <Printer size={14} />Print
+          </button>
+        </div>
       </div>
 
       {/* A4 Invoice */}

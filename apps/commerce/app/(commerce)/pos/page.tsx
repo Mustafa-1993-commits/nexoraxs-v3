@@ -15,7 +15,7 @@ import { BranchPill } from "@/components/dashboard/BranchPill";
 
 export default function POSPage() {
   const router = useRouter();
-  const { products, customers, money, showToast, createOrder, createInvoice, updateProduct, createCustomer, getCommerceSetup, commerceIdentity, currentUserDisplayName, t } = useApp();
+  const { products, customers, money, showToast, createOrder, createInvoice, createCustomer, getCommerceSetup, commerceIdentity, currentUserDisplayName, t } = useApp();
   const setup = getCommerceSetup();
 
   const [cart, setCart] = useState<{ id: string; name: string; price: number; qty: number; sku: string; taxable: boolean; stock: number; category: string }[]>([]);
@@ -63,27 +63,28 @@ export default function POSPage() {
   }, [cart, showPayment]);
 
   function completeSale(method: "cash" | "card" | "wallet") {
-    const order = createOrder({
-      items: cart.map((i) => ({ productId: i.id, id: i.id, name: i.name, qty: i.qty, price: i.price, sku: i.sku, taxable: i.taxable })),
-      customerId: selectedCustomer?.id || null,
-      payment: method,
-      discount,
-      vat: doc.vat,
-      subtotal: doc.net,
-      total: doc.total,
-      net: doc.net,
-    });
-    createInvoice(order.id);
-    cart.forEach((ci) => {
-      const prod = products.find((p) => p.id === ci.id);
-      if (prod && prod.stock != null) {
-        updateProduct(ci.id, { stock: Math.max(0, prod.stock - ci.qty) });
-      }
-    });
-    writePosLastOrderId(order.id);
-    setCart([]); setDiscount(0); setSelectedCustomer(null); setShowPayment(false);
-    setPayMethod("cash"); setTendered("");
-    router.push("/pos/success");
+    try {
+      const order = createOrder({
+        items: cart.map((i) => ({ productId: i.id, id: i.id, name: i.name, qty: i.qty, price: i.price, sku: i.sku, taxable: i.taxable })),
+        customerId: selectedCustomer?.id || null,
+        payment: method,
+        discount,
+        vat: doc.vat,
+        subtotal: doc.net,
+        total: doc.total,
+        net: doc.net,
+      });
+      createInvoice(order.id);
+      writePosLastOrderId(order.id);
+      setCart([]); setDiscount(0); setSelectedCustomer(null); setShowPayment(false);
+      setPayMethod("cash"); setTendered("");
+      router.push("/pos/success");
+    } catch (error) {
+      const message = error instanceof Error && error.message === "insufficient_stock"
+        ? t("insufficient_stock")
+        : t("sale_rejected");
+      showToast(message, "error");
+    }
   }
 
   const change = payMethod === "cash" && tendered ? +tendered - doc.total : 0;

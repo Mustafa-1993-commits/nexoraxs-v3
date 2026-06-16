@@ -34,6 +34,10 @@ export {
   canAttachMedia,
   buildMediaAsset,
   applyUsageDelta,
+  effectiveStockFor,
+  buildStockMovement,
+  buildStockTransfer,
+  buildCommerceReturn,
 } from "./actions";
 export type { CompressedImage } from "./actions";
 
@@ -49,7 +53,11 @@ export {
   nxBestSellers,
   nxGroupSales,
   nxNewCustomers,
+  nxBranchInventoryMap,
+  nxReturnsForPeriod,
+  nxNetSales,
   computeDoc,
+  computeReturnTotals,
   fmtDate,
   storageUsagePercent,
   formatBytes,

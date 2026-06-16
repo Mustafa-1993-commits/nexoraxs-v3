@@ -7,13 +7,16 @@ import {
   readCollection, writeCollection, readSession, writeSession, clearAllStorage,
   seedDB, storageUsagePercent, formatBytes,
   compressImageToThumbnail, canAttachMedia, buildMediaAsset, applyUsageDelta,
+  effectiveStockFor, buildStockMovement, buildStockTransfer, buildCommerceReturn,
 } from "@nexoraxs/shared";
+import { computeReturnTotals } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
 import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
   WorkspaceStorageUsage, MediaAsset, MediaOwnerType,
+  BranchInventory, StockMovement, StockTransfer, CommerceReturn, CommerceReturnItem, RefundMethod,
 } from "@nexoraxs/types";
 
 // ---- types ----
@@ -95,7 +98,15 @@ interface AppContextType {
   products: CommerceProduct[];
   orders: CommerceOrder[];
   invoices: CommerceInvoice[];
+  // business-scoped only (not branch-filtered) — for cross-branch direct-by-id resolution
+  allOrders: CommerceOrder[];
+  allInvoices: CommerceInvoice[];
+  allCommerceReturns: CommerceReturn[];
   customers: CommerceCustomer[];
+  branchInventory: BranchInventory[];
+  stockMovements: StockMovement[];
+  stockTransfers: StockTransfer[];
+  commerceReturns: CommerceReturn[];
   subscriptions: OSSubscription[];
   mediaAssets: MediaAsset[];
   workspaceStorageUsage: WorkspaceStorageUsage | null;
@@ -106,6 +117,24 @@ interface AppContextType {
   addProduct: (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt"> & { imageFile?: File | null }) => Promise<CommerceProduct>;
   updateProduct: (id: string, data: Partial<CommerceProduct> & { imageFile?: File | null }) => Promise<void>;
   deleteProduct: (id: string) => void;
+  adjustStock: (data: {
+    productId: string;
+    branchId?: string;
+    qty: number;
+    lowStockThreshold?: number;
+  }) => { ok: true } | { ok: false; error: string };
+  transferStock: (data: {
+    toBranchId: string;
+    items: { productId: string; qty: number }[];
+    note?: string;
+  }) => { ok: true; transfer: StockTransfer } | { ok: false; error: string };
+  createReturn: (data: {
+    orderId: string;
+    items: { productId: string; qty: number }[];
+    reason: string;
+    refundMethod: RefundMethod;
+    restock: boolean;
+  }) => { ok: true; return: CommerceReturn } | { ok: false; error: string };
   createOrder: (data: {
     items: OrderItem[];
     customerId: string | null;
@@ -153,6 +182,10 @@ interface RuntimeState {
   orders: CommerceOrder[];
   customers: CommerceCustomer[];
   invoices: CommerceInvoice[];
+  branchInventory: BranchInventory[];
+  stockMovements: StockMovement[];
+  stockTransfers: StockTransfer[];
+  commerceReturns: CommerceReturn[];
   mediaAssets: MediaAsset[];
   workspaceStorageUsage: WorkspaceStorageUsage[];
 }
@@ -168,6 +201,7 @@ function emptyRuntimeState(): RuntimeState {
     teamMembers: [], commerceSetups: [],
     products: [], orders: [],
     customers: [], invoices: [],
+    branchInventory: [], stockMovements: [], stockTransfers: [], commerceReturns: [],
     mediaAssets: [], workspaceStorageUsage: [],
   };
 }
@@ -305,6 +339,10 @@ function loadState(): RuntimeState {
     orders: readCollection<CommerceOrder>(STORAGE_KEYS.orders),
     customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
     invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
+    branchInventory: readCollection<BranchInventory>(STORAGE_KEYS.branchInventory),
+    stockMovements: readCollection<StockMovement>(STORAGE_KEYS.stockMovements),
+    stockTransfers: readCollection<StockTransfer>(STORAGE_KEYS.stockTransfers),
+    commerceReturns: readCollection<CommerceReturn>(STORAGE_KEYS.commerceReturns),
     mediaAssets: readCollection<MediaAsset>(STORAGE_KEYS.mediaAssets),
     workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
   };
@@ -463,9 +501,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [currentOSSubscription]);
 
-  const products = useMemo(() => state.products.filter((p) => p.businessUnitId === state.currentBusinessUnitId), [state.products, state.currentBusinessUnitId]);
-  const orders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
-  const invoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
+  const products = useMemo(() => state.products
+    .filter((p) => p.businessUnitId === state.currentBusinessUnitId)
+    .map((p) => {
+      if (!state.currentBranchId) return p;
+      const eff = effectiveStockFor(p, state.currentBranchId, state.branchInventory);
+      return { ...p, stock: eff.qty, lowStockThreshold: eff.lowStockThreshold };
+    }), [state.products, state.currentBusinessUnitId, state.currentBranchId, state.branchInventory]);
+  const allOrders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
+  const allInvoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
+  const allCommerceReturns = useMemo(() => state.commerceReturns.filter((r) => r.businessUnitId === state.currentBusinessUnitId), [state.commerceReturns, state.currentBusinessUnitId]);
+  const orders = useMemo(() => allOrders.filter((o) => o.branchId === state.currentBranchId), [allOrders, state.currentBranchId]);
+  const invoices = useMemo(() => allInvoices.filter((i) => i.branchId === state.currentBranchId), [allInvoices, state.currentBranchId]);
+  const commerceReturns = useMemo(() => allCommerceReturns.filter((r) => r.branchId === state.currentBranchId), [allCommerceReturns, state.currentBranchId]);
   const customers = useMemo(() => state.customers.filter((c) => c.businessUnitId === state.currentBusinessUnitId), [state.customers, state.currentBusinessUnitId]);
 
   const workspaceStorageUsage = useMemo(
@@ -714,25 +762,345 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, products: newProducts }));
   }, [state.products]);
 
+  // ---- branch inventory ----
+  const adjustStock = useCallback((data: {
+    productId: string; branchId?: string; qty: number; lowStockThreshold?: number;
+  }): { ok: true } | { ok: false; error: string } => {
+    const branchId = data.branchId ?? state.currentBranchId;
+    if (!branchId || !state.currentWorkspaceId || !state.currentBusinessUnitId) {
+      return { ok: false, error: "no_active_branch" };
+    }
+    const product = state.products.find((p) => p.id === data.productId);
+    if (!product) return { ok: false, error: "product_not_found" };
+
+    const current = effectiveStockFor(product, branchId, state.branchInventory);
+    const qtyChange = data.qty - current.qty;
+    const lowStockThreshold = data.lowStockThreshold ?? current.lowStockThreshold;
+    const existing = state.branchInventory.find((bi) => bi.productId === product.id && bi.branchId === branchId);
+
+    let recordId: string;
+    let newBranchInventory: BranchInventory[];
+    if (existing) {
+      recordId = existing.id;
+      newBranchInventory = state.branchInventory.map((bi) =>
+        bi.id === existing.id ? { ...bi, qty: data.qty, lowStockThreshold, updatedAt: nowISO() } : bi
+      );
+    } else {
+      recordId = uid("bi");
+      newBranchInventory = [...state.branchInventory, {
+        id: recordId, workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
+        branchId, productId: product.id, qty: data.qty, lowStockThreshold, updatedAt: nowISO(),
+      }];
+    }
+    writeCollection(STORAGE_KEYS.branchInventory, newBranchInventory);
+
+    let newStockMovements = state.stockMovements;
+    if (qtyChange !== 0) {
+      const movement = buildStockMovement({
+        workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
+        branchId, productId: product.id, qtyChange, reason: "adjustment",
+        reference: { type: "adjustment", id: recordId },
+        performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Unknown",
+      });
+      newStockMovements = [...state.stockMovements, movement];
+      writeCollection(STORAGE_KEYS.stockMovements, newStockMovements);
+    }
+
+    setState((prev) => ({ ...prev, branchInventory: newBranchInventory, stockMovements: newStockMovements }));
+    return { ok: true };
+  }, [state.products, state.branchInventory, state.stockMovements, state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser]);
+
+  // ---- stock transfers ----
+  const transferStock = useCallback((data: {
+    toBranchId: string; items: { productId: string; qty: number }[]; note?: string;
+  }): { ok: true; transfer: StockTransfer } | { ok: false; error: string } => {
+    const fromBranchId = state.currentBranchId;
+    if (!fromBranchId || !state.currentWorkspaceId || !state.currentBusinessUnitId) {
+      return { ok: false, error: "transfer_rejected" };
+    }
+    if (data.toBranchId === fromBranchId) {
+      return { ok: false, error: "transfer_rejected" };
+    }
+    const toBranch = state.branches.find((b) => b.id === data.toBranchId);
+    if (!toBranch || toBranch.businessUnitId !== state.currentBusinessUnitId) {
+      return { ok: false, error: "transfer_rejected" };
+    }
+    if (!data.items || data.items.length === 0) {
+      return { ok: false, error: "transfer_rejected" };
+    }
+
+    const resolvedItems: { product: CommerceProduct; qty: number }[] = [];
+    for (const item of data.items) {
+      const product = state.products.find((p) => p.id === item.productId);
+      if (!product) return { ok: false, error: "transfer_rejected" };
+      if (!Number.isInteger(item.qty) || item.qty <= 0) return { ok: false, error: "insufficient_stock" };
+      const eff = effectiveStockFor(product, fromBranchId, state.branchInventory);
+      if (eff.qty < item.qty) return { ok: false, error: "insufficient_stock" };
+      resolvedItems.push({ product, qty: item.qty });
+    }
+
+    const existingTransfers = state.stockTransfers.filter((tr) => tr.businessUnitId === state.currentBusinessUnitId);
+    const transferNumber = `TRF-${String(existingTransfers.length + 1).padStart(4, "0")}`;
+    const transfer = buildStockTransfer({
+      transferNumber,
+      workspaceId: state.currentWorkspaceId,
+      businessUnitId: state.currentBusinessUnitId,
+      fromBranchId,
+      toBranchId: data.toBranchId,
+      items: resolvedItems.map(({ product, qty }) => ({ productId: product.id, name: product.name, qty })),
+      performedBy: currentUser?.id ?? "",
+      performedByName: getUserDisplayName(currentUser) || "Unknown",
+      note: data.note,
+    });
+
+    let nextBranchInventory = state.branchInventory;
+    const newMovements: StockMovement[] = [];
+    for (const { product, qty } of resolvedItems) {
+      const sourceEff = effectiveStockFor(product, fromBranchId, nextBranchInventory);
+      const sourceExisting = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === fromBranchId);
+      const sourceNewQty = sourceEff.qty - qty;
+      if (sourceExisting) {
+        nextBranchInventory = nextBranchInventory.map((bi) =>
+          bi.id === sourceExisting.id ? { ...bi, qty: sourceNewQty, updatedAt: nowISO() } : bi
+        );
+      } else {
+        nextBranchInventory = [...nextBranchInventory, {
+          id: uid("bi"), workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
+          branchId: fromBranchId, productId: product.id, qty: sourceNewQty, lowStockThreshold: sourceEff.lowStockThreshold, updatedAt: nowISO(),
+        }];
+      }
+
+      const destEff = effectiveStockFor(product, data.toBranchId, nextBranchInventory);
+      const destExisting = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === data.toBranchId);
+      const destNewQty = destEff.qty + qty;
+      if (destExisting) {
+        nextBranchInventory = nextBranchInventory.map((bi) =>
+          bi.id === destExisting.id ? { ...bi, qty: destNewQty, updatedAt: nowISO() } : bi
+        );
+      } else {
+        nextBranchInventory = [...nextBranchInventory, {
+          id: uid("bi"), workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
+          branchId: data.toBranchId, productId: product.id, qty: destNewQty, lowStockThreshold: destEff.lowStockThreshold, updatedAt: nowISO(),
+        }];
+      }
+
+      newMovements.push(buildStockMovement({
+        workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
+        branchId: fromBranchId, productId: product.id, qtyChange: -qty, reason: "transfer_out",
+        reference: { type: "transfer", id: transfer.id },
+        performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Unknown",
+      }));
+      newMovements.push(buildStockMovement({
+        workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
+        branchId: data.toBranchId, productId: product.id, qtyChange: qty, reason: "transfer_in",
+        reference: { type: "transfer", id: transfer.id },
+        performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Unknown",
+      }));
+    }
+
+    writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
+    const newStockMovements = [...state.stockMovements, ...newMovements];
+    writeCollection(STORAGE_KEYS.stockMovements, newStockMovements);
+    const newStockTransfers = [...state.stockTransfers, transfer];
+    writeCollection(STORAGE_KEYS.stockTransfers, newStockTransfers);
+
+    setState((prev) => ({
+      ...prev,
+      branchInventory: nextBranchInventory,
+      stockMovements: newStockMovements,
+      stockTransfers: newStockTransfers,
+    }));
+    return { ok: true, transfer };
+  }, [state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, state.branches, state.products, state.branchInventory, state.stockMovements, state.stockTransfers, currentUser]);
+
+  // ---- returns ----
+  const createReturn = useCallback((data: {
+    orderId: string; items: { productId: string; qty: number }[]; reason: string;
+    refundMethod: RefundMethod; restock: boolean;
+  }): { ok: true; return: CommerceReturn } | { ok: false; error: string } => {
+    const order = state.orders.find((o) => o.id === data.orderId);
+    if (!order || order.workspaceId !== state.currentWorkspaceId || order.businessUnitId !== state.currentBusinessUnitId) {
+      return { ok: false, error: "return_rejected" };
+    }
+    if (!data.items || data.items.length === 0) {
+      return { ok: false, error: "return_rejected" };
+    }
+
+    const existingReturns = state.commerceReturns.filter((r) => r.orderId === order.id);
+    const returnedQtyByProduct: Record<string, number> = {};
+    existingReturns.forEach((r) => {
+      r.items.forEach((it) => {
+        returnedQtyByProduct[it.productId] = (returnedQtyByProduct[it.productId] || 0) + it.qty;
+      });
+    });
+
+    for (const item of data.items) {
+      if (!Number.isInteger(item.qty) || item.qty <= 0) return { ok: false, error: "return_rejected" };
+      const orderItem = order.items.find((oi) => oi.productId === item.productId || oi.id === item.productId);
+      if (!orderItem) return { ok: false, error: "return_rejected" };
+      const remaining = orderItem.qty - (returnedQtyByProduct[item.productId] || 0);
+      if (item.qty > remaining) return { ok: false, error: "return_rejected" };
+    }
+
+    const totals = computeReturnTotals(order, data.items);
+    const returnItems: CommerceReturnItem[] = totals.lines.map((line) => {
+      const orderItem = order.items.find((oi) => oi.productId === line.productId || oi.id === line.productId);
+      return {
+        productId: line.productId, name: line.name, sku: orderItem?.sku,
+        qty: line.qty, price: line.price, taxable: orderItem?.taxable !== false,
+      };
+    });
+
+    const invoice = state.invoices.find((i) => i.orderId === order.id) ?? null;
+    const buReturns = state.commerceReturns.filter((r) => r.businessUnitId === state.currentBusinessUnitId);
+    const returnNumber = `RET-${String(buReturns.length + 1).padStart(4, "0")}`;
+    const newReturn = buildCommerceReturn({
+      returnNumber, workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
+      branchId: order.branchId, orderId: order.id, invoiceId: invoice?.id ?? null,
+      items: returnItems, reason: data.reason, refundMethod: data.refundMethod, restock: data.restock,
+      totals: { subtotal: totals.subtotal, vat: totals.vat, total: totals.total },
+      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
+    });
+
+    let nextBranchInventory = state.branchInventory;
+    const newMovements: StockMovement[] = [];
+    if (data.restock) {
+      for (const item of data.items) {
+        const product = state.products.find((p) => p.id === item.productId);
+        if (!product) continue;
+        const eff = effectiveStockFor(product, order.branchId, nextBranchInventory);
+        const existing = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === order.branchId);
+        const newQty = eff.qty + item.qty;
+        if (existing) {
+          nextBranchInventory = nextBranchInventory.map((bi) =>
+            bi.id === existing.id ? { ...bi, qty: newQty, updatedAt: nowISO() } : bi
+          );
+        } else {
+          nextBranchInventory = [...nextBranchInventory, {
+            id: uid("bi"), workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
+            branchId: order.branchId, productId: product.id, qty: newQty, lowStockThreshold: eff.lowStockThreshold, updatedAt: nowISO(),
+          }];
+        }
+        newMovements.push(buildStockMovement({
+          workspaceId: order.workspaceId, businessUnitId: order.businessUnitId, branchId: order.branchId,
+          productId: product.id, qtyChange: item.qty, reason: "return",
+          reference: { type: "return", id: newReturn.id },
+          performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Cashier",
+        }));
+      }
+    }
+
+    let fullyReturned = true;
+    for (const oi of order.items) {
+      const key = oi.productId || oi.id || "";
+      const returnedAfter = (returnedQtyByProduct[key] || 0) + (data.items.find((i) => i.productId === key)?.qty || 0);
+      if (returnedAfter < oi.qty) { fullyReturned = false; break; }
+    }
+
+    const newOrders = state.orders.map((o) => o.id === order.id ? {
+      ...o,
+      returnStatus: (fullyReturned ? "returned" : "partial") as "returned" | "partial",
+      returnedTotal: (o.returnedTotal || 0) + totals.total,
+      returnIds: [...(o.returnIds || []), newReturn.id],
+    } : o);
+    writeCollection(STORAGE_KEYS.orders, newOrders);
+
+    let newInvoices = state.invoices;
+    if (invoice) {
+      newInvoices = state.invoices.map((i) => i.id === invoice.id ? { ...i, returnIds: [...(i.returnIds || []), newReturn.id] } : i);
+      writeCollection(STORAGE_KEYS.invoices, newInvoices);
+    }
+
+    const newReturns = [...state.commerceReturns, newReturn];
+    writeCollection(STORAGE_KEYS.commerceReturns, newReturns);
+
+    if (data.restock) {
+      writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
+      writeCollection(STORAGE_KEYS.stockMovements, [...state.stockMovements, ...newMovements]);
+    }
+
+    setState((prev) => ({
+      ...prev,
+      orders: newOrders,
+      invoices: newInvoices,
+      commerceReturns: newReturns,
+      branchInventory: data.restock ? nextBranchInventory : prev.branchInventory,
+      stockMovements: data.restock ? [...prev.stockMovements, ...newMovements] : prev.stockMovements,
+    }));
+    return { ok: true, return: newReturn };
+  }, [state.orders, state.invoices, state.commerceReturns, state.products, state.branchInventory, state.stockMovements, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser]);
+
   // ---- orders ----
   const createOrder = useCallback((data: {
     items: OrderItem[]; customerId: string | null; payment: "cash" | "card" | "wallet";
     discount: number; vat: number; subtotal: number; total: number; net: number;
   }): CommerceOrder => {
+    const branchId = state.currentBranchId!;
+    const stockItems: { item: OrderItem; product: CommerceProduct }[] = [];
+    const requestedByProduct: Record<string, number> = {};
+    for (const item of data.items) {
+      if (!item.productId) continue;
+      const product = state.products.find((p) => p.id === item.productId);
+      if (!product) continue;
+      const existing = state.branchInventory.find((bi) => bi.productId === product.id && bi.branchId === branchId);
+      const isTracked = product.stock !== null || !!existing;
+      if (!isTracked) continue;
+      const eff = effectiveStockFor(product, branchId, state.branchInventory);
+      const requestedQty = (requestedByProduct[product.id] ?? 0) + item.qty;
+      requestedByProduct[product.id] = requestedQty;
+      if (requestedQty > eff.qty) {
+        throw new Error("insufficient_stock");
+      }
+      stockItems.push({ item, product });
+    }
+
     const existingOrders = readCollection<CommerceOrder>(STORAGE_KEYS.orders);
     const buOrders = existingOrders.filter((o) => o.businessUnitId === state.currentBusinessUnitId);
     const orderNum = `ORD-${String(buOrders.length + 1).padStart(4, "0")}`;
     const order: CommerceOrder = {
       id: uid("ord"), orderNumber: orderNum, workspaceId: state.currentWorkspaceId!,
-      businessUnitId: state.currentBusinessUnitId!, branchId: state.currentBranchId!,
+      businessUnitId: state.currentBusinessUnitId!, branchId,
       cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
       createdAt: nowISO(), ...data,
     };
     const newOrders = [...existingOrders, order];
     writeCollection(STORAGE_KEYS.orders, newOrders);
-    setState((prev) => ({ ...prev, orders: newOrders }));
+
+    // deduct branch inventory and record a "sale" stock movement per item
+    let nextBranchInventory = state.branchInventory;
+    const newMovements: StockMovement[] = [];
+    for (const { item, product } of stockItems) {
+      const eff = effectiveStockFor(product, order.branchId, nextBranchInventory);
+      const existing = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === order.branchId);
+      const newQty = eff.qty - item.qty;
+      if (existing) {
+        nextBranchInventory = nextBranchInventory.map((bi) =>
+          bi.id === existing.id ? { ...bi, qty: newQty, updatedAt: nowISO() } : bi
+        );
+      } else {
+        nextBranchInventory = [...nextBranchInventory, {
+          id: uid("bi"), workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
+          branchId: order.branchId, productId: product.id, qty: newQty, lowStockThreshold: eff.lowStockThreshold, updatedAt: nowISO(),
+        }];
+      }
+      newMovements.push(buildStockMovement({
+        workspaceId: order.workspaceId, businessUnitId: order.businessUnitId, branchId: order.branchId,
+        productId: product.id, qtyChange: -item.qty, reason: "sale",
+        reference: { type: "order", id: order.id },
+        performedBy: order.cashierId, performedByName: order.cashierName,
+      }));
+    }
+
+    let newStockMovements = state.stockMovements;
+    if (newMovements.length > 0) {
+      newStockMovements = [...state.stockMovements, ...newMovements];
+      writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
+      writeCollection(STORAGE_KEYS.stockMovements, newStockMovements);
+    }
+
+    setState((prev) => ({ ...prev, orders: newOrders, branchInventory: nextBranchInventory, stockMovements: newStockMovements }));
     return order;
-  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, currentUser]);
+  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.products, state.branchInventory, state.stockMovements, currentUser]);
 
   // ---- invoices ----
   const createInvoice = useCallback((orderId: string): CommerceInvoice => {
@@ -809,9 +1177,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     createUser, loginUser, logoutUser,
     createWorkspace, setLocale, createBranch, addBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
     saveCommerceSetup, getCommerceSetup,
-    products, orders, invoices, customers, subscriptions: state.subscriptions,
+    products, orders, invoices, allOrders, allInvoices, allCommerceReturns, customers, subscriptions: state.subscriptions,
+    branchInventory: state.branchInventory, stockMovements: state.stockMovements,
+    stockTransfers: state.stockTransfers, commerceReturns,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
-    addProduct, updateProduct, deleteProduct, createOrder, createInvoice, createCustomer, updateCustomer,
+    addProduct, updateProduct, deleteProduct, adjustStock, transferStock, createReturn, createOrder, createInvoice, createCustomer, updateCustomer,
     attachMedia,
     setCurrent,
   };
