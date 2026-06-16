@@ -75,7 +75,7 @@ export default function OrdersPage() {
                 {filtered.map((o) => {
                   const inv = invoices.find((i) => i.orderId === o.id);
                   return (
-                    <tr key={o.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <tr key={o.id} style={{ borderBottom: "1px solid var(--border)" }} data-testid={`order-row-${o.id}`}>
                       <td style={{ padding: "11px 14px", fontWeight: 600, fontSize: 13, fontFamily: "var(--mono)" }}>{o.orderNumber}</td>
                       <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{fmtDate(o.createdAt)}</td>
                       <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--text-2)" }}>{o.items.reduce((s, i) => s + i.qty, 0)} items</td>
@@ -86,7 +86,9 @@ export default function OrdersPage() {
                       <td style={{ padding: "11px 14px" }}>
                         {inv ? (
                           <Link href={`/invoices/${inv.id}`} style={{ fontSize: 11.5, fontFamily: "var(--mono)", color: "var(--accent)", textDecoration: "none" }}>
-                            {inv.invoiceNumber}
+                            <span data-testid={`order-invoice-number-${o.id}`}>
+                              {inv.invoiceNumber}
+                            </span>
                           </Link>
                         ) : (
                           <span style={{ fontSize: 12, color: "var(--text-3)" }}>—</span>
@@ -94,7 +96,7 @@ export default function OrdersPage() {
                       </td>
                       <td style={{ padding: "11px 14px", fontWeight: 700, fontSize: 13 }}>{money(o.total)}</td>
                       <td style={{ padding: "11px 14px" }}>
-                        <Link href={`/orders/${o.id}`} style={{ padding: "5px 10px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", display: "inline-flex", gap: 5, alignItems: "center", fontSize: 12, color: "var(--text)", textDecoration: "none" }}>
+                        <Link href={`/orders/${o.id}`} style={{ padding: "5px 10px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", display: "inline-flex", gap: 5, alignItems: "center", fontSize: 12, color: "var(--text)", textDecoration: "none" }} data-testid={`order-detail-link-${o.id}`}>
                           View
                         </Link>
                       </td>

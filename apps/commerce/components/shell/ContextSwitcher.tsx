@@ -27,7 +27,7 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
 
   return (
     <div ref={ref} className="nx-sb-context">
-      <button className="nx-sb-switch" onClick={() => setOpen((o) => !o)}>
+      <button className="nx-sb-switch" onClick={() => setOpen((o) => !o)} data-testid="context-switcher">
         {mode === "core" ? (
           <span className="nx-choice-ic" style={{ width: 34, height: 34, background: "#14161d", color: "#fff" }}>
             <Building2 size={17} />
@@ -42,7 +42,7 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
         <ChevronsUpDown size={15} style={{ color: "var(--text-3)", flexShrink: 0 }} />
       </button>
       {open && (
-        <div className="nx-dd left" style={{ top: "calc(100% + 4px)", width: "100%", minWidth: 256 }}>
+        <div className="nx-dd left" style={{ top: "calc(100% + 4px)", width: "100%", minWidth: 256 }} data-testid="context-menu">
           <div className="nx-dd-label">Workspace</div>
           <button className="nx-dd-item" onClick={() => setOpen(false)}>
             <span className="nx-choice-ic" style={{ width: 28, height: 28, background: "#14161d", color: "#fff" }}>
@@ -91,6 +91,7 @@ export function ContextSwitcher({ mode }: ContextSwitcherProps) {
                   key={br.id}
                   className="nx-dd-item"
                   onClick={() => { setCurrent({ currentBranchId: br.id }); setOpen(false); }}
+                  data-testid={`branch-option-${br.id}`}
                 >
                   <span className="nx-choice-ic" style={{ width: 28, height: 28 }}>
                     <MapPin size={14} />

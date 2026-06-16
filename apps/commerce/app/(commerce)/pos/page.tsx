@@ -148,7 +148,7 @@ export default function POSPage() {
             const oos = (p.stock ?? 99) === 0;
             const low = oos ? false : (p.stock ?? 99) <= (p.lowStockThreshold || 5);
             return (
-              <button key={p.id} className={"nx-pcard" + (oos ? " oos" : "")} onClick={() => addToCart(p)} disabled={oos}>
+              <button key={p.id} className={"nx-pcard" + (oos ? " oos" : "")} onClick={() => addToCart(p)} disabled={oos} data-testid={`pos-product-${p.id}`}>
                 <div className="nx-pcard-img nx-thumb-stripe">
                   {p.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -215,7 +215,7 @@ export default function POSPage() {
             </div>
           ) : (
             cart.map((item) => (
-              <div className="nx-citem" key={item.id}>
+              <div className="nx-citem" key={item.id} data-testid={`cart-item-${item.id}`}>
                 <span className="nx-thumb nx-thumb-stripe" style={{ width: 42, height: 42 }}><Pill size={16} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{item.name}</div>
@@ -255,6 +255,7 @@ export default function POSPage() {
             disabled={cart.length === 0}
             style={{ marginTop: 14, padding: "12px", fontSize: 15 }}
             onClick={() => { setPayMethod("cash"); setTendered(""); setShowPayment(true); }}
+            data-testid="checkout-button"
           >
             <CreditCard size={16} />
             Checkout · <span className="nx-kbd" style={{ background: "rgba(255,255,255,.2)", color: "#fff", borderColor: "transparent" }}>F2</span>
@@ -329,7 +330,7 @@ export default function POSPage() {
               <p className="nx-note" style={{ marginTop: 14, justifyContent: "center" }}><Lock size={13} />One payment method per sale in this MVP.</p>
             </div>
             <div className="nx-modal-foot">
-              <button className="nx-btn nx-btn-primary nx-btn-lg nx-btn-full" onClick={() => completeSale(payMethod)}>
+              <button className="nx-btn nx-btn-primary nx-btn-lg nx-btn-full" onClick={() => completeSale(payMethod)} data-testid="complete-sale-button">
                 Complete Sale · {money(doc.total)}
               </button>
             </div>

@@ -114,6 +114,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 className="nx-btn nx-btn-secondary"
                 style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, padding: "7px 12px" }}
                 onClick={openReturnModal}
+                data-testid="open-return-button"
               >
                 <RotateCcw size={13} />{t("return")}
               </button>
@@ -227,6 +228,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     value={returnQtys[ri.key] || ""}
                     onChange={(e) => setReturnQtys((prev) => ({ ...prev, [ri.key]: e.target.value }))}
                     placeholder="0"
+                    data-testid={`return-qty-${ri.key}`}
                   />
                 </div>
               ))}
@@ -234,7 +236,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
             <div className="nx-field" style={{ marginBottom: 14 }}>
               <label className="nx-field-label">Reason</label>
-              <input className="nx-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Customer changed mind" />
+              <input className="nx-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Customer changed mind" data-testid="return-reason-input" />
             </div>
 
             <div className="nx-field" style={{ marginBottom: 14 }}>
@@ -248,13 +250,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 22, cursor: "pointer" }}>
-              <input type="checkbox" checked={restock} onChange={(e) => setRestock(e.target.checked)} />
+              <input type="checkbox" checked={restock} onChange={(e) => setRestock(e.target.checked)} data-testid="return-restock-checkbox" />
               {t("restock")}
             </label>
 
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button className="nx-btn" onClick={() => setShowReturn(false)}>Cancel</button>
-              <button className="nx-btn-primary" onClick={handleSubmitReturn}>{t("process_return")}</button>
+              <button className="nx-btn-primary" onClick={handleSubmitReturn} data-testid="submit-return-button">{t("process_return")}</button>
             </div>
           </div>
         </div>

@@ -122,9 +122,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </thead>
               <tbody>
                 {d.lines.map((item, i) => (
-                  <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                  <tr key={i} style={{ borderBottom: "1px solid var(--border)" }} data-testid={`invoice-item-${i}`}>
                     <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 600 }}>{item.name}</td>
-                    <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{item.qty}</td>
+                    <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }} data-testid={`invoice-item-qty-${i}`}>{item.qty}</td>
                     <td style={{ padding: "11px 16px", fontSize: 13 }}>{money(item.price)}</td>
                     <td style={{ padding: "11px 16px", fontSize: 13, color: "var(--text-2)" }}>{money(item.vat)}</td>
                     <td style={{ padding: "11px 16px", fontSize: 13, fontWeight: 700 }}>{money(item.total)}</td>
@@ -150,7 +150,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <span>VAT ({setup.vatRate || 14}%)</span><span>{money(invoice.vat)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 4 }}>
-              <span>Total</span><span style={{ color: "var(--pos)" }}>{money(invoice.total)}</span>
+              <span>Total</span><span style={{ color: "var(--pos)" }} data-testid="invoice-total">{money(invoice.total)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text-3)" }}>
               <span>Net</span><span>{money(invoice.net)}</span>

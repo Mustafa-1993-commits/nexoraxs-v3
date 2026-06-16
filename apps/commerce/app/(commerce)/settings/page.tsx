@@ -86,6 +86,7 @@ export default function CommerceSettingsPage() {
               className="nx-btn nx-btn-secondary nx-btn-sm"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               onClick={() => { setBranchName(""); setBranchCity(""); setBranchErr(""); setShowAddBranch(true); }}
+              data-testid="add-branch-button"
             >
               <Plus size={14} />Add Branch
             </button>
@@ -124,20 +125,20 @@ export default function CommerceSettingsPage() {
                     <span className="nx-field-label">Branch name</span>
                     <span className="nx-input-wrap">
                       <MapPin size={16} className="nx-input-icon" />
-                      <input className="nx-input" placeholder="e.g. Nasr City" value={branchName} onChange={(e) => { setBranchName(e.target.value); setBranchErr(""); }} autoFocus />
+                      <input className="nx-input" placeholder="e.g. Nasr City" value={branchName} onChange={(e) => { setBranchName(e.target.value); setBranchErr(""); }} autoFocus data-testid="branch-name-input" />
                     </span>
                     {branchErr && <span className="nx-field-error"><CircleAlert size={13} />{branchErr}</span>}
                   </label>
                   <label className="nx-field">
                     <span className="nx-field-label">City<span className="nx-field-optional">Optional</span></span>
                     <span className="nx-input-wrap">
-                      <input className="nx-input" placeholder="e.g. Cairo" value={branchCity} onChange={(e) => setBranchCity(e.target.value)} />
+                      <input className="nx-input" placeholder="e.g. Cairo" value={branchCity} onChange={(e) => setBranchCity(e.target.value)} data-testid="branch-city-input" />
                     </span>
                   </label>
                   <div className="nx-row" style={{ gap: 10, marginTop: 4 }}>
                     <button type="button" className="nx-btn nx-btn-ghost nx-btn-md" onClick={() => setShowAddBranch(false)}>Cancel</button>
                     <span className="nx-spacer" />
-                    <button type="button" className="nx-btn nx-btn-primary nx-btn-md" onClick={saveBranch}><Check size={15} />Save branch</button>
+                    <button type="button" className="nx-btn nx-btn-primary nx-btn-md" onClick={saveBranch} data-testid="save-branch-button"><Check size={15} />Save branch</button>
                   </div>
                 </div>
               </div>

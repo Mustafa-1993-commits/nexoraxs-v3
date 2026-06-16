@@ -102,7 +102,7 @@ export default function InventoryPage() {
                   const oos = stock === 0;
                   const low = stock != null && stock > 0 && stock <= (p.lowStockThreshold || 5);
                   return (
-                    <tr key={p.id}>
+                    <tr key={p.id} data-testid={`inventory-row-${p.id}`}>
                       <td>
                         <div className="nx-row" style={{ gap: 11 }}>
                           {p.image ? (
@@ -119,7 +119,7 @@ export default function InventoryPage() {
                       <td style={{ fontWeight: 600 }}>{money(p.price)}</td>
                       <td>
                         {stock == null ? <span style={{ color: "var(--text-3)", fontSize: 12 }}>Not tracked</span> : (
-                          <span className={`nx-badge ${oos ? "tone-danger" : low ? "tone-warn" : "tone-neutral"}`} style={{ fontSize: 11 }}>
+                          <span className={`nx-badge ${oos ? "tone-danger" : low ? "tone-warn" : "tone-neutral"}`} style={{ fontSize: 11 }} data-testid={`inventory-stock-${p.id}`}>
                             {oos ? "Out of stock" : `${stock} ${p.unit || "pcs"}`}
                           </span>
                         )}
@@ -130,6 +130,7 @@ export default function InventoryPage() {
                           onClick={() => { setEditing(p); setNewStock(String(stock ?? "")); }}
                           className="nx-btn nx-btn-sm"
                           style={{ fontSize: 12, padding: "5px 10px" }}
+                          data-testid={`inventory-update-${p.id}`}
                         >
                           Update stock
                         </button>
@@ -153,11 +154,11 @@ export default function InventoryPage() {
             <div style={{ fontWeight: 600, marginBottom: 14 }}>{editing.name}</div>
             <div className="nx-field">
               <label className="nx-field-label">New stock quantity</label>
-              <input className="nx-input" type="number" min={0} value={newStock} onChange={(e) => setNewStock(e.target.value)} autoFocus />
+              <input className="nx-input" type="number" min={0} value={newStock} onChange={(e) => setNewStock(e.target.value)} autoFocus data-testid="stock-quantity-input" />
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
               <button className="nx-btn" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="nx-btn-primary" onClick={handleUpdateStock}>Save</button>
+              <button className="nx-btn-primary" onClick={handleUpdateStock} data-testid="save-stock-button">Save</button>
             </div>
           </div>
         </div>

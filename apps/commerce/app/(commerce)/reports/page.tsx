@@ -63,15 +63,22 @@ export default function ReportsPage() {
             { label: "Orders", value: String(rev.count), icon: <ShoppingBag size={18} />, color: "var(--text-2)" },
             { label: "Avg Ticket", value: money(avgTicket), icon: <TrendingUp size={18} />, color: "var(--text-2)" },
             { label: "New Customers", value: String(newCusts), icon: <Users size={18} />, color: "var(--text-2)" },
-          ] as { label: string; value: string; icon: React.ReactNode; color: string }[]).map(({ label, value, icon, color }) => (
-            <div key={label} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "16px 18px", boxShadow: "var(--sh-sm)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-2)" }}>{label}</span>
-                <span style={{ color }}>{icon}</span>
+          ] as { label: string; value: string; icon: React.ReactNode; color: string }[]).map(({ label, value, icon, color }) => {
+            const testIdByLabel: Record<string, string> = {
+              [t("gross_sales")]: "reports-gross-sales",
+              [t("returns_refunds")]: "reports-returns-refunds",
+              [t("net_sales")]: "reports-net-sales",
+            };
+            return (
+              <div key={label} data-testid={testIdByLabel[label]} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "16px 18px", boxShadow: "var(--sh-sm)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-2)" }}>{label}</span>
+                  <span style={{ color }}>{icon}</span>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text)", letterSpacing: "-.02em" }}>{value}</div>
               </div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text)", letterSpacing: "-.02em" }}>{value}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Sales chart + payment breakdown */}

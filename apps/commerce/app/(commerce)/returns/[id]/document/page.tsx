@@ -67,15 +67,15 @@ export default function ReturnDocumentPage({ params }: { params: Promise<{ id: s
                 )}
                 {setup.address && <div className="nx-invoice-muted">{setup.address}{setup.city ? `, ${setup.city}` : ""}</div>}
                 {setup.phone && <div className="nx-invoice-muted">{setup.phone}</div>}
-                <div className="nx-invoice-muted">{t("branch")}: {branchName}</div>
+                <div className="nx-invoice-muted" data-testid="return-doc-branch">{t("branch")}: {branchName}</div>
               </div>
             </div>
             <div className="nx-invoice-titleblock">
               <div className="nx-invoice-doctype">{t("return_receipt")}</div>
               <div className="nx-invoice-meta-grid">
-                <span>{t("return_number")}</span><b>{ret.returnNumber}</b>
-                {order && <><span>{t("order_number")}</span><b>{order.orderNumber}</b></>}
-                {invoice && <><span>{t("invoice_number")}</span><b>{invoice.invoiceNumber}</b></>}
+                <span>{t("return_number")}</span><b data-testid="return-doc-return-number">{ret.returnNumber}</b>
+                {order && <><span>{t("order_number")}</span><b data-testid="return-doc-order-number">{order.orderNumber}</b></>}
+                {invoice && <><span>{t("invoice_number")}</span><b data-testid="return-doc-invoice-number">{invoice.invoiceNumber}</b></>}
                 <span>{t("date")}</span><b>{fmtDate(ret.createdAt)}</b>
                 <span>{t("cashier")}</span><b>{ret.cashierName}</b>
                 {setup.vatRegistered && setup.taxNumber && (
@@ -140,7 +140,7 @@ export default function ReturnDocumentPage({ params }: { params: Promise<{ id: s
                   <b>{money(ret.vat)}</b>
                 </div>
               )}
-              <div className="grand"><span>{t("total_refunded")}</span><b>{money(ret.total)}</b></div>
+              <div className="grand"><span>{t("total_refunded")}</span><b data-testid="return-doc-refund-total">{money(ret.total)}</b></div>
             </div>
           </div>
         </div>

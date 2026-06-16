@@ -85,7 +85,7 @@ export default function StockTransfersPage() {
                 </label>
                 <label className="nx-field">
                   <span className="nx-field-label">{t("to_branch")}</span>
-                  <select className="nx-input" value={toBranchId} onChange={(e) => setToBranchId(e.target.value)}>
+                  <select className="nx-input" value={toBranchId} onChange={(e) => setToBranchId(e.target.value)} data-testid="transfer-to-branch">
                     {destinations.map((b) => (
                       <option key={b.id} value={b.id}>{b.name}</option>
                     ))}
@@ -105,6 +105,7 @@ export default function StockTransfersPage() {
                       style={{ flex: 2 }}
                       value={row.productId}
                       onChange={(e) => updateItem(i, { productId: e.target.value })}
+                      data-testid={`transfer-product-${i}`}
                     >
                       <option value="">{t("select_product")}...</option>
                       {products.map((p) => (
@@ -120,11 +121,12 @@ export default function StockTransfersPage() {
                       value={row.qty}
                       onChange={(e) => updateItem(i, { qty: e.target.value })}
                       placeholder={t("qty")}
+                      data-testid={`transfer-qty-${i}`}
                     />
                     <button className="nx-icon-btn" onClick={() => removeItem(i)} aria-label={t("remove_item")}><Trash2 size={15} /></button>
                   </div>
                 ))}
-                <button className="nx-btn nx-btn-secondary nx-btn-sm" onClick={addItemRow} disabled={products.length === 0}>
+                <button className="nx-btn nx-btn-secondary nx-btn-sm" onClick={addItemRow} disabled={products.length === 0} data-testid="add-transfer-item">
                   <Plus size={14} />{t("add_item")}
                 </button>
               </div>
@@ -134,7 +136,7 @@ export default function StockTransfersPage() {
                 <input className="nx-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("example_transfer_note")} />
               </label>
 
-              <button className="nx-btn nx-btn-primary nx-btn-md" onClick={handleSubmit} disabled={items.length === 0}>
+              <button className="nx-btn nx-btn-primary nx-btn-md" onClick={handleSubmit} disabled={items.length === 0} data-testid="submit-transfer">
                 <ArrowRightLeft size={15} />{t("stock_transfer")}
               </button>
             </>
@@ -165,7 +167,7 @@ export default function StockTransfersPage() {
               </thead>
               <tbody>
                 {history.map((tr) => (
-                  <tr key={tr.id}>
+                  <tr key={tr.id} data-testid={`transfer-row-${tr.id}`}>
                     <td style={{ fontWeight: 700, fontFamily: "var(--mono)" }}>{tr.transferNumber}</td>
                     <td>{branchName(tr.fromBranchId)}</td>
                     <td>{branchName(tr.toBranchId)}</td>

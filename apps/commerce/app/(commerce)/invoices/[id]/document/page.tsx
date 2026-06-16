@@ -92,8 +92,8 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
             <div className="nx-invoice-titleblock">
               <div className="nx-invoice-doctype">Tax Invoice</div>
               <div className="nx-invoice-meta-grid">
-                <span>Invoice #</span><b>{invoice.invoiceNumber}</b>
-                {order && <><span>Order #</span><b>{order.orderNumber}</b></>}
+                <span>Invoice #</span><b data-testid="invoice-doc-invoice-number">{invoice.invoiceNumber}</b>
+                {order && <><span>Order #</span><b data-testid="invoice-doc-order-number">{order.orderNumber}</b></>}
                 <span>Date</span><b>{fmtDate(invoice.createdAt)}</b>
                 <span>Salesperson</span><b>{invoice.cashierName || order?.cashierName || "Cashier"}</b>
                 {setup.vatRegistered && setup.taxNumber && (
@@ -167,7 +167,7 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
                   <b>{money(d.vat)}</b>
                 </div>
               )}
-              <div className="grand"><span>Total due</span><b>{money(d.total)}</b></div>
+              <div className="grand"><span>Total due</span><b data-testid="invoice-doc-total">{money(d.total)}</b></div>
             </div>
           </div>
         </div>
