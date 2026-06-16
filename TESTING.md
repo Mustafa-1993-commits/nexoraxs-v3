@@ -19,13 +19,38 @@ pnpm test:e2e:headed
 pnpm test:e2e:ui
 ```
 
+The Playwright base URL is `http://localhost:3002`.
+
+#### Mode A: reuse a manually started dev server
+
+In one terminal:
+
+```bash
+pnpm dev
+```
+
+In another terminal:
+
+```bash
+pnpm test:e2e:ui
+pnpm test:e2e:headed
+```
+
+Playwright reuses the already-running Commerce app on `localhost:3002`.
+
+#### Mode B: let Playwright start Commerce
+
+If no dev server is running, run Playwright directly:
+
+```bash
+pnpm test:e2e:ui
+```
+
 The Playwright config starts the Commerce app automatically with:
 
 ```bash
 pnpm --filter commerce dev
 ```
-
-The base URL is `http://localhost:3002`.
 
 ### Current Coverage
 

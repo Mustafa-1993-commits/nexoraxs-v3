@@ -15,7 +15,7 @@ export default defineConfig({
   webServer: {
     command: "pnpm --filter commerce dev",
     url: "http://localhost:3002",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 120_000,
   },
   projects: [
