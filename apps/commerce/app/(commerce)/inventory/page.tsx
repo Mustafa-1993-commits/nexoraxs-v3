@@ -117,7 +117,7 @@ export default function InventoryPage() {
                       <td className="num" style={{ color: "var(--text-3)" }}>{p.sku || "—"}</td>
                       <td style={{ color: "var(--text-2)", fontSize: 13 }}>{p.category || "General"}</td>
                       <td style={{ fontWeight: 600 }}>{money(p.price)}</td>
-                      <td>
+                      <td data-testid={`inventory-stock-cell-${p.id}`}>
                         {stock == null ? <span style={{ color: "var(--text-3)", fontSize: 12 }}>Not tracked</span> : (
                           <span className={`nx-badge ${oos ? "tone-danger" : low ? "tone-warn" : "tone-neutral"}`} style={{ fontSize: 11 }} data-testid={`inventory-stock-${p.id}`}>
                             {oos ? "Out of stock" : `${stock} ${p.unit || "pcs"}`}

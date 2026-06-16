@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Settings, Building2, FileText, Tag, Ruler, Printer, ArrowRight, MapPin, Plus, Check, X, CircleAlert } from "lucide-react";
 import { useApp } from "@/lib/store";
 
+function branchSlug(name: string) {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "branch";
+}
+
 export default function CommerceSettingsPage() {
   const { getCommerceSetup, currentBU, currentWorkspace, currentBranch, BRANCHES, addBranch, setCurrent, workspaceStorageUsage, storageUsagePercent, storageUsageLabel, showToast, t } = useApp();
   const setup = getCommerceSetup();
@@ -91,20 +95,22 @@ export default function CommerceSettingsPage() {
               <Plus size={14} />Add Branch
             </button>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }} data-testid="branch-list">
             {BRANCHES.map((br) => (
-              <button
-                key={br.id}
-                className={"nx-cust-row" + (br.id === currentBranch?.id ? " on" : "")}
-                onClick={() => setCurrent({ currentBranchId: br.id })}
-              >
-                <span className="nx-choice-ic" style={{ width: 32, height: 32 }}><MapPin size={15} /></span>
-                <span style={{ flex: 1, textAlign: "left" }}>
-                  <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>{br.name}{br.isMain ? " · Main" : ""}</span>
-                  {br.city && <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }}>{br.city}</span>}
-                </span>
-                {br.id === currentBranch?.id && <Check size={16} style={{ color: "var(--accent)" }} />}
-              </button>
+              <div key={br.id} data-testid="branch-card">
+                <button
+                  className={"nx-cust-row" + (br.id === currentBranch?.id ? " on" : "")}
+                  onClick={() => setCurrent({ currentBranchId: br.id })}
+                  data-testid={`branch-card-${branchSlug(br.name)}`}
+                >
+                  <span className="nx-choice-ic" style={{ width: 32, height: 32 }}><MapPin size={15} /></span>
+                  <span style={{ flex: 1, textAlign: "left" }}>
+                    <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }} data-testid="branch-card-name">{br.name}{br.isMain ? " · Main" : ""}</span>
+                    {br.city && <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }} data-testid="branch-card-city">{br.city}</span>}
+                  </span>
+                  {br.id === currentBranch?.id && <Check size={16} style={{ color: "var(--accent)" }} />}
+                </button>
+              </div>
             ))}
           </div>
         </div>
