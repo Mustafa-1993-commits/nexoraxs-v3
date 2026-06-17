@@ -80,7 +80,7 @@ function LoginForm() {
 
       {step === "email" ? (
         <>
-          <form onSubmit={handleEmailContinue} className="nx-auth-form-fields" style={{ marginTop: 4 }}>
+          <form onSubmit={handleEmailContinue} className="nx-auth-form-fields" style={{ marginTop: 4 }} data-testid="core-login-form">
             {error && (
               <div className="nx-auth-banner" style={{ background: "var(--danger-weak)", borderColor: "var(--danger)", color: "var(--danger)" }}>
                 {error}
@@ -155,7 +155,7 @@ function LoginForm() {
           </div>
         </>
       ) : (
-        <form onSubmit={handleSubmit} className="nx-auth-form-fields" style={{ marginTop: 4 }}>
+        <form onSubmit={handleSubmit} className="nx-auth-form-fields" style={{ marginTop: 4 }} data-testid="core-login-form">
         {error && (
           <div className="nx-auth-banner" style={{ background: "var(--danger-weak)", borderColor: "var(--danger)", color: "var(--danger)" }}>
             {error}

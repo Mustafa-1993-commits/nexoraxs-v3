@@ -84,7 +84,7 @@ export default function ProductHubPage() {
   ];
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="core-product-hub">
       <div className="nx-page" style={{ paddingBlock: "24px" }}>
 
         {/* Page header */}

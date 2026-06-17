@@ -170,7 +170,7 @@ export default function OnboardingPage() {
   function signOut() { logoutUser(); router.push("/login"); }
 
   return (
-    <div className="nx-onb">
+    <div className="nx-onb" data-testid="core-onboarding">
       {/* Top bar */}
       <div className="nx-onb-bar">
         <span style={{ fontWeight: 800, fontSize: 17, color: "var(--accent)", letterSpacing: "-.02em" }}>NexoraXS</span>

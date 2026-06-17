@@ -6,6 +6,7 @@ import {
   uid, nowISO, normalizeEmail, getUserDisplayName,
   readCollection, writeCollection, readSession, writeSession,
   seedDB, storageUsagePercent, formatBytes,
+  getWorkspacesForUser, getPrimaryWorkspaceForUser, isWorkspaceAccessibleByUser,
 } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
@@ -36,6 +37,8 @@ export interface OnboardingState {
   step: number;
   completedOS: string[];
 }
+
+const EMPTY_ONBOARDING_STATE: OnboardingState = { phase: null, step: 0, completedOS: [] };
 
 interface AppContextType {
   isHydrated: boolean;
@@ -146,7 +149,114 @@ function emptyRuntimeState() {
   };
 }
 
-function loadState(): ReturnType<typeof emptyRuntimeState> {
+type RuntimeState = ReturnType<typeof emptyRuntimeState>;
+
+function removeSessionKey(key: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(key);
+}
+
+function clearWorkspaceSessionKeys(): void {
+  removeSessionKey(STORAGE_KEYS.currentWorkspaceId);
+  removeSessionKey(STORAGE_KEYS.currentOSId);
+  removeSessionKey(STORAGE_KEYS.currentOSSubscriptionId);
+  removeSessionKey(STORAGE_KEYS.currentBusinessUnitId);
+  removeSessionKey(STORAGE_KEYS.currentBranchId);
+  removeSessionKey(STORAGE_KEYS.onboardingState);
+}
+
+function clearAuthSessionKeys(): void {
+  removeSessionKey(STORAGE_KEYS.currentUserId);
+  clearWorkspaceSessionKeys();
+}
+
+function workspaceSessionSelection(state: RuntimeState, workspaceId: string | null) {
+  if (!workspaceId) {
+    return {
+      currentWorkspaceId: null,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+    };
+  }
+
+  const subscription = state.subscriptions.find((sub) => sub.workspaceId === workspaceId && sub.id === state.currentOSSubscriptionId)
+    ?? state.subscriptions.find((sub) => sub.workspaceId === workspaceId && sub.osId === "commerce")
+    ?? state.subscriptions.find((sub) => sub.workspaceId === workspaceId)
+    ?? null;
+  const businessUnit = state.businessUnits.find((unit) => unit.workspaceId === workspaceId && unit.id === state.currentBusinessUnitId)
+    ?? state.businessUnits.find((unit) => unit.workspaceId === workspaceId && (!subscription || unit.osSubscriptionId === subscription.id))
+    ?? state.businessUnits.find((unit) => unit.workspaceId === workspaceId)
+    ?? null;
+  const branch = state.branches.find((candidate) => (
+    candidate.workspaceId === workspaceId
+    && candidate.id === state.currentBranchId
+    && (!businessUnit || candidate.businessUnitId === businessUnit.id)
+  ))
+    ?? state.branches.find((candidate) => (
+      candidate.workspaceId === workspaceId
+      && candidate.isMain
+      && (!businessUnit || candidate.businessUnitId === businessUnit.id)
+    ))
+    ?? state.branches.find((candidate) => candidate.workspaceId === workspaceId && (!businessUnit || candidate.businessUnitId === businessUnit.id))
+    ?? null;
+
+  return {
+    currentWorkspaceId: workspaceId,
+    currentOSId: subscription?.osId ?? businessUnit?.osId ?? null,
+    currentOSSubscriptionId: subscription?.id ?? null,
+    currentBusinessUnitId: businessUnit?.id ?? null,
+    currentBranchId: branch?.id ?? null,
+  };
+}
+
+function repairRuntimeState(state: RuntimeState): RuntimeState {
+  const currentUser = state.users.find((user) => user.id === state.currentUserId);
+  if (!currentUser) {
+    return {
+      ...state,
+      currentUserId: null,
+      currentWorkspaceId: null,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+      onboardingState: EMPTY_ONBOARDING_STATE,
+    };
+  }
+
+  const accessibleWorkspaces = getWorkspacesForUser(currentUser.id, state.workspaces, state.teamMembers);
+  if (!state.currentWorkspaceId) {
+    return {
+      ...state,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+      onboardingState: EMPTY_ONBOARDING_STATE,
+    };
+  }
+
+  if (!accessibleWorkspaces.some((workspace) => workspace.id === state.currentWorkspaceId)) {
+    return {
+      ...state,
+      currentWorkspaceId: null,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+      onboardingState: EMPTY_ONBOARDING_STATE,
+    };
+  }
+
+  return {
+    ...state,
+    ...workspaceSessionSelection(state, state.currentWorkspaceId),
+  };
+}
+
+function loadState(): RuntimeState {
   if (typeof window === "undefined") return emptyRuntimeState();
 
   const demoFlag = readSession<string | null>(STORAGE_KEYS.demo, null);
@@ -159,7 +269,7 @@ function loadState(): ReturnType<typeof emptyRuntimeState> {
   const theme = (localStorage.getItem(STORAGE_KEYS.theme) as "light" | "dark" | null) || "light";
   const lang = (readSession<string | null>(STORAGE_KEYS.locale, null) || "en") as Lang;
 
-  return {
+  return repairRuntimeState({
     currentUserId: readSession<string | null>(STORAGE_KEYS.currentUserId, null),
     currentWorkspaceId: readSession<string | null>(STORAGE_KEYS.currentWorkspaceId, null),
     currentOSId: readSession<string | null>(STORAGE_KEYS.currentOSId, null),
@@ -181,7 +291,7 @@ function loadState(): ReturnType<typeof emptyRuntimeState> {
     customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
     invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
     workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
-  };
+  });
 }
 
 function persistAll(data: ReturnType<typeof seedDB>): void {
@@ -259,16 +369,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- derived entities ----
   const currentUser = useMemo(() => state.users.find((u) => u.id === state.currentUserId) ?? null, [state.users, state.currentUserId]);
-  const currentWorkspace = useMemo(() => state.workspaces.find((w) => w.id === state.currentWorkspaceId) ?? null, [state.workspaces, state.currentWorkspaceId]);
-  const currentBU = useMemo(() => state.businessUnits.find((b) => b.id === state.currentBusinessUnitId) ?? null, [state.businessUnits, state.currentBusinessUnitId]);
-  const currentBranch = useMemo(() => state.branches.find((b) => b.id === state.currentBranchId) ?? null, [state.branches, state.currentBranchId]);
-  const currentOSSubscription = useMemo(() => state.subscriptions.find((s) => s.id === state.currentOSSubscriptionId) ?? null, [state.subscriptions, state.currentOSSubscriptionId]);
+  const currentWorkspace = useMemo(() => {
+    if (!isWorkspaceAccessibleByUser(state.currentUserId, state.currentWorkspaceId, state.workspaces, state.teamMembers)) return null;
+    return state.workspaces.find((w) => w.id === state.currentWorkspaceId) ?? null;
+  }, [state.currentUserId, state.currentWorkspaceId, state.workspaces, state.teamMembers]);
+  const currentBU = useMemo(() => state.businessUnits.find((b) => b.id === state.currentBusinessUnitId && b.workspaceId === state.currentWorkspaceId) ?? null, [state.businessUnits, state.currentBusinessUnitId, state.currentWorkspaceId]);
+  const currentBranch = useMemo(() => state.branches.find((b) => b.id === state.currentBranchId && b.workspaceId === state.currentWorkspaceId) ?? null, [state.branches, state.currentBranchId, state.currentWorkspaceId]);
+  const currentOSSubscription = useMemo(() => state.subscriptions.find((s) => s.id === state.currentOSSubscriptionId && s.workspaceId === state.currentWorkspaceId) ?? null, [state.subscriptions, state.currentOSSubscriptionId, state.currentWorkspaceId]);
 
   const BUSINESS_UNITS = useMemo(() => state.businessUnits.filter((b) => b.workspaceId === state.currentWorkspaceId), [state.businessUnits, state.currentWorkspaceId]);
   const BRANCHES = useMemo(() => state.branches.filter((b) => b.workspaceId === state.currentWorkspaceId && b.businessUnitId === state.currentBusinessUnitId), [state.branches, state.currentWorkspaceId, state.currentBusinessUnitId]);
 
   const isAuthenticated = !!state.currentUserId && !!currentUser;
-  const isOnboardingComplete = state.onboardingState.completedOS.includes("commerce") && !!currentWorkspace;
+  const isOnboardingComplete = !!currentUser && !!currentWorkspace && !!currentOSSubscription && !!currentBU && !!currentBranch;
   const isCommerceOSActive = !!currentOSSubscription && currentOSSubscription.osId === "commerce";
   const isCommerceSetupComplete = !!state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId);
 
@@ -327,7 +440,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const user: User = { id: uid("user"), fullName: data.fullName, email, passwordHash: data.password, role: "owner", createdAt: nowISO(), updatedAt: nowISO() };
     const newUsers = [...state.users, user];
     writeCollection(STORAGE_KEYS.users, newUsers);
-    setState((prev) => ({ ...prev, users: newUsers, currentUserId: user.id }));
+    writeSession(STORAGE_KEYS.currentUserId, user.id);
+    clearWorkspaceSessionKeys();
+    setState((prev) => ({
+      ...prev,
+      users: newUsers,
+      currentUserId: user.id,
+      currentWorkspaceId: null,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+      onboardingState: EMPTY_ONBOARDING_STATE,
+    }));
     return "success";
   }, [state.users]);
 
@@ -335,30 +460,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const em = normalizeEmail(email);
     const user = state.users.find((u) => normalizeEmail(u.email) === em && u.passwordHash === password);
     if (!user) return "invalid_credentials";
-    setState((prev) => ({ ...prev, currentUserId: user.id }));
+    const primaryWorkspace = getPrimaryWorkspaceForUser(user.id, state.workspaces, state.teamMembers);
+    const selection = workspaceSessionSelection({ ...state, currentUserId: user.id, currentWorkspaceId: primaryWorkspace?.id ?? null }, primaryWorkspace?.id ?? null);
+    writeSession(STORAGE_KEYS.currentUserId, user.id);
+    if (!primaryWorkspace) clearWorkspaceSessionKeys();
+    setState((prev) => ({
+      ...prev,
+      currentUserId: user.id,
+      ...selection,
+      onboardingState: primaryWorkspace ? { phase: null, step: 0, completedOS: selection.currentOSId ? [selection.currentOSId] : [] } : EMPTY_ONBOARDING_STATE,
+    }));
     return "success";
-  }, [state.users]);
+  }, [state]);
 
   const logoutUser = useCallback(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem(STORAGE_KEYS.currentUserId);
-    }
-    setState((prev) => ({ ...prev, currentUserId: null }));
+    clearAuthSessionKeys();
+    setState((prev) => ({
+      ...prev,
+      currentUserId: null,
+      currentWorkspaceId: null,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+      onboardingState: EMPTY_ONBOARDING_STATE,
+    }));
   }, []);
 
   // ---- workspace ----
   const createWorkspace = useCallback((data: { name: string; country: string; currency: string; timezone: string }): Workspace => {
     const ws: Workspace = { id: uid("ws"), name: data.name, country: data.country, currency: data.currency, timezone: data.timezone, language: state.lang, ownerUserId: state.currentUserId!, createdAt: nowISO() };
     const newWS = [...state.workspaces, ws];
+    const ownerMember: WorkspaceMember = {
+      id: uid("wm"),
+      workspaceId: ws.id,
+      userId: state.currentUserId!,
+      workspaceRole: "Owner",
+      osId: null,
+      osRole: "Owner",
+      businessUnitId: null,
+      branchId: null,
+      status: "active",
+      lastActive: "Active now",
+    };
+    const newTeamMembers = [...state.teamMembers, ownerMember];
     writeCollection(STORAGE_KEYS.workspaces, newWS);
+    writeCollection(STORAGE_KEYS.teamMembers, newTeamMembers);
     writeSession(STORAGE_KEYS.currentWorkspaceId, ws.id);
     const starterLimit = PLAN_CATALOG.find((p) => p.id === "commerce_starter")?.limits.storageLimitBytes ?? 500 * 1024 * 1024;
     const usage: WorkspaceStorageUsage = { workspaceId: ws.id, usedBytes: 0, limitBytes: starterLimit, updatedAt: nowISO() };
     const newUsage = [...state.workspaceStorageUsage, usage];
     writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
-    setState((prev) => ({ ...prev, workspaces: newWS, currentWorkspaceId: ws.id, workspaceStorageUsage: newUsage }));
+    setState((prev) => ({
+      ...prev,
+      workspaces: newWS,
+      teamMembers: newTeamMembers,
+      currentWorkspaceId: ws.id,
+      currentOSId: null,
+      currentOSSubscriptionId: null,
+      currentBusinessUnitId: null,
+      currentBranchId: null,
+      workspaceStorageUsage: newUsage,
+    }));
     return ws;
-  }, [state.workspaces, state.currentUserId, state.lang, state.workspaceStorageUsage]);
+  }, [state.workspaces, state.teamMembers, state.currentUserId, state.lang, state.workspaceStorageUsage]);
 
   // ---- onboarding ----
   const setLocale = useCallback((locale: Lang) => {
@@ -401,15 +566,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const planMeta = PLAN_CATALOG.find((p) => p.id === planId);
     const limitBytes = planMeta?.limits.storageLimitBytes;
-    let newUsage = state.workspaceStorageUsage;
+    let newUsage = readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage);
     if (limitBytes && workspaceId) {
-      newUsage = state.workspaceStorageUsage.map((u) =>
-        u.workspaceId === workspaceId ? { ...u, limitBytes, updatedAt: nowISO() } : u,
-      );
+      newUsage = newUsage.some((u) => u.workspaceId === workspaceId)
+        ? newUsage.map((u) =>
+          u.workspaceId === workspaceId ? { ...u, limitBytes, updatedAt: nowISO() } : u,
+        )
+        : [...newUsage, { workspaceId, usedBytes: 0, limitBytes, updatedAt: nowISO() }];
       writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
     }
     setState((prev) => ({ ...prev, subscriptions: newSubs, currentOSSubscriptionId: sub.id, workspaceStorageUsage: newUsage }));
-  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId, state.workspaceStorageUsage]);
+  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId]);
 
   const createBusinessUnit = useCallback((data: { name: string; preset: string; osId: string }): BusinessUnit => {
     const workspaceId = state.currentWorkspaceId || readSession<string | null>(STORAGE_KEYS.currentWorkspaceId, null) || "";
@@ -568,6 +735,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
     setState((prev) => {
+      const requestedWorkspaceId = data.currentWorkspaceId ?? prev.currentWorkspaceId;
+      if (requestedWorkspaceId && !isWorkspaceAccessibleByUser(prev.currentUserId, requestedWorkspaceId, prev.workspaces, prev.teamMembers)) {
+        return {
+          ...prev,
+          currentWorkspaceId: null,
+          currentOSId: null,
+          currentOSSubscriptionId: null,
+          currentBusinessUnitId: null,
+          currentBranchId: null,
+          onboardingState: EMPTY_ONBOARDING_STATE,
+        };
+      }
+
       const next = { ...prev, ...data };
       if (data.currentBusinessUnitId && data.currentBusinessUnitId !== prev.currentBusinessUnitId && !data.currentBranchId) {
         const stillValid = prev.branches.some((b) => b.id === prev.currentBranchId && b.businessUnitId === data.currentBusinessUnitId);

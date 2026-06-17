@@ -1,8 +1,41 @@
 import type {
   CommerceCustomer, CommerceOrder, CommerceProduct, WorkspaceStorageUsage,
-  BranchInventory, CommerceReturn,
+  BranchInventory, CommerceReturn, Workspace, WorkspaceMember,
 } from "@nexoraxs/types";
 import type { Lang } from "./schema";
+
+export function getWorkspacesForUser(
+  userId: string | null | undefined,
+  workspaces: Workspace[],
+  members: WorkspaceMember[],
+): Workspace[] {
+  if (!userId) return [];
+  const memberWorkspaceIds = new Set(
+    members
+      .filter((member) => member.userId === userId && member.status !== "removed")
+      .map((member) => member.workspaceId),
+  );
+  return workspaces.filter((workspace) => workspace.ownerUserId === userId || memberWorkspaceIds.has(workspace.id));
+}
+
+export function getPrimaryWorkspaceForUser(
+  userId: string | null | undefined,
+  workspaces: Workspace[],
+  members: WorkspaceMember[],
+): Workspace | null {
+  const accessible = getWorkspacesForUser(userId, workspaces, members);
+  return accessible.find((workspace) => workspace.ownerUserId === userId) ?? accessible[0] ?? null;
+}
+
+export function isWorkspaceAccessibleByUser(
+  userId: string | null | undefined,
+  workspaceId: string | null | undefined,
+  workspaces: Workspace[],
+  members: WorkspaceMember[],
+): boolean {
+  if (!userId || !workspaceId) return false;
+  return getWorkspacesForUser(userId, workspaces, members).some((workspace) => workspace.id === workspaceId);
+}
 
 export function money(n: number, lang: Lang = "en"): string {
   const v = (Math.round(n * 100) / 100).toLocaleString("en-EG", {
