@@ -9,6 +9,12 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://localhost:3002",
+    // headless=false shows the browser during E2E runs for manual QA review.
+    headless: false,
+    launchOptions: {
+      // slowMo adds a 2000ms delay between Playwright actions.
+      slowMo: 2000,
+    },
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },

@@ -195,10 +195,26 @@ function LogoUpload({ value, onChange, businessName }: { value: string | null; o
 
 /* ---- Receipt preview (real nx-receipt-* markup) ---- */
 function SetupReceiptPreview({ setup, items, money }: { setup: SetupDraft; items: OrderItem[]; money: (n: number) => string }) {
+  const [previewDate, setPreviewDate] = useState("Preview date");
   const businessName = setup.displayName || "Commerce Business";
   const d = computeDoc(items, setup, 0);
   const width = setup.receiptSize === "58mm" ? 230 : 300;
-  const nowStr = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPreviewDate(new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(new Date()));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <div className="nx-receipt" style={{ width, margin: "0 auto" }}>
       <div className="nx-receipt-head">
@@ -216,7 +232,7 @@ function SetupReceiptPreview({ setup, items, money }: { setup: SetupDraft; items
       <div className="nx-receipt-rule" />
       <div className="nx-receipt-meta">
         <div><span>Receipt</span><b>{setup.receiptPrefix || "RCPT"}-{setup.receiptStart || 1001}</b></div>
-        <div><span>Date</span><b>{nowStr}</b></div>
+        <div><span>Date</span><b>{previewDate}</b></div>
         <div><span>Cashier</span><b>Preview</b></div>
       </div>
       <div className="nx-receipt-rule dashed" />

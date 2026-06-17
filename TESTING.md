@@ -16,10 +16,30 @@ pnpm exec playwright install chromium
 ```bash
 pnpm test:e2e
 pnpm test:e2e:headed
+pnpm test:e2e:slow
+PWDEBUG=1 pnpm test:e2e:debug
 pnpm test:e2e:ui
 ```
 
 The Playwright base URL is `http://localhost:3002`.
+
+### Manual QA modes
+
+Use slow mode to watch the Commerce E2E flow run visibly:
+
+```bash
+pnpm test:e2e:slow
+```
+
+The Playwright config sets `headless=false`, which shows the browser, and `slowMo=2000`, which adds 2000ms between actions.
+
+Use debug mode with the Playwright Inspector:
+
+```bash
+PWDEBUG=1 pnpm test:e2e:debug
+```
+
+`PWDEBUG=1` enables the Playwright Inspector. The Inspector allows step-by-step execution for manual QA review.
 
 #### Mode A: reuse a manually started dev server
 
