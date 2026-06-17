@@ -146,7 +146,7 @@ Business Unit management becomes visible in the UI only when at least one of the
 3. The same OS is used for multiple distinct activities.
 4. The active plan allows more than one Business Unit.
 
-Branches are visible from day one. Business Units are revealed progressively only when operational complexity requires them.
+Branches are visible from day one. Businesses are visible to users while BusinessUnit remains the internal model only when operational complexity requires them.
 
 ---
 
@@ -531,3 +531,36 @@ Before proposing or writing code, every agent must verify:
 - Can it be UI/mock first?
 
 When in doubt, keep the scope smaller and create a spec.
+
+
+---
+
+## Amendment Draft v1.4
+
+### Domain Strategy
+
+Production domains:
+
+- www.nexoraxs.com → Landing
+- app.nexoraxs.com → Core Platform / Product Hub
+- commerce.nexoraxs.com → Commerce OS Admin
+- {store}.nexoraxs.com → Storefronts
+- api.nexoraxs.com → Backend API
+- cdn.nexoraxs.com → Media CDN
+
+### Business Terminology Rule
+
+BusinessUnit remains the internal domain model.
+
+User-facing UI MUST use:
+- Business
+- Branch
+
+User-facing UI MUST NOT expose:
+- Business Unit
+- Default Business Unit
+- BU
+
+### Commerce MVP Clarification
+
+Multi-branch support is part of the Commerce MVP and is no longer considered a future-only capability.

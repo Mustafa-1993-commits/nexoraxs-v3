@@ -201,7 +201,7 @@ Business Unit management becomes visible in the UI when one or more of the follo
 3. The same OS is used for multiple distinct activities, such as Pharmacy + Supermarket + Restaurant inside Commerce OS.
 4. The active plan allows more than one Business Unit, such as Starter = 1 BU, Pro = 3 BUs, Business = Unlimited / Custom.
 
-Branches are visible from day one. Business Units are revealed progressively only when operational complexity requires them.
+Branches are visible from day one. Businesses are visible to users while BusinessUnit remains the internal model only when operational complexity requires them.
 
 MVP visible concepts:
 
@@ -1078,6 +1078,45 @@ Before writing code, answer these questions:
 7. Can this be implemented as UI/mock first before backend?
 
 If unsure, do not expand the architecture. Create a small spec and keep the MVP boundary narrow.
+
+---
+
+<!-- SPECKIT START -->
+Active plan: specs/044-commerce-relationships-branches-transfers-returns/plan.md
+<!-- SPECKIT END -->
+
+
+---
+
+## Architecture Alignment v5.4 (Draft)
+
+### Production Domains
+
+www.nexoraxs.com          → Landing / Marketing
+app.nexoraxs.com          → Core Platform / Product Hub
+commerce.nexoraxs.com     → Commerce OS Admin
+{store}.nexoraxs.com      → Online Stores
+api.nexoraxs.com          → Backend API
+cdn.nexoraxs.com          → Media / CDN
+
+### Business Terminology
+
+Internal model:
+- BusinessUnit
+- businessUnitId
+
+User-facing terminology:
+- Business
+- Branch
+
+### Commerce MVP Status
+
+Multi-branch support is part of the Commerce MVP:
+- Branch switcher
+- Branch inventory
+- Stock transfers
+- Returns and refunds
+- Branch-scoped reporting
 
 ---
 

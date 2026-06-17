@@ -53,7 +53,7 @@ Commerce OS MVP
 +
 Arabic/English localization foundation
 +
-Business Unit-ready architecture hidden behind a default Business Unit
+Business-ready architecture (internal BusinessUnit model, user-facing Business terminology)
 +
 Future OS products shown as Coming Soon only
 ```
@@ -790,7 +790,7 @@ Business Unit management becomes visible in the UI when one or more of the follo
 
 ### MVP Visibility Rule
 
-Branches are visible from day one. Business Units are revealed progressively only when operational complexity requires them.
+Branches are visible from day one. Businesses are visible to users while BusinessUnit remains the internal model only when operational complexity requires them.
 
 MVP visible concepts:
 
@@ -2451,3 +2451,35 @@ UI labels may display “Coming Soon”, “Subscribe”, “Start Trial”, “
 - Arabic and English support must be planned from day one across UI, documents, invoices, reports, and notifications.
 - Integrations must be optional and must preserve domain ownership.
 - No OS may duplicate another OS core domain.
+
+
+---
+
+## v5.4 Alignment Notes (Draft)
+
+### Production Routing
+
+www.nexoraxs.com          → Landing
+app.nexoraxs.com          → Core Platform
+commerce.nexoraxs.com     → Commerce OS
+{store}.nexoraxs.com      → Storefronts
+api.nexoraxs.com          → Backend API
+cdn.nexoraxs.com          → Media/CDN
+
+### Business Model
+
+Internal:
+Workspace → BusinessUnit → Branch
+
+User-facing:
+Workspace → Business → Branch
+
+### Commerce MVP
+
+Commerce MVP includes:
+- Multi-business readiness
+- Multi-branch support
+- Branch inventory
+- Stock transfers
+- Returns/refunds
+- Branch-scoped reporting
