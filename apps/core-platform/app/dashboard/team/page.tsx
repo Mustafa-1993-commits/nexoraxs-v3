@@ -54,7 +54,7 @@ export default function TeamPage() {
   const allMembers = [owner, ...invited];
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="core-team">
       <div className="nx-page" style={{ paddingBlock: "24px" }}>
 
         {/* Page header */}

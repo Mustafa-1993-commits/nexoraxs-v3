@@ -78,7 +78,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="order-detail">
       <div style={{ padding: "24px 28px", maxWidth: 860, margin: "0 auto" }}>
         {/* Breadcrumb */}
         <Link href="/orders" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-2)", textDecoration: "none", marginBottom: 20 }}>
@@ -206,7 +206,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       {showReturn && (
         <div style={{ position: "fixed", inset: 0, background: "#0006", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
-          <div style={{ background: "var(--surface)", borderRadius: "var(--r-lg)", padding: 28, width: 440, maxHeight: "85vh", overflowY: "auto" }}>
+          <div style={{ background: "var(--surface)", borderRadius: "var(--r-lg)", padding: 28, width: 440, maxHeight: "85vh", overflowY: "auto" }} data-testid="return-modal">
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 18 }}>
               <h3 style={{ fontWeight: 700 }}>{t("process_return")}</h3>
               <button onClick={() => setShowReturn(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} /></button>

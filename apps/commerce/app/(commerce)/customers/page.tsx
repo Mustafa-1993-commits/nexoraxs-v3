@@ -62,7 +62,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="customers-page">
       <div className="nx-page">
         <div className="nx-page-head">
           <div>
@@ -115,7 +115,7 @@ export default function CustomersPage() {
             </div>
           </div>
         ) : (
-          <div className="nx-table-wrap">
+          <div className="nx-table-wrap" data-testid="customers-list">
             <table className="nx-table">
               <thead>
                 <tr>
@@ -156,7 +156,7 @@ export default function CustomersPage() {
 
       {showAdd && (
         <div className="nx-modal-scrim">
-          <div className="nx-modal" style={{ maxWidth: 400 }}>
+          <div className="nx-modal" style={{ maxWidth: 400 }} data-testid="add-customer-modal">
             <div className="nx-modal-head">
               <h3 className="nx-modal-title">Add Customer</h3>
               <button className="nx-icon-btn" onClick={() => setShowAdd(false)}><X size={18} /></button>

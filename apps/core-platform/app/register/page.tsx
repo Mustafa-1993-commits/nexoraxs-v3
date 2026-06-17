@@ -99,7 +99,7 @@ export default function RegisterPage() {
     >
       {step === "email" ? (
         <>
-          <form onSubmit={handleEmailContinue} className="nx-auth-form-fields" style={{ marginTop: 4 }}>
+          <form onSubmit={handleEmailContinue} className="nx-auth-form-fields" style={{ marginTop: 4 }} data-testid="core-register-form">
             {error && (
               <div className="nx-auth-banner" style={{ background: "var(--danger-weak)", borderColor: "var(--danger)", color: "var(--danger)" }}>
                 {error}
@@ -139,7 +139,7 @@ export default function RegisterPage() {
           </div>
         </>
       ) : (
-        <form onSubmit={handleSubmit} className="nx-auth-form-fields" style={{ marginTop: 4 }}>
+        <form onSubmit={handleSubmit} className="nx-auth-form-fields" style={{ marginTop: 4 }} data-testid="core-register-form">
           {error && (
             <div className="nx-auth-banner" style={{ background: "var(--danger-weak)", borderColor: "var(--danger)", color: "var(--danger)" }}>
               {error}

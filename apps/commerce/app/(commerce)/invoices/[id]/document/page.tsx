@@ -72,7 +72,7 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
 
       {/* A4 Invoice */}
       <div style={{ flex: 1, padding: "40px 24px", display: "flex", justifyContent: "center" }}>
-        <div className="nx-invoice nx-pop" id="invoice-doc">
+        <div className="nx-invoice nx-pop" id="invoice-doc" data-testid="invoice-document">
           {/* Header */}
           <div className="nx-invoice-top">
             <div className="nx-invoice-brand">

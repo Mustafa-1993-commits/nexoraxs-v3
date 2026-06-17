@@ -437,7 +437,7 @@ export default function CommerceSetupPage() {
   }
 
   return (
-    <div className="nx-onb">
+    <div className="nx-onb" data-testid="commerce-setup">
       {/* Top bar */}
       <div className="nx-onb-bar">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -736,8 +736,8 @@ export default function CommerceSetupPage() {
 
             {/* Actions */}
             <div className="nx-onb-actions" style={{ marginTop: 32 }}>
-              <button className="nx-btn nx-btn-ghost nx-btn-md" onClick={goBack}>← Back</button>
-              <button className="nx-btn nx-btn-primary nx-btn-md" onClick={goNext}>
+              <button className="nx-btn nx-btn-ghost nx-btn-md" onClick={goBack} data-testid="commerce-setup-back">← Back</button>
+              <button className="nx-btn nx-btn-primary nx-btn-md" onClick={goNext} data-testid="commerce-setup-next">
                 {step === SETUP_STEPS.length - 1 ? "Finish Setup ✓" : "Continue →"}
               </button>
             </div>

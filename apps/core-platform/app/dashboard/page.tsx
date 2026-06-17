@@ -39,7 +39,7 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="core-dashboard">
       <div style={{ padding: "24px 28px", maxWidth: 1100, margin: "0 auto" }}>
         <div className="nx-page-head">
           <div>

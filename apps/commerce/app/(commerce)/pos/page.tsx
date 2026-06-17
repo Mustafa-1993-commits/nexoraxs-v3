@@ -106,7 +106,7 @@ export default function POSPage() {
   }
 
   return (
-    <div className="nx-pos">
+    <div className="nx-pos" data-testid="pos-page">
       {/* Left: product grid */}
       <div className="nx-pos-left">
         <div className="nx-pos-topbar">
@@ -191,7 +191,7 @@ export default function POSPage() {
 
         {/* Customer */}
         <div className="nx-cart-cust">
-          <button className="nx-sb-switch" style={{ background: "var(--surface)" }} onClick={openCustomerPicker}>
+          <button className="nx-sb-switch" style={{ background: "var(--surface)" }} onClick={openCustomerPicker} data-testid="customer-picker">
             <Avatar name={selectedCustomer ? selectedCustomer.name : "Walk in"} size={30} />
             <span className="nx-sb-switch-txt">
               <span className="nx-sb-switch-name">{selectedCustomer ? selectedCustomer.name : "Walk-in customer"}</span>
@@ -266,7 +266,7 @@ export default function POSPage() {
       {/* Checkout modal */}
       {showPayment && (
         <div className="nx-modal-scrim">
-          <div className="nx-modal" style={{ maxWidth: 440 }}>
+          <div className="nx-modal" style={{ maxWidth: 440 }} data-testid="checkout-modal">
             <div className="nx-modal-head">
               <div>
                 <h3 className="nx-modal-title">Complete sale</h3>
@@ -341,7 +341,7 @@ export default function POSPage() {
       {/* Customer picker modal */}
       {showCustPicker && (
         <div className="nx-modal-scrim">
-          <div className="nx-modal" style={{ maxWidth: 460 }}>
+          <div className="nx-modal" style={{ maxWidth: 460 }} data-testid={custMode === "new" ? "add-customer-modal" : "customer-picker-modal"}>
             <div className="nx-modal-head">
               <div>
                 <h3 className="nx-modal-title">{custMode === "new" ? "Add new customer" : "Customer"}</h3>

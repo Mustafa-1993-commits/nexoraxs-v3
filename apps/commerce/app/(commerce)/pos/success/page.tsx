@@ -117,7 +117,7 @@ export default function POSSuccessPage() {
             <div className="nx-print-hide" style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: 14 }}>
               Receipt
             </div>
-            <div className="nx-receipt" style={{ margin: "0 auto" }}>
+            <div className="nx-receipt" style={{ margin: "0 auto" }} data-testid="receipt-preview">
               <div className="nx-receipt-head">
                 {setup.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element

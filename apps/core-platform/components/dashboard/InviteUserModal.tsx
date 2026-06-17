@@ -74,7 +74,7 @@ export function InviteUserModal({ open, onClose, onInvite }: Props) {
 
   return (
     <div className="nx-modal-scrim" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nx-modal" style={{ maxWidth: 520 }}>
+      <div className="nx-modal" style={{ maxWidth: 520 }} data-testid="invite-user-modal">
         <div className="nx-modal-head">
           <div>
             <h3 className="nx-modal-title">Invite a team member</h3>

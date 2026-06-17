@@ -52,7 +52,7 @@ export function Shell({ mode, navGroups, children }: ShellProps) {
   }
 
   return (
-    <div className="nx-app-root">
+    <div className="nx-app-root" data-testid="commerce-shell">
       {/* Topbar */}
       <div className="nx-topbar">
         <div className="nx-topbar-brand">

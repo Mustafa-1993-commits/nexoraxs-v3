@@ -62,7 +62,7 @@ export default function BillingPage() {
   const otherOS = OPERATING_SYSTEMS.filter((o) => o.id !== "commerce");
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="core-billing">
       <div className="nx-page" style={{ paddingBlock: "24px" }}>
 
         {/* Page header */}

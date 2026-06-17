@@ -401,15 +401,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const planMeta = PLAN_CATALOG.find((p) => p.id === planId);
     const limitBytes = planMeta?.limits.storageLimitBytes;
-    let newUsage = state.workspaceStorageUsage;
+    let newUsage = readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage);
     if (limitBytes && workspaceId) {
-      newUsage = state.workspaceStorageUsage.map((u) =>
-        u.workspaceId === workspaceId ? { ...u, limitBytes, updatedAt: nowISO() } : u,
-      );
+      newUsage = newUsage.some((u) => u.workspaceId === workspaceId)
+        ? newUsage.map((u) =>
+          u.workspaceId === workspaceId ? { ...u, limitBytes, updatedAt: nowISO() } : u,
+        )
+        : [...newUsage, { workspaceId, usedBytes: 0, limitBytes, updatedAt: nowISO() }];
       writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
     }
     setState((prev) => ({ ...prev, subscriptions: newSubs, currentOSSubscriptionId: sub.id, workspaceStorageUsage: newUsage }));
-  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId, state.workspaceStorageUsage]);
+  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId]);
 
   const createBusinessUnit = useCallback((data: { name: string; preset: string; osId: string }): BusinessUnit => {
     const workspaceId = state.currentWorkspaceId || readSession<string | null>(STORAGE_KEYS.currentWorkspaceId, null) || "";

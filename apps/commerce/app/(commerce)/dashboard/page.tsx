@@ -72,7 +72,7 @@ export default function CommerceDashboardPage() {
   const subStatus = sub ? (sub.status === "active" ? "Active" : sub.status === "trialing" ? "Trial" : "Unified") : "Unified";
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="commerce-dashboard">
       <div style={{ padding: "28px 32px 48px", maxWidth: 1280, margin: "0 auto" }}>
 
         {/* Page header */}

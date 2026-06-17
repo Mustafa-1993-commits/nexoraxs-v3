@@ -65,7 +65,7 @@ export default function StockTransfersPage() {
         <p style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 16 }}>{t("review_transfer_stock")}</p>
 
         {/* New transfer */}
-        <div className="nx-card" style={{ padding: "20px 22px", marginBottom: 24 }}>
+        <div className="nx-card" style={{ padding: "20px 22px", marginBottom: 24 }} data-testid="transfer-form">
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16, display: "flex", gap: 8, alignItems: "center" }}>
             <ArrowRightLeft size={16} />{t("new_transfer")}
           </div>

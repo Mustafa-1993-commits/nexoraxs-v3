@@ -22,7 +22,7 @@ export default function WelcomePage() {
     .join("") || "NX";
 
   return (
-    <div className="nx-welcome-screen">
+    <div className="nx-welcome-screen" data-testid="core-welcome">
       <div className="nx-welcome-glow" />
 
       <div className="nx-welcome-stage">

@@ -34,7 +34,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="core-settings">
       <div className="nx-page" style={{ paddingBlock: "24px" }}>
 
         {/* Page header */}

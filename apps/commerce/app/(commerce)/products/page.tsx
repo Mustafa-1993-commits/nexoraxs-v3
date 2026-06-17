@@ -76,7 +76,7 @@ export default function ProductsPage() {
             </div>
           </div>
         ) : (
-          <div className="nx-table-wrap">
+          <div className="nx-table-wrap" data-testid="product-list">
             <table className="nx-table">
               <thead>
                 <tr>
@@ -93,7 +93,7 @@ export default function ProductsPage() {
               </thead>
               <tbody>
                 {filtered.map((p) => (
-                  <tr key={p.id}>
+                  <tr key={p.id} data-testid={`product-card-${p.id}`}>
                     <td>
                       <div className="nx-row" style={{ gap: 11 }}>
                         {p.image ? (

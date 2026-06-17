@@ -84,7 +84,7 @@ export default function ProductHubPage() {
   ];
 
   return (
-    <div className="nx-main-scroll">
+    <div className="nx-main-scroll" data-testid="core-product-hub">
       <div className="nx-page" style={{ paddingBlock: "24px" }}>
 
         {/* Page header */}
@@ -156,7 +156,7 @@ export default function ProductHubPage() {
             </div>
 
             {/* Featured Commerce OS card */}
-            <div className="nx-card nx-card-pad nx-os-feature nx-os-card" style={{ marginBottom: 16 }}>
+            <div className="nx-card nx-card-pad nx-os-feature nx-os-card" style={{ marginBottom: 16 }} data-testid="os-card-commerce">
               <div className="nx-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div className="nx-row" style={{ gap: 14, alignItems: "flex-start" }}>
                   <span className="nx-os-ic" style={{ width: 52, height: 52, background: "linear-gradient(135deg,#4f46e5,#7c3aed)", color: "#fff" }}>
@@ -192,7 +192,7 @@ export default function ProductHubPage() {
                   </Link>
                 ) : (
                   <Link href={isOnboardingComplete ? setupHref : "/onboarding"} className="nx-btn nx-btn-primary nx-btn-md" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <Settings size={15} />Complete Setup
+                    <Settings size={15} />Complete setup in Commerce
                   </Link>
                 )}
                 <Link href="/dashboard/billing" className="nx-btn nx-btn-secondary nx-btn-md" style={{ textDecoration: "none", display: "inline-flex" }}>
@@ -204,7 +204,7 @@ export default function ProductHubPage() {
             {/* Coming soon grid */}
             <div className="nx-hub-grid">
               {others.map((os) => (
-                <div key={os.id} className="nx-card nx-card-pad nx-os-card soon">
+                <div key={os.id} className="nx-card nx-card-pad nx-os-card soon" data-testid={`os-card-${os.id}`}>
                   <div className="nx-row" style={{ justifyContent: "space-between" }}>
                     <span className="nx-os-ic" style={{ width: 40, height: 40, background: `${os.accent}14`, color: os.accent }}>
                       {OS_ICON_MAP[os.icon] ?? <Store size={18} />}
