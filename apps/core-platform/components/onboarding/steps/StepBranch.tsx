@@ -63,7 +63,7 @@ export function StepBranch({ onFinish, onBack }: { onFinish: () => void; onBack:
             <input
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="Alexandria"
+              placeholder={country ? "Select a city..." : "Select country first"}
               className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-blue-500/50"
             />
             {errors.city && <p className="mt-1 text-xs text-rose-400">{errors.city}</p>}

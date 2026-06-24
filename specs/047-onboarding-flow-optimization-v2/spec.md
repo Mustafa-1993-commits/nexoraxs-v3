@@ -119,6 +119,7 @@ An owner can use the same branch name under different businesses without conflic
 - **FR-034**: Core workspace onboarding MUST derive Currency and Timezone from the selected Country, while preserving user overrides for Currency or Timezone after those fields are manually changed.
 - **FR-035**: Workspace MAY persist an optional Region for compatibility; existing workspaces without Region MUST continue to load and operate normally.
 - **FR-036**: Core workspace onboarding location cards MUST be visually distinct: Country uses a CSS country flag plus country name, Currency uses a currency symbol plus currency code/name, and Timezone uses a clock/time visual plus city, GMT offset, and IANA timezone.
+- **FR-037**: City fields in Commerce setup MUST start empty, MUST NOT prefill a city, and MAY show country-scoped city options from the selected Workspace or setup country while remaining optional.
 
 ### Key Entities *(include if feature involves data)*
 

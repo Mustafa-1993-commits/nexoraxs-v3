@@ -15,6 +15,14 @@ import type { OrderItem } from "@/lib/store";
 const SETUP_STEPS = ["Identity", "Preset", "Mode", "Tax", "Numbering", "Templates", "Categories", "Review"] as const;
 
 const COUNTRIES = ["Egypt", "Saudi Arabia", "United Arab Emirates", "Jordan", "Kuwait", "Qatar"];
+const CITY_OPTIONS_BY_COUNTRY: Record<string, string[]> = {
+  Egypt: ["Cairo", "Alexandria", "Giza", "Mansoura", "Tanta", "Nasr City", "New Cairo"],
+  "Saudi Arabia": ["Riyadh", "Jeddah", "Dammam", "Mecca", "Medina", "Khobar"],
+  "United Arab Emirates": ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Al Ain"],
+  Jordan: ["Amman", "Irbid", "Zarqa", "Aqaba"],
+  Kuwait: ["Kuwait City", "Hawalli", "Salmiya", "Farwaniya"],
+  Qatar: ["Doha", "Al Wakrah", "Al Rayyan", "Lusail"],
+};
 
 const PRESET_CATEGORIES: Record<string, string[]> = {
   retail_store: ["General", "Featured", "Accessories", "Clearance"],
@@ -125,6 +133,11 @@ function categoriesForPreset(presetId: string): string[] {
 function presetMetaFor(presetId: string) {
   const resolved = resolvePresetId(presetId);
   return PRESETS.find((p) => p.id === presetId || p.id === resolved) ?? PRESETS[0];
+}
+
+function cityOptionsForCountry(country: string | null | undefined): string[] {
+  if (!country) return [];
+  return CITY_OPTIONS_BY_COUNTRY[country] || [];
 }
 
 function activityDefaults(industryType: string): Partial<SetupDraft> {
@@ -565,6 +578,8 @@ export default function CommerceSetupPage() {
 
   const businessType = draft.presetId || draft.businessType || draft.preset || "retail_store";
   const presetLabel = presetMetaFor(businessType).label;
+  const branchCityOptions = cityOptionsForCountry(currentWorkspace?.country);
+  const identityCityOptions = cityOptionsForCountry(draft.country || currentWorkspace?.country);
 
   if (isHydrated && !hasCommerceSetupContext) {
     return (
@@ -676,7 +691,15 @@ export default function CommerceSetupPage() {
                 <input className="nx-input" value={branchName} onChange={(e) => setBranchName(e.target.value)} placeholder="Main Branch" />
               </Field>
               <Field label="City" optional>
-                <input className="nx-input" value={branchCity} onChange={(e) => setBranchCity(e.target.value)} placeholder="Alexandria" />
+                <select
+                  className="nx-input"
+                  value={branchCity}
+                  onChange={(e) => setBranchCity(e.target.value)}
+                  disabled={!currentWorkspace?.country}
+                >
+                  <option value="">{currentWorkspace?.country ? "Select a city..." : "Select country first"}</option>
+                  {branchCityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
+                </select>
               </Field>
             </div>
             <div className="nx-onb-actions">
@@ -738,7 +761,17 @@ export default function CommerceSetupPage() {
                   </div>
                   <Field label="Billing Address"><input className="nx-input" value={draft.address} onChange={(e) => upd({ address: e.target.value })} placeholder="Street, area" /></Field>
                   <div className="nx-form-grid cols-2">
-                    <Field label="City"><input className="nx-input" value={draft.city} onChange={(e) => upd({ city: e.target.value })} placeholder="Alexandria" /></Field>
+                    <Field label="City" optional>
+                      <select
+                        className="nx-input"
+                        value={draft.city}
+                        onChange={(e) => upd({ city: e.target.value })}
+                        disabled={!(draft.country || currentWorkspace?.country)}
+                      >
+                        <option value="">{draft.country || currentWorkspace?.country ? "Select a city..." : "Select country first"}</option>
+                        {identityCityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
+                      </select>
+                    </Field>
                     <Field label="Country">
                       <select className="nx-input" value={draft.country} onChange={(e) => upd({ country: e.target.value })}>
                         <option value="">Select country…</option>
