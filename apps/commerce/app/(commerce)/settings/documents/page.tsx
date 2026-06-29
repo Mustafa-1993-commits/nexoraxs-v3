@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { computeDoc } from "@/lib/store";
+import { computeDoc, getBusinessBillingAddress } from "@/lib/store";
 import type { OrderItem } from "@/lib/store";
 
 // Sample items used for preview only — no storage read
@@ -15,6 +15,7 @@ const PREVIEW_ITEMS: OrderItem[] = [
 
 function ReceiptPreview({ setup, money }: { setup: ReturnType<ReturnType<typeof useApp>["getCommerceSetup"]>; money: (n: number) => string }) {
   const businessName = setup.displayName || "Commerce Business";
+  const billingAddress = getBusinessBillingAddress(setup);
   const d = computeDoc(PREVIEW_ITEMS, setup, 0);
   const width = setup.receiptSize === "58mm" ? 230 : 300;
   const nowStr = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -23,7 +24,7 @@ function ReceiptPreview({ setup, money }: { setup: ReturnType<ReturnType<typeof 
       <div className="nx-receipt-head">
         <div className="nx-receipt-logo ph">{businessName.charAt(0)}</div>
         <div className="nx-receipt-biz">{businessName}</div>
-        {setup.address && <div className="nx-receipt-muted">{setup.address}</div>}
+        {billingAddress.singleLine && <div className="nx-receipt-muted">{billingAddress.singleLine}</div>}
         {setup.phone && <div className="nx-receipt-muted">Tel: {setup.phone}</div>}
         {setup.vatRegistered && <div className="nx-receipt-muted">{setup.taxLabel || "VAT"} Reg: {setup.taxNumber}</div>}
       </div>
@@ -77,6 +78,7 @@ function ReceiptPreview({ setup, money }: { setup: ReturnType<ReturnType<typeof 
 
 function InvoicePreview({ setup, money }: { setup: ReturnType<ReturnType<typeof useApp>["getCommerceSetup"]>; money: (n: number) => string }) {
   const businessName = setup.displayName || "Commerce Business";
+  const billingAddress = getBusinessBillingAddress(setup);
   const d = computeDoc(PREVIEW_ITEMS, setup, 0);
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   return (
@@ -87,7 +89,7 @@ function InvoicePreview({ setup, money }: { setup: ReturnType<ReturnType<typeof 
           <div>
             <div className="nx-invoice-biz">{businessName}</div>
             {setup.legalName && <div className="nx-invoice-muted">{setup.legalName}</div>}
-            {setup.address && <div className="nx-invoice-muted">{setup.address}</div>}
+            {billingAddress.singleLine && <div className="nx-invoice-muted">{billingAddress.singleLine}</div>}
             {setup.phone && <div className="nx-invoice-muted">{setup.phone}</div>}
           </div>
         </div>

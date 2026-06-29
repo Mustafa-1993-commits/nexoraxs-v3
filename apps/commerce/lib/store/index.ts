@@ -16,8 +16,9 @@ export {
   money, taxBreak, nxOrdersForPeriod, nxRevenue, nxBestSellers,
   nxGroupSales, nxNewCustomers, nxOrderDate, nxOrderTotal, computeDoc, fmtDate,
   nxBranchInventoryMap, nxReturnsForPeriod, nxNetSales, computeReturnTotals,
+  suggestCommercePresetForIndustry, getBusinessBillingAddress, getBranchOperationalAddress,
 } from "@nexoraxs/shared";
-export type { SalesBucket, SalesGroup } from "@nexoraxs/shared";
+export type { SalesBucket, SalesGroup, ResolvedAddress } from "@nexoraxs/shared";
 export { uid, nowISO, normalizeEmail, getUserDisplayName } from "@nexoraxs/shared";
 export {
   effectiveStockFor, buildStockMovement, buildStockTransfer, buildCommerceReturn,

@@ -15,6 +15,7 @@ export type { Lang } from "@nexoraxs/shared";
 export {
   money, taxBreak, nxOrdersForPeriod, nxRevenue, nxBestSellers,
   nxGroupSales, nxOrderDate, nxOrderTotal, computeDoc, fmtDate,
+  suggestCommercePresetForIndustry, getBusinessBillingAddress, getBranchOperationalAddress,
 } from "@nexoraxs/shared";
-export type { SalesBucket, SalesGroup } from "@nexoraxs/shared";
+export type { SalesBucket, SalesGroup, ResolvedAddress } from "@nexoraxs/shared";
 export { uid, nowISO, normalizeEmail, getUserDisplayName } from "@nexoraxs/shared";

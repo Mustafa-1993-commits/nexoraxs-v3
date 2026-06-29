@@ -43,10 +43,13 @@ export function commerceSetupUrl({
     params.set("currentBusinessUnitId", businessUnit.id);
     params.set("businessUnitName", businessUnit.name);
     params.set("businessPreset", businessUnit.presetId || businessUnit.preset || "retail");
+    if (businessUnit.industryType) params.set("businessIndustryType", businessUnit.industryType);
   }
   if (branch) {
     params.set("currentBranchId", branch.id);
     params.set("branchName", branch.name);
+    if (branch.city || branch.branchCity) params.set("branchCity", branch.branchCity || branch.city || "");
+    if (branch.branchAddressLine1 || branch.address) params.set("branchAddress", branch.branchAddressLine1 || branch.address || "");
   }
   if (osEnablement) {
     params.set("currentOSEnablementId", osEnablement.id);

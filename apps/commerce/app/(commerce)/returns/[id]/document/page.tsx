@@ -3,7 +3,7 @@
 import { use } from "react";
 import { Printer, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useApp, fmtDate } from "@/lib/store";
+import { useApp, fmtDate, getBusinessBillingAddress, getBranchOperationalAddress } from "@/lib/store";
 
 export default function ReturnDocumentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -25,11 +25,14 @@ export default function ReturnDocumentPage({ params }: { params: Promise<{ id: s
   }
 
   const setup = getCommerceSetup();
+  const billingAddress = getBusinessBillingAddress(setup);
   const businessName = setup.displayName || setup.legalName || currentBU?.name || "Commerce Business";
   const order = allOrders.find((o) => o.id === ret.orderId);
   const invoice = ret.invoiceId ? allInvoices.find((inv) => inv.id === ret.invoiceId) : null;
   const customer = order?.customerId ? customers.find((c) => c.id === order.customerId) : null;
-  const branchName = BRANCHES.find((b) => b.id === ret.branchId)?.name || ret.branchId;
+  const branch = BRANCHES.find((b) => b.id === ret.branchId);
+  const branchName = branch?.name || ret.branchId;
+  const branchAddress = getBranchOperationalAddress(branch);
 
   return (
     <div style={{ minHeight: "100vh", background: "#e5e7eb", display: "flex", flexDirection: "column" }}>
@@ -65,9 +68,10 @@ export default function ReturnDocumentPage({ params }: { params: Promise<{ id: s
                 {setup.legalName && setup.legalName !== businessName && (
                   <div className="nx-invoice-muted">{setup.legalName}</div>
                 )}
-                {setup.address && <div className="nx-invoice-muted">{setup.address}{setup.city ? `, ${setup.city}` : ""}</div>}
+                {billingAddress.singleLine && <div className="nx-invoice-muted">{billingAddress.singleLine}</div>}
                 {setup.phone && <div className="nx-invoice-muted">{setup.phone}</div>}
                 <div className="nx-invoice-muted" data-testid="return-doc-branch">{t("branch")}: {branchName}</div>
+                {branchAddress.singleLine && <div className="nx-invoice-muted">{branchAddress.singleLine}</div>}
               </div>
             </div>
             <div className="nx-invoice-titleblock">

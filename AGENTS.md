@@ -1082,5 +1082,5 @@ If unsure, do not expand the architecture. Create a small spec and keep the MVP 
 ---
 
 <!-- SPECKIT START -->
-Active plan: specs/047-onboarding-flow-optimization-v2/plan.md
+Active plan: specs/048-business-commerce-setup-addresses/plan.md
 <!-- SPECKIT END -->

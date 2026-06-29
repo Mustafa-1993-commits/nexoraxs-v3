@@ -17,12 +17,21 @@ export interface CommerceSetup {
   legalName: string;
   phone: string;
   email: string;
+  /** Current MVP compatibility field. Treat as Business Billing Address line 1. */
   address: string;
+  /** Current MVP compatibility field. Treat as Business Billing City. */
   city: string;
+  /** Current MVP compatibility field. Treat as Business Billing Country. */
   country: string;
+  billingAddressLine1?: string;
+  billingAddressLine2?: string;
+  billingCity?: string;
+  billingCountry?: string;
+  billingPostalCode?: string;
   crn: string;
   trn: string;
   logo: string | null;
+  logoMediaAssetId?: string | null;
   presetId: string;
   businessType: string;
   preset: string;

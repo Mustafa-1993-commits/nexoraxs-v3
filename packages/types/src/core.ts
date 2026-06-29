@@ -42,8 +42,15 @@ export interface Branch {
   workspaceId: string;
   businessUnitId: string;
   name: string;
+  /** Current MVP compatibility field. Treat as Branch Address line 1. */
+  address?: string;
+  branchAddressLine1?: string;
+  branchAddressLine2?: string;
   city?: string;
+  branchCity?: string;
   country?: string;
+  branchCountry?: string;
+  postalCode?: string;
   currency?: string;
   isMain: boolean;
   createdAt: string;
@@ -102,6 +109,9 @@ export interface WorkspaceStorageUsage {
 
 export type MediaOwnerType =
   | "business_logo"
+  | "business_cover"
+  | "brand_image"
+  | "certificate"
   | "product_image"
   | "category_image"
   | "store_banner"

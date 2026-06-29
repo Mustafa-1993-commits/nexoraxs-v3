@@ -8,6 +8,7 @@ import type {
 import { OS_CATALOG, PLAN_CATALOG } from "./schema";
 
 export const DEFAULT_SETUP = {
+  // address/city/country are retained for existing mock data and mean Business Billing Address.
   displayName: "", legalName: "", phone: "", email: "", address: "", city: "", country: "Egypt",
   crn: "", trn: "", logo: null as string | null,
   presetId: "retail", businessType: "retail", preset: "retail", mode: "physical" as const,

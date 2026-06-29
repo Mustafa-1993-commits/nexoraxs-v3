@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useApp, type CommerceSetup, computeDoc } from "@/lib/store";
 import { OS_BU_PRESETS, DEFAULT_SETUP } from "@/lib/store";
+import { getBusinessBillingAddress, getBranchOperationalAddress, suggestCommercePresetForIndustry } from "@/lib/store";
 import type { OrderItem } from "@/lib/store";
 
 const SETUP_STEPS = ["Identity", "Preset", "Mode", "Tax", "Numbering", "Templates", "Categories", "Review"] as const;
@@ -111,12 +112,7 @@ function resolvePresetId(presetId: string): string {
 }
 
 function presetForIndustry(industryType: string): string {
-  const normalized = industryType.trim().toLowerCase();
-  if (normalized === "retail" || normalized === "retail_store") return "retail_store";
-  if (normalized === "restaurant_cafe") return "restaurant_cafe";
-  if (normalized === "electronics_mobile") return "electronics_mobile";
-  if (normalized === "clothing_fashion" || normalized === "clothing" || normalized === "fashion / clothing") return "clothing_fashion";
-  return INDUSTRY_OPTIONS.find((option) => option.id === normalized)?.presetId || "retail_store";
+  return suggestCommercePresetForIndustry(industryType);
 }
 
 function industryLabelFor(industryType: string | null | undefined): string {
@@ -270,6 +266,7 @@ function LogoUpload({ value, onChange, businessName }: { value: string | null; o
 function SetupReceiptPreview({ setup, items, money }: { setup: SetupDraft; items: OrderItem[]; money: (n: number) => string }) {
   const [previewDate, setPreviewDate] = useState("Preview date");
   const businessName = setup.displayName || "Commerce Business";
+  const billingAddress = getBusinessBillingAddress(setup);
   const d = computeDoc(items, setup, 0);
   const width = setup.receiptSize === "58mm" ? 230 : 300;
 
@@ -298,7 +295,7 @@ function SetupReceiptPreview({ setup, items, money }: { setup: SetupDraft; items
           <div className="nx-receipt-logo ph">{businessName.charAt(0)}</div>
         )}
         <div className="nx-receipt-biz">{businessName}</div>
-        {setup.address && <div className="nx-receipt-muted">{setup.address}</div>}
+        {billingAddress.singleLine && <div className="nx-receipt-muted">{billingAddress.singleLine}</div>}
         {setup.phone && <div className="nx-receipt-muted">Tel: {setup.phone}</div>}
         {setup.vatRegistered && <div className="nx-receipt-muted">{setup.taxLabel || "VAT"} Reg: {setup.taxNumber}</div>}
       </div>
@@ -348,6 +345,7 @@ function SetupReceiptPreview({ setup, items, money }: { setup: SetupDraft; items
 /* ---- Invoice preview (for tax/review steps) ---- */
 function SetupInvoicePreview({ setup, items, money }: { setup: SetupDraft; items: OrderItem[]; money: (n: number) => string }) {
   const businessName = setup.displayName || "Commerce Business";
+  const billingAddress = getBusinessBillingAddress(setup);
   const d = computeDoc(items, setup, 0);
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   return (
@@ -363,7 +361,7 @@ function SetupInvoicePreview({ setup, items, money }: { setup: SetupDraft; items
           <div>
             <div className="nx-invoice-biz">{businessName}</div>
             {setup.legalName && <div className="nx-invoice-muted">{setup.legalName}</div>}
-            {setup.address && <div className="nx-invoice-muted">{setup.address}</div>}
+            {billingAddress.singleLine && <div className="nx-invoice-muted">{billingAddress.singleLine}</div>}
             {setup.phone && <div className="nx-invoice-muted">{setup.phone}</div>}
           </div>
         </div>
@@ -456,6 +454,7 @@ export default function CommerceSetupPage() {
   const [industryType, setIndustryType] = useState<string>("retail");
   const [branchName, setBranchName] = useState("Main Branch");
   const [branchCity, setBranchCity] = useState("");
+  const [branchAddress, setBranchAddress] = useState("");
   const [manual, setManual] = useState<GeneratedFieldState>({
     displayName: false,
     legalName: false,
@@ -565,7 +564,14 @@ export default function CommerceSetupPage() {
       return;
     }
     try {
-      createBranch({ name, city: branchCity.trim() || undefined, country: currentWorkspace?.country, currency: currentWorkspace?.currency, isMain: true });
+      createBranch({
+        name,
+        city: branchCity.trim() || undefined,
+        address: branchAddress.trim() || undefined,
+        country: currentWorkspace?.country,
+        currency: currentWorkspace?.currency,
+        isMain: true,
+      });
     } catch (error) {
       if (error instanceof Error && error.message === "branch_name_exists") {
         showToast("A branch with this name already exists for this business.", "warn");
@@ -580,6 +586,8 @@ export default function CommerceSetupPage() {
   const presetLabel = presetMetaFor(businessType).label;
   const branchCityOptions = cityOptionsForCountry(currentWorkspace?.country);
   const identityCityOptions = cityOptionsForCountry(draft.country || currentWorkspace?.country);
+  const billingAddress = getBusinessBillingAddress(draft);
+  const operationalBranchAddress = getBranchOperationalAddress(currentBranch);
 
   if (isHydrated && !hasCommerceSetupContext) {
     return (
@@ -690,7 +698,7 @@ export default function CommerceSetupPage() {
               <Field label="Branch name">
                 <input className="nx-input" value={branchName} onChange={(e) => setBranchName(e.target.value)} placeholder="Main Branch" />
               </Field>
-              <Field label="City" optional>
+              <Field label="Branch City" optional>
                 <select
                   className="nx-input"
                   value={branchCity}
@@ -700,6 +708,14 @@ export default function CommerceSetupPage() {
                   <option value="">{currentWorkspace?.country ? "Select a city..." : "Select country first"}</option>
                   {branchCityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
                 </select>
+              </Field>
+              <Field label="Branch Address" optional>
+                <input
+                  className="nx-input"
+                  value={branchAddress}
+                  onChange={(e) => setBranchAddress(e.target.value)}
+                  placeholder="Street, building, area"
+                />
               </Field>
             </div>
             <div className="nx-onb-actions">
@@ -759,21 +775,21 @@ export default function CommerceSetupPage() {
                     <Field label="Phone"><input className="nx-input" value={draft.phone} onChange={(e) => upd({ phone: e.target.value })} placeholder="01000000000" /></Field>
                     <Field label="Email" optional><input className="nx-input" value={draft.email} onChange={(e) => upd({ email: e.target.value })} placeholder="store@business.com" /></Field>
                   </div>
-                  <Field label="Billing Address"><input className="nx-input" value={draft.address} onChange={(e) => upd({ address: e.target.value })} placeholder="Street, area" /></Field>
+                  <Field label="Billing Address"><input className="nx-input" value={draft.billingAddressLine1 ?? draft.address} onChange={(e) => upd({ address: e.target.value, billingAddressLine1: e.target.value })} placeholder="Street, area" /></Field>
                   <div className="nx-form-grid cols-2">
-                    <Field label="City" optional>
+                    <Field label="Billing City" optional>
                       <select
                         className="nx-input"
-                        value={draft.city}
-                        onChange={(e) => upd({ city: e.target.value })}
+                        value={draft.billingCity ?? draft.city}
+                        onChange={(e) => upd({ city: e.target.value, billingCity: e.target.value })}
                         disabled={!(draft.country || currentWorkspace?.country)}
                       >
                         <option value="">{draft.country || currentWorkspace?.country ? "Select a city..." : "Select country first"}</option>
                         {identityCityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
                       </select>
                     </Field>
-                    <Field label="Country">
-                      <select className="nx-input" value={draft.country} onChange={(e) => upd({ country: e.target.value })}>
+                    <Field label="Billing Country">
+                      <select className="nx-input" value={draft.billingCountry ?? draft.country} onChange={(e) => upd({ country: e.target.value, billingCountry: e.target.value })}>
                         <option value="">Select country…</option>
                         {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                       </select>
@@ -985,8 +1001,11 @@ export default function CommerceSetupPage() {
                     ["Workspace", currentWorkspace?.name || "—"],
                     ["Operating System", "Commerce OS"],
                     ["Business", draft.displayName || currentBU?.name || "—"],
+                    ["Branch", currentBranch?.name || "—"],
                     ["Industry Type", industryLabelFor(currentBU?.industryType)],
-                    ["Commerce preset", presetLabel],
+                    ["Commerce Preset", presetLabel],
+                    ["Billing Address", billingAddress.singleLine || "—"],
+                    ["Branch Address", operationalBranchAddress.singleLine || currentBranch?.city || "—"],
                     ["Operational mode", draft.mode === "physical" ? "Physical Store" : draft.mode === "online" ? "Online Store" : "Both"],
                     ["VAT", draft.vatRegistered ? `Enabled · ${draft.vatRate}%` : "Not registered"],
                     ["Prices", draft.pricesIncludeTax ? "Tax inclusive" : "Tax exclusive"],
@@ -1056,8 +1075,15 @@ function PresetStep({
   const rec = PRESET_RECOMMENDATION[resolvePresetId(businessType)];
 
   function pick(id: string) {
-    markManual(["preset", "categories"]);
-    upd({ presetId: id, businessType: id, preset: id, categories: categoriesForPreset(id) });
+    markManual(["preset", "categories", "templates"]);
+    upd({
+      presetId: id,
+      businessType: id,
+      preset: id,
+      categories: categoriesForPreset(id),
+      receiptStyle: "classic",
+      invoiceTemplate: "a4-simple",
+    });
     setEditing(false);
   }
 

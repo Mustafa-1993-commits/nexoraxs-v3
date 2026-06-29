@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ShoppingCart, FileText, Printer } from "lucide-react";
-import { useApp, computeDoc, fmtDate, readPosLastOrderId, clearPosLastOrderId } from "@/lib/store";
+import { useApp, computeDoc, fmtDate, readPosLastOrderId, clearPosLastOrderId, getBusinessBillingAddress, getBranchOperationalAddress } from "@/lib/store";
 import type { CommerceOrder, CommerceInvoice } from "@/lib/store";
 
 export default function POSSuccessPage() {
   const { orders, invoices, customers, money, getCommerceSetup, currentBranch, t } = useApp();
   const setup = getCommerceSetup();
+  const billingAddress = getBusinessBillingAddress(setup);
+  const branchAddress = getBranchOperationalAddress(currentBranch);
   const businessName = setup.displayName || setup.legalName || "Commerce Business";
   const [order, setOrder] = useState<CommerceOrder | null>(null);
   const [invoice, setInvoice] = useState<CommerceInvoice | null>(null);
@@ -127,7 +129,8 @@ export default function POSSuccessPage() {
                 )}
                 <div className="nx-receipt-biz">{businessName}</div>
                 {currentBranch?.name && <div className="nx-receipt-muted">{currentBranch.name}</div>}
-                {setup.address && <div className="nx-receipt-muted">{setup.address}</div>}
+                {branchAddress.singleLine && <div className="nx-receipt-muted">{branchAddress.singleLine}</div>}
+                {!branchAddress.singleLine && billingAddress.singleLine && <div className="nx-receipt-muted">{billingAddress.singleLine}</div>}
                 {setup.phone && <div className="nx-receipt-muted">Tel: {setup.phone}</div>}
                 {setup.vatRegistered && setup.taxNumber && (
                   <div className="nx-receipt-muted">{setup.taxLabel || "VAT"} Reg: {setup.taxNumber}</div>

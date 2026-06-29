@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Settings, Building2, FileText, Tag, Ruler, Printer, ArrowRight, MapPin, Plus, Check, X, CircleAlert } from "lucide-react";
-import { prettyPreset, useApp } from "@/lib/store";
+import { getBranchOperationalAddress, prettyPreset, useApp } from "@/lib/store";
 
 function branchSlug(name: string) {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "branch";
@@ -17,6 +17,7 @@ export default function CommerceSettingsPage() {
   const [showAddBranch, setShowAddBranch] = useState(false);
   const [branchName, setBranchName] = useState("");
   const [branchCity, setBranchCity] = useState("");
+  const [branchAddress, setBranchAddress] = useState("");
   const [branchErr, setBranchErr] = useState("");
 
   function saveBranch() {
@@ -26,7 +27,7 @@ export default function CommerceSettingsPage() {
       return;
     }
     try {
-      addBranch({ name, city: branchCity.trim() || undefined });
+      addBranch({ name, city: branchCity.trim() || undefined, address: branchAddress.trim() || undefined });
     } catch (error) {
       if (error instanceof Error && error.message === "branch_name_exists") {
         setBranchErr("A branch with this name already exists for this business.");
@@ -37,12 +38,13 @@ export default function CommerceSettingsPage() {
     showToast(`Branch "${name}" added.`, "success");
     setBranchName("");
     setBranchCity("");
+    setBranchAddress("");
     setBranchErr("");
     setShowAddBranch(false);
   }
 
   const sections = [
-    { icon: <Building2 size={20} />, title: "Business Identity", desc: "Display name, legal name, contact info and address.", href: "/setup" },
+    { icon: <Building2 size={20} />, title: "Business Identity", desc: "Business-level display name, legal name, contact info and Billing Address.", href: "/setup" },
     { icon: <Settings size={20} />, title: "Operational Mode", desc: `Currently: ${setup.mode === "physical" ? "Physical Store" : setup.mode === "online" ? "Online Store" : "Both"}`, href: "/setup" },
     { icon: <FileText size={20} />, title: "Tax & VAT", desc: setup.vatRegistered ? `VAT enabled at ${setup.vatRate}%` : "Not registered for VAT", href: "/setup" },
     { icon: <FileText size={20} />, title: "Numbering", desc: `Invoices: ${setup.invoicePrefix}-${setup.invoiceStart} · Receipts: ${setup.receiptPrefix}-${setup.receiptStart}`, href: "/setup" },
@@ -79,7 +81,7 @@ export default function CommerceSettingsPage() {
 
         {workspaceStorageUsage && (
           <div style={{ marginTop: 16, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "16px 18px", boxShadow: "var(--sh-sm)" }}>
-            <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 8 }}>Media storage used by this business</div>
+            <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 8 }}>Business Resources storage</div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
               <span style={{ fontSize: 13, color: "var(--text-2)" }}>{t("media_storage_used")}</span>
               <span style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>{storageUsageLabel}</span>
@@ -97,7 +99,7 @@ export default function CommerceSettingsPage() {
             <button
               className="nx-btn nx-btn-secondary nx-btn-sm"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-              onClick={() => { setBranchName(""); setBranchCity(""); setBranchErr(""); setShowAddBranch(true); }}
+              onClick={() => { setBranchName(""); setBranchCity(""); setBranchAddress(""); setBranchErr(""); setShowAddBranch(true); }}
               data-testid="add-branch-button"
             >
               <Plus size={14} />Add Branch
@@ -114,7 +116,12 @@ export default function CommerceSettingsPage() {
                   <span className="nx-choice-ic" style={{ width: 32, height: 32 }}><MapPin size={15} /></span>
                   <span style={{ flex: 1, textAlign: "left" }}>
                     <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }} data-testid="branch-card-name">{br.name}{br.isMain ? " · Main" : ""}</span>
-                    {br.city && <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }} data-testid="branch-card-city">{br.city}</span>}
+                    {(() => {
+                      const branchAddressInfo = getBranchOperationalAddress(br);
+                      return branchAddressInfo.singleLine
+                        ? <span style={{ display: "block", fontSize: 12, color: "var(--text-3)" }} data-testid="branch-card-city">{branchAddressInfo.singleLine}</span>
+                        : null;
+                    })()}
                   </span>
                   {br.id === currentBranch?.id && <Check size={16} style={{ color: "var(--accent)" }} />}
                 </button>
@@ -144,9 +151,15 @@ export default function CommerceSettingsPage() {
                     {branchErr && <span className="nx-field-error"><CircleAlert size={13} />{branchErr}</span>}
                   </label>
                   <label className="nx-field">
-                    <span className="nx-field-label">City<span className="nx-field-optional">Optional</span></span>
+                    <span className="nx-field-label">Branch City<span className="nx-field-optional">Optional</span></span>
                     <span className="nx-input-wrap">
                       <input className="nx-input" placeholder="e.g. Cairo" value={branchCity} onChange={(e) => setBranchCity(e.target.value)} data-testid="branch-city-input" />
+                    </span>
+                  </label>
+                  <label className="nx-field">
+                    <span className="nx-field-label">Branch Address<span className="nx-field-optional">Optional</span></span>
+                    <span className="nx-input-wrap">
+                      <input className="nx-input" placeholder="Street, building, area" value={branchAddress} onChange={(e) => setBranchAddress(e.target.value)} data-testid="branch-address-input" />
                     </span>
                   </label>
                   <div className="nx-row" style={{ gap: 10, marginTop: 4 }}>

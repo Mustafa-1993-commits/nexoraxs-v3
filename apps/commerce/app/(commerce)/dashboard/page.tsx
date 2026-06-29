@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { nxRevenue, nxOrdersForPeriod, nxBestSellers, nxOrderDate, nxReturnsForPeriod, nxNetSales } from "@/lib/store";
+import { getBusinessBillingAddress } from "@/lib/store";
 
 type Period = "today" | "week" | "month";
 const PERIOD_LABELS: Record<Period, string> = { today: "Today", week: "Week", month: "Month" };
@@ -37,8 +38,9 @@ export default function CommerceDashboardPage() {
   const [period, setPeriod] = useState<Period>("today");
 
   const setup = getCommerceSetup();
+  const billingAddress = getBusinessBillingAddress(setup);
   const checklist = [
-    { label: "Business identity", done: !!(setup.displayName && setup.address) },
+    { label: "Business identity & Billing Address", done: !!(setup.displayName && billingAddress.singleLine) },
     { label: "Tax setup", done: setup.vatRegistered !== undefined && !!setup.taxNumber },
     { label: "Invoice template", done: !!setup.invoiceTemplate },
     { label: "First product", done: products.length > 0 },

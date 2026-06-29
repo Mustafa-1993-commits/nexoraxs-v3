@@ -1,6 +1,7 @@
 import type {
   CommerceCustomer, CommerceOrder, CommerceProduct, WorkspaceStorageUsage,
   BranchInventory, CommerceReturn, Branch, BusinessUnit, OSEnablement, OSSubscription,
+  CommerceSetup,
 } from "@nexoraxs/types";
 import type { Lang } from "./schema";
 import { nowISO, uid } from "./actions";
@@ -299,6 +300,7 @@ export function isOSEnabledForBusiness(
 export function industryTypeFromPreset(preset: string | null | undefined): string {
   const value = normalizeId(preset);
   if (!value) return "other";
+  if (value === "retail_store") return "retail";
   if (value === "restaurant_cafe") return "restaurant";
   if (value === "electronics_mobile") return "electronics";
   if (value === "clothing_fashion") return "fashion";
@@ -307,6 +309,71 @@ export function industryTypeFromPreset(preset: string | null | undefined): strin
 
 export function getBusinessIndustryType(businessUnit: Pick<BusinessUnit, "industryType" | "presetId" | "preset"> | null | undefined): string {
   return businessUnit?.industryType || industryTypeFromPreset(businessUnit?.presetId || businessUnit?.preset);
+}
+
+export function suggestCommercePresetForIndustry(industryType: string | null | undefined): string {
+  const value = normalizeId(industryType)?.toLowerCase().replace(/\s*\/\s*/g, "_").replace(/[\s-]+/g, "_");
+  if (!value) return "retail_store";
+  if (value === "retail" || value === "retail_store") return "retail_store";
+  if (value === "pharmacy") return "pharmacy";
+  if (value === "supermarket") return "supermarket";
+  if (value === "restaurant" || value === "restaurant_cafe" || value === "cafe") return "restaurant_cafe";
+  if (value === "electronics" || value === "electronics_mobile" || value === "mobile") return "electronics_mobile";
+  if (value === "fashion" || value === "clothing" || value === "clothing_fashion" || value === "fashion_clothing") return "clothing_fashion";
+  if (value === "cosmetics") return "cosmetics";
+  if (value === "medical_supplies") return "medical_supplies";
+  return "retail_store";
+}
+
+export interface ResolvedAddress {
+  line1: string;
+  line2: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  lines: string[];
+  singleLine: string;
+}
+
+function compactAddress(input: {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+}): ResolvedAddress {
+  const line1 = input.line1?.trim() || "";
+  const line2 = input.line2?.trim() || "";
+  const city = input.city?.trim() || "";
+  const country = input.country?.trim() || "";
+  const postalCode = input.postalCode?.trim() || "";
+  const lines = [
+    line1,
+    line2,
+    [city, postalCode].filter(Boolean).join(" "),
+    country,
+  ].filter(Boolean);
+  return { line1, line2, city, country, postalCode, lines, singleLine: lines.join(", ") };
+}
+
+export function getBusinessBillingAddress(setup: Partial<CommerceSetup> | null | undefined): ResolvedAddress {
+  return compactAddress({
+    line1: setup?.billingAddressLine1 || setup?.address,
+    line2: setup?.billingAddressLine2,
+    city: setup?.billingCity || setup?.city,
+    country: setup?.billingCountry || setup?.country,
+    postalCode: setup?.billingPostalCode,
+  });
+}
+
+export function getBranchOperationalAddress(branch: Partial<Branch> | null | undefined): ResolvedAddress {
+  return compactAddress({
+    line1: branch?.branchAddressLine1 || branch?.address,
+    line2: branch?.branchAddressLine2,
+    city: branch?.branchCity || branch?.city,
+    country: branch?.branchCountry || branch?.country,
+    postalCode: branch?.postalCode,
+  });
 }
 
 export function ensureCommerceBusinessEnablement(input: {
