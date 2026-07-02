@@ -205,7 +205,7 @@ api.nexoraxs.com        → Backend API
 
 ### Business naming rule
 
-Use **Business** in the UI when it improves clarity for the user.
+Use **Business** in the UI.
 
 Use **BusinessUnit** in architecture, types, data contracts, storage, and backend.
 
@@ -243,6 +243,7 @@ Rules:
 - Buying an OS plan creates an `OSSubscription`.
 - Launching/setup for a business creates an `OSEnablement`.
 - Product Hub must display subscription state and setup/enablement state separately.
+- Product Hub must distinguish availability state (`available`, `coming soon`, `locked`), subscription state (`not subscribed`, `subscribed`, `trial`, `active`, `past due`, `cancelled`), and enablement state (`not enabled`, `setup required`, `active`, `disabled`).
 - OSEnablement references:
   - `workspaceId`
   - `osId`
@@ -1287,11 +1288,7 @@ If unsure, do not expand the architecture. Create a small spec and keep the MVP 
 ---
 
 <!-- SPECKIT START -->
-<<<<<<< Updated upstream
-Active plan: specs/044-commerce-relationships-branches-transfers-returns/plan.md
-=======
 Active plan: specs/049-onboarding-architecture-v2/plan.md
->>>>>>> Stashed changes
 <!-- SPECKIT END -->
 
 
@@ -1302,13 +1299,20 @@ Architecture Goals
 - Multi-Business
 - Multi-Branch
 - Multi-Operating System
+- Product Hub as Operating System entry point
+- OSSubscription and OSEnablement separation
 
 Rules
 
 - Business (BusinessUnit internally) owns one or more Branches.
+- UI uses Business; internal model remains BusinessUnit.
+- BusinessUnit, BU, and Default Business Unit must not appear in user-facing UI.
 - Branch represents the operational scope only.
-- The platform architecture must support multiple Branches per Business from day one, even if the MVP initially exposes only a Main Branch.
+- Business is visible from onboarding.
+- The platform architecture must support multiple Branches per Business from day one.
+- Every operational Business must have exactly one Main Branch.
 - OSEnablement may target workspace, business, or branch scope depending on the Operating System.
+- Spec 049 freezes onboarding architecture after approval.
 
 ### Spec 049 Additional Acceptance Criteria
 
@@ -1316,3 +1320,4 @@ Rules
 - Multi-Branch architecture-ready.
 - Branches belong to Business (BusinessUnit internally).
 - OSEnablement supports workspace, business, and branch scopes.
+- Future specs must extend Spec 049 concepts unless an Architecture RFC is approved.
