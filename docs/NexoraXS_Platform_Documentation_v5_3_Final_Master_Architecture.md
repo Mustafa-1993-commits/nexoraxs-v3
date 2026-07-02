@@ -1,9 +1,9 @@
 # NexoraXS Platform Documentation
 
-**Version:** 5.3 Final Master Architecture  
+**Version:** 5.3.2 Final Master Architecture — Onboarding Alignment  
 **Prepared For:** NexoraXS Business Operating Platform  
 **Official Domain:** https://www.nexoraxs.com  
-**Status:** Final Master Architecture — Architecture Freeze Ready
+**Status:** Final Master Architecture — Architecture Freeze Ready + v5.3.2 Onboarding Alignment
 
 ---
 
@@ -926,6 +926,240 @@ Every operational OS must be branch-aware where applicable.
 - Medical departments by branch
 
 ---
+
+
+
+## 11AA. Spec 049 — Onboarding Architecture v2
+
+`049-onboarding-architecture-v2` locks the final onboarding direction. It is limited to onboarding architecture, Product Hub, OS subscription/enablement state, and Commerce setup entry. It must not change Commerce operational modules such as POS, Products, Inventory, Orders, Customers, Reports, Returns, or Transfers except where navigation/context wiring is required.
+
+After Spec 049 is implemented, onboarding architecture is frozen. Later specs should be feature specs, not redesigns of the core onboarding journey.
+
+## 11A. MVP Business Onboarding Journey
+
+The MVP onboarding flow is a UX/product-flow alignment built on top of the existing Workspace / Business Unit / Branch architecture. It does not change the core architecture.
+
+### Final MVP onboarding flow
+
+```text
+Sign Up / Login
+→ Welcome + Language
+→ Create Workspace
+→ Create Business (UI label; includes Business Activity)
+→ Product Hub / OS Launcher
+→ Launch Commerce OS
+→ Choose Commerce Plan
+→ Commerce Setup
+→ Auto Configuration
+→ Commerce Dashboard
+```
+
+### Local development routing
+
+```text
+Core Platform / Product Hub     → localhost:3001
+Commerce OS Setup + Dashboard   → localhost:3002
+```
+
+Production domains remain mapped by application domain:
+
+```text
+app.nexoraxs.com        → Core Platform / Product Hub
+commerce.nexoraxs.com   → Commerce OS Setup + Dashboard
+api.nexoraxs.com        → Backend API
+```
+
+### Business vs Business Unit terminology
+
+For UX simplicity, the user-facing MVP may use the word **Business**.
+
+Architecturally and in the data model, this remains **Business Unit**.
+
+```text
+User sees:      Business
+System stores:  BusinessUnit
+```
+
+The platform must not introduce a second entity that duplicates Business Unit. `Business` is a UX label only.
+
+### Address ownership rule
+
+Address-like fields have distinct ownership and must not be treated as duplicates.
+
+- Workspace country, currency, and timezone are workspace defaults.
+- Branch address/city is the operational location.
+- Commerce billing address/city/country is for invoices and legal documents.
+- Billing address may default from branch/workspace, but user edits must be preserved.
+
+### Business Activity recommendation rule
+
+Business Activity is used to recommend suitable Operating Systems. It must never force Operating System subscriptions.
+
+```text
+Business Activity
+→ Recommendation Engine
+→ Suggested OS cards
+→ User chooses which OS to activate
+```
+
+Examples:
+
+```text
+Pharmacy
+→ Commerce OS recommended
+→ HR OS optional
+→ Healthcare OS optional / future
+→ Maintenance OS optional / future
+
+Gym
+→ Gym OS recommended / future
+→ CRM OS optional / future
+→ HR OS optional / future
+
+Fashion
+→ Commerce OS recommended
+→ CRM OS optional / future
+→ HR OS optional / future
+```
+
+Future OS products may be shown as Coming Soon, locked, or optional, but must not distract from the Commerce OS MVP.
+
+### Product Hub ownership
+
+Product Hub belongs to Core Platform. It is responsible for:
+
+- showing OS subscription states;
+- showing OS setup/enablement states;
+- showing recommended, active, trial, locked, and coming-soon OS products;
+- launching the selected OS app;
+- routing users to the correct OS-specific setup if that OS has not been configured.
+
+Product Hub must not contain OS business logic. OS business logic remains inside the owning OS.
+
+### OS Subscription vs OS Enablement
+
+OSSubscription and OSEnablement are separate first-class architecture concepts.
+
+```text
+OSSubscription = workspace-level license and billing record
+OSEnablement   = operational activation of an OS for a workspace, business, or branch scope
+```
+
+Rules:
+
+- Buying an OS plan creates an `OSSubscription`.
+- Launching/setup for a business creates an `OSEnablement`.
+- Product Hub must display subscription state and setup/enablement state separately.
+- OSEnablement references:
+  - `workspaceId`
+  - `osId`
+  - `osSubscriptionId`
+  - `scope: workspace | business | branch`
+  - `businessUnitId` optional depending on scope
+  - `branchIds` optional depending on scope
+  - `status: setup_required | active | disabled`
+
+Example Product Hub interpretation:
+
+```text
+Commerce OS
+Subscription: active
+Enablement: setup_required for Mustafa Pharmacy
+Action: Complete Setup
+```
+
+### OS-specific Setup Experience
+
+Every Operating System owns its own setup experience.
+
+```text
+Core Platform
+→ Product Hub
+→ Launch selected OS
+→ OS-specific Setup Experience
+→ OS Dashboard
+```
+
+Core Platform may collect generic workspace/business/branch context, but setup steps that belong to an OS must run inside that OS.
+
+Examples:
+
+```text
+Commerce OS Setup
+→ Business Identity
+→ Selling Mode
+→ Tax Settings
+→ Preset Defaults
+→ Review & Launch
+
+HR OS Setup future
+→ Company Structure
+→ Departments
+→ Attendance Rules
+→ Leave Policies
+→ Review & Launch
+
+Gym OS Setup future
+→ Membership Defaults
+→ Working Hours
+→ Trainers / Classes Defaults
+→ Review & Launch
+```
+
+### Preset ownership rule
+
+Business Activity may suggest a default preset, but every OS owns and applies its own preset.
+
+```text
+Business Activity: Pharmacy
+→ Commerce OS loads Commerce Pharmacy Preset
+→ HR OS may later load HR Retail Pharmacy Preset
+→ Healthcare OS may later load Healthcare Pharmacy Integration Preset
+```
+
+A Business Activity must not own modules, hardcode workflows, or create application boundaries.
+
+### Commerce MVP setup simplification
+
+Commerce OS MVP setup should be concise. The preferred MVP flow is:
+
+```text
+Commerce Setup Experience
+→ Choose Commerce Plan
+→ Business Identity
+→ Commerce Preset
+→ Main Branch + Tax
+→ Review & Launch
+→ Auto Configuration
+```
+
+### CommerceSetup ownership
+
+CommerceSetup belongs to BusinessUnit. It must not be modeled as a child of Branch.
+
+Branch is the operational scope for POS, inventory, orders, invoices, reports, transfers, and returns.
+
+CommerceSetup owns:
+
+- commerce preset;
+- billing/legal identity;
+- tax configuration;
+- numbering;
+- templates;
+- categories;
+- units;
+- selling mode.
+
+The following may be seeded automatically from the Commerce preset and moved to Settings for later editing:
+
+- categories;
+- units;
+- document templates;
+- invoice / receipt numbering;
+- suggested modules;
+- optional sample products.
+
+Advanced preset-driven capabilities such as expiry tracking, batch tracking, kitchen workflows, IMEI tracking, supplier purchases, and healthcare prescription integration remain recommended, locked, coming soon, or plan-gated until implemented.
 
 ## 11. Product Hub / OS Launcher
 
@@ -2451,3 +2685,26 @@ UI labels may display “Coming Soon”, “Subscribe”, “Start Trial”, “
 - Arabic and English support must be planned from day one across UI, documents, invoices, reports, and notifications.
 - Integrations must be optional and must preserve domain ownership.
 - No OS may duplicate another OS core domain.
+
+
+## Multi-Branch Architecture Goal (Spec 049 Addition)
+
+Architecture Goals
+
+- Multi-Business
+- Multi-Branch
+- Multi-Operating System
+
+Rules
+
+- Business (BusinessUnit internally) owns one or more Branches.
+- Branch represents the operational scope only.
+- The platform architecture must support multiple Branches per Business from day one, even if the MVP initially exposes only a Main Branch.
+- OSEnablement may target workspace, business, or branch scope depending on the Operating System.
+
+### Spec 049 Additional Acceptance Criteria
+
+- Multi-Business architecture-ready.
+- Multi-Branch architecture-ready.
+- Branches belong to Business (BusinessUnit internally).
+- OSEnablement supports workspace, business, and branch scopes.

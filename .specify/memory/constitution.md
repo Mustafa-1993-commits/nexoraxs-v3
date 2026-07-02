@@ -1,7 +1,7 @@
 # NexoraXS Constitution
 
-**Version:** 1.3.0  
-**Last Amended:** 2026-06-03  
+**Version:** 1.3.2  
+**Last Amended:** 2026-07-01  
 **Architecture Alignment:** NexoraXS v5.3 Final Master Architecture — Architecture Freeze Ready  
 **Status:** Active governance document
 
@@ -206,6 +206,108 @@ A user invited to a workspace does not automatically gain access to every OS, Bu
 
 ---
 
+
+
+## Article VIB — OS Subscription and OS Enablement
+
+OSSubscription and OSEnablement are first-class architecture concepts and must not be collapsed into a single state.
+
+Definitions:
+
+```txt
+OSSubscription = workspace-level license and billing record.
+OSEnablement   = operational activation of an OS for a workspace, business, or branch scope.
+```
+
+Rules:
+
+- Buying an OS plan creates an OSSubscription.
+- Launching/setup for a business creates an OSEnablement.
+- OSEnablement references:
+  - `workspaceId`
+  - `osId`
+  - `osSubscriptionId`
+  - `scope: workspace | business | branch`
+  - `businessUnitId` optional depending on scope
+  - `branchIds` optional depending on scope
+  - `status: setup_required | active | disabled`
+- Product Hub must display subscription state and setup/enablement state separately.
+
+OSSubscription answers: “Has this workspace licensed this OS?”
+
+OSEnablement answers: “Where is this OS operationally active, and is setup complete?”
+
+## Article VIA — Business Onboarding and OS Recommendation
+
+The MVP onboarding flow must be business-first, not OS-first.
+
+Required onboarding direction:
+
+```txt
+Sign Up / Login
+→ Welcome + Language
+→ Create Workspace
+→ Create Business (UI label; includes Business Activity)
+→ Product Hub
+→ Launch Commerce OS
+→ Choose Commerce Plan
+→ Commerce Setup
+→ Auto Configuration
+→ Commerce Dashboard
+```
+
+### Business terminology rule
+
+The UI may use the label **Business** for simplicity.
+
+The data model and architecture must continue to use **Business Unit**.
+
+```txt
+User-facing label: Business
+Architectural entity: Business Unit
+```
+
+No separate `Business` entity may be introduced if it duplicates Business Unit.
+
+### Business Activity rule
+
+Business Activity is a recommendation input only.
+
+It may recommend suitable Operating Systems and presets, but it must never force an OS subscription or create a hard dependency between OS products.
+
+```txt
+Business Activity
+→ Recommendation Engine
+→ Suggested OS products
+→ User chooses OS products
+```
+
+### Product Hub rule
+
+Product Hub belongs to Core Platform.
+
+Product Hub may show recommended, active, trial, locked, and coming-soon OS products. It must display subscription state separately from setup/enablement state, but it must not contain OS business logic.
+
+### OS-specific Setup rule
+
+Each Operating System owns its own setup experience, preset application, setup steps, and domain defaults.
+
+Core Platform may collect shared context such as Workspace, Business Unit, Branch, and OS subscription state, but it must not implement Commerce, HR, Gym, CRM, Maintenance, or Healthcare setup logic.
+
+### Preset ownership rule
+
+Business Activity may suggest a default preset, but presets are owned and applied by the selected OS.
+
+Examples:
+
+```txt
+Pharmacy + Commerce OS → Commerce Pharmacy Preset
+Gym + Gym OS → Gym Default Preset
+Clinic + Healthcare OS → Healthcare Clinic Preset
+```
+
+Presets must not own modules, must not hardcode workflows, and must not create separate applications.
+
 ## Article VII — Pricing and Plan Limits
 
 Each OS has independent plans and limits.
@@ -332,6 +434,30 @@ Pharmacy belongs to Commerce OS because it is operationally product, inventory, 
 Healthcare owns clinical workflows, not pharmacy retail sales.
 
 ---
+
+## Article IXA — CommerceSetup and Address Ownership
+
+CommerceSetup belongs to BusinessUnit. It must not be modeled as a child of Branch.
+
+Branch is operational scope for POS, inventory, orders, invoices, reports, transfers, and returns.
+
+CommerceSetup owns:
+
+- commerce preset
+- billing/legal identity
+- tax configuration
+- numbering
+- templates
+- categories
+- units
+- selling mode
+
+Address ownership rules:
+
+- Workspace country/currency/timezone are workspace defaults.
+- Branch address/city is operational location.
+- Commerce billing address/city/country is for invoices/legal documents.
+- Billing address may default from branch/workspace, but user edits must be preserved.
 
 ## Article X — Cross-OS Data Ownership
 
@@ -531,3 +657,26 @@ Before proposing or writing code, every agent must verify:
 - Can it be UI/mock first?
 
 When in doubt, keep the scope smaller and create a spec.
+
+
+## Multi-Branch Architecture Goal (Spec 049 Addition)
+
+Architecture Goals
+
+- Multi-Business
+- Multi-Branch
+- Multi-Operating System
+
+Rules
+
+- Business (BusinessUnit internally) owns one or more Branches.
+- Branch represents the operational scope only.
+- The platform architecture must support multiple Branches per Business from day one, even if the MVP initially exposes only a Main Branch.
+- OSEnablement may target workspace, business, or branch scope depending on the Operating System.
+
+### Spec 049 Additional Acceptance Criteria
+
+- Multi-Business architecture-ready.
+- Multi-Branch architecture-ready.
+- Branches belong to Business (BusinessUnit internally).
+- OSEnablement supports workspace, business, and branch scopes.

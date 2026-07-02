@@ -1,189 +1,846 @@
-# Feature Specification: Business-Level Commerce Setup, Address Separation, and Business Resources
+# Spec 048: Business-Level Commerce Setup + Address Separation + Business Resources
 
-**Feature Branch**: `047-feat/onboarding-flow-optimization-v2`
-**Created**: 2026-06-25
-**Status**: Draft
-**Input**: User description: "048-business-commerce-setup-addresses - Business-Level Commerce Setup + Address Separation + Business Resources"
+## Feature
+Business-Level Commerce Setup + Address Separation + Business Resources
 
-## User Scenarios & Testing
+## Spec ID
+`048-business-commerce-setup-addresses`
 
-### User Story 1 - Commerce setup is business-level (Priority: P1)
+## Goal
+Implement and document the business-level Commerce setup model for NexoraXS, based on the Target Architecture v2.0 decisions from Spec 047.
 
-As a workspace owner configuring Commerce OS, I need Commerce setup to apply to the selected Business, not to a single Branch, so multiple branches under the same business can share identity, tax, presets, templates, and defaults.
+This spec applies selected architecture decisions into the MVP implementation without creating a second architecture source of truth.
 
-**Why this priority**: This is the core architecture correction for Spec 048 and prevents branch-level data from becoming the source of truth for business-wide Commerce configuration.
+## Main focus areas
+1. Commerce Setup belongs to Business, not Branch.
+2. Workspace Address, Business Billing Address, and Branch Address are separate concepts.
+3. Business Industry Type is separate from Commerce Preset.
+4. Commerce Preset follows Suggestion → User Confirmation → Apply.
+5. Business Resources becomes the expandable business-level resource concept.
+6. Business Settings are separate from Commerce Setup and Branch settings.
+7. OSEnablement ownership is clarified as the bridge between OSSubscription and Business/Workspace/Branch usage.
+8. Workspace Employees and Business Employees are not the same concept.
+9. Business Warehouses are documented as future-ready.
+10. Existing Core Platform + Commerce MVP must continue working.
 
-**Independent Test**: Create or select a Business with one or more Branches, complete Commerce setup, and verify the setup is associated with the Business while Branch data remains operational context only.
-
-**Acceptance Scenarios**:
-
-1. **Given** Workspace "Mustafa Group" has Business "Mustafa Fashion" and Branch "Nasr City Branch", **When** Commerce setup is completed, **Then** the setup is saved for "Mustafa Fashion" and not exclusively for "Nasr City Branch".
-2. **Given** a Business has multiple Branches, **When** Commerce identity, tax, templates, categories, and numbering are reviewed, **Then** those values are treated as shared Business-level Commerce configuration.
-3. **Given** Branch information is shown in POS or operational context, **When** Commerce setup identity is displayed, **Then** the Business name and Branch name remain separate and are not concatenated.
-
----
-
-### User Story 2 - Addresses are separated by ownership and purpose (Priority: P1)
-
-As an operator, I need Workspace Address, Business Billing Address, and Branch Address to be distinct concepts, so legal documents, platform account data, and operational locations do not overwrite or confuse each other.
-
-**Why this priority**: Existing ambiguous address labels can cause invoice, receipt, branch, and workspace information to be mixed incorrectly.
-
-**Independent Test**: Review or complete setup with separate Workspace, Business Billing, and Branch address values and verify each appears only in its appropriate context.
-
-**Acceptance Scenarios**:
-
-1. **Given** Business Billing Address is present, **When** invoices or tax documents render business identity, **Then** they use the Business Billing Address as the legal/business document address.
-2. **Given** Branch Address is present, **When** POS or branch context renders operational location, **Then** it uses Branch name/address and does not overwrite Business Billing Address.
-3. **Given** existing MVP records only contain generic address, city, or country fields, **When** the data is read, **Then** those fields are treated as Billing Address fallback values without breaking existing records.
+## Important constraints
+- This is architecture/data-flow alignment, not a UI redesign.
+- Do not start Laravel/backend work.
+- Do not break current Core Platform + Commerce MVP.
+- Do not remove current mock-db/localStorage behavior.
+- Do not import from `docs/claude.aidesign` at runtime.
+- Do not rename all `BusinessUnit` symbols globally unless safe.
+- Current `BusinessUnit` in code may continue to represent Business internally.
+- User-facing copy should say Business, Store, Activity, Branch, or Location.
+- Never show “Default Business Unit” in the UI.
 
 ---
 
-### User Story 3 - Industry Type suggests, but does not force, Commerce Preset (Priority: P1)
+## 0. Dependency on Spec 047
+Spec 047 is the source of truth for Target Architecture v2.0.
 
-As a business owner, I need Industry Type to classify the Business and Commerce Preset to configure Commerce OS separately, so I can accept or change the suggested Commerce setup without corrupting the Business classification.
+Spec 048 must not redefine or contradict Spec 047. It only applies and clarifies selected decisions from Spec 047:
+- Business-level Commerce Setup
+- Address separation
+- Industry Type vs Commerce Preset
+- Preset suggestion and confirmation flow
+- Business Resources
+- Business Settings
+- OSEnablement ownership clarification
+- Business Employees vs Workspace Employees
+- Business Warehouses
+- Branch operational ownership
 
-**Why this priority**: Spec 047 established Industry Type and Commerce Preset as separate concepts; Spec 048 applies that separation to setup behavior.
-
-**Independent Test**: Select a Business Industry Type, observe the suggested Commerce Preset, choose a different preset, and verify both values remain independently stored and displayed.
-
-**Acceptance Scenarios**:
-
-1. **Given** Business "Mustafa Pharmacy" has Industry Type "Pharmacy", **When** the Commerce Preset step opens, **Then** "Pharmacy" is suggested as the recommended preset.
-2. **Given** the suggested preset is "Pharmacy", **When** the user chooses "Generic Retail" instead, **Then** Business Industry Type remains "Pharmacy" and Commerce Preset becomes "Generic Retail".
-3. **Given** a Commerce Preset has been manually confirmed, **When** Industry Type changes before setup completion, **Then** the system does not overwrite the confirmed preset unless the user confirms a new preset.
-
----
-
-### User Story 4 - Business-level resources, settings, employees, warehouses, and OS enablement are clarified (Priority: P2)
-
-As a product or engineering stakeholder, I need the ownership boundaries for Business Resources, Business Settings, employees, warehouses, and OSEnablement documented clearly, so future work extends the MVP without creating a second architecture model.
-
-**Why this priority**: These concepts shape future implementation, but most should remain documentation or low-risk type/data alignment in this spec.
-
-**Independent Test**: Review the implementation documentation and current data flow notes to verify every concept has one clear owner and does not contradict Spec 047.
-
-**Acceptance Scenarios**:
-
-1. **Given** Business logo, brand image, certificate, or document asset needs storage, **When** it is described in the architecture, **Then** it is treated as a Business Resource scoped to Business and consuming Workspace storage quota.
-2. **Given** users or staff are discussed, **When** Workspace Employees and Business Employees are described, **Then** workspace-level staff and business-level operational staff are not treated as the same concept.
-3. **Given** Commerce OS is subscribed at Workspace level, **When** the OS is enabled for a Business, **Then** OSEnablement is described as the bridge from OSSubscription to the actual usage target.
-4. **Given** warehouses are future inventory locations, **When** they are documented, **Then** they belong to Business and do not force a warehouse UI into the MVP.
+If a conflict exists:
+- Spec 047 wins for core architecture.
+- Spec 048 must be updated to align with Spec 047.
 
 ---
 
-### User Story 5 - Existing MVP remains compatible (Priority: P1)
+## 1. Golden Rules
+1. Workspace owns global resources.
+2. Business owns business configuration and identity.
+3. Branch owns operational execution.
+4. Commerce Setup configures the Business for Commerce OS.
+5. OSEnablement connects purchased software to the Business, Workspace, or Branch where it is used.
 
-As an existing MVP user, I need current Core Platform and Commerce OS flows to keep working while these architecture alignments are introduced, so the platform does not regress during the transition.
+### Ownership model
 
-**Why this priority**: This spec is an alignment spec, not a redesign or backend migration.
+Workspace owns:
+- Users / Members
+- Workspace-level roles
+- Workspace-level employees such as CEO, Finance, Legal, HR
+- Businesses
+- OS Subscriptions
+- Billing
+- Storage quota
+- Global settings
+- Workspace-level resources
 
-**Independent Test**: Complete the existing Core onboarding and Commerce setup flow, then verify Product Hub, Commerce Dashboard, POS, receipts/invoices, branch context, and business identity still work.
+Business owns:
+- Business Identity
+- Business Billing
+- Business Settings
+- Business Resources
+- Industry Type
+- Commerce Setup if Commerce OS is enabled
+- Branches
+- Business Employees
+- Business Warehouses
 
-**Acceptance Scenarios**:
+Branch owns:
+- Physical location
+- Operational address
+- POS activity
+- Sales/orders
+- Inventory/stock
+- Cashiers assigned to branch later
+- Branch-specific operational overrides later
 
-1. **Given** the current MVP uses BusinessUnit internally, **When** user-facing screens are touched, **Then** labels say Business, Store, Activity, Branch, or Location and never show "Default Business Unit".
-2. **Given** current mock storage data exists, **When** the feature is loaded, **Then** existing local/session storage behavior is preserved and no data is wiped automatically.
-3. **Given** Commerce setup is completed, **When** the user launches Commerce Dashboard, **Then** current business identity and branch context still render correctly.
+OSSubscription owns:
+- Purchased license
+- Plan
+- Billing status
+- Trial/renewal dates
 
-### Edge Cases
+OSEnablement owns:
+- Where an OS is actually used
+- Scope: workspace, business, or branch
+- Enabled/disabled/locked status
+- Link between a purchased OSSubscription and its actual usage target
 
-- Existing Commerce setup records only have generic `address`, `city`, or `country` fields; these must be interpreted as Business Billing Address fallbacks until safely renamed.
-- A Business has multiple Branches with different operational addresses but one shared Commerce setup.
-- A user chooses a Commerce Preset that differs from the suggested preset derived from Industry Type.
-- OSSubscription exists for the Workspace but no OSEnablement exists yet; the MVP must continue working through current Business compatibility while remaining ready for OSEnablement.
-- Billing Address is missing; invoices and receipts must fall back gracefully without treating Branch Address as the primary legal address unless no better value exists.
-- Multiple Businesses under the same Workspace may have Branches with the same display name; Branch uniqueness remains scoped to Business.
-- Existing media assets and product images must remain valid and must not be duplicated into order, invoice, or document payloads.
-- Existing Workspace, BusinessUnit, Branch, CommerceSetup, and MediaAsset records may lack new optional fields and must remain readable.
+Commerce OS owns:
+- Commerce Preset
+- Tax configuration
+- Selling mode
+- Categories
+- Units
+- Templates
+- Numbering
+- Commerce-specific configuration
 
-## Requirements
+### Critical rule
+CommerceSetup belongs to Business, not Branch.
 
-### Functional Requirements
+Correct:
 
-- **FR-001**: Spec 048 MUST reference Spec 047 as the source of truth for Target Architecture v2.0 and MUST NOT contradict it.
-- **FR-002**: The system MUST treat CommerceSetup as Business-level configuration scoped by Workspace and Business/BusinessUnit, not as Branch-owned configuration.
-- **FR-003**: Branch MUST remain the owner of operational execution concerns such as physical location, POS activity, sales/orders context, inventory/stock context, and branch-specific future overrides.
-- **FR-004**: The platform MUST distinguish Workspace Address, Business Billing Address, and Branch Address as separate concepts with separate purposes.
-- **FR-005**: User-facing labels SHOULD use purpose-specific wording such as Billing Address, Billing City, Billing Country, Branch Address, and Branch City where meaning matters.
-- **FR-006**: Receipts, invoices, and tax documents MUST use Business Billing Address as the default legal/business address when available.
-- **FR-007**: POS and operational branch context MUST use Branch name/address separately from Business Billing Address.
-- **FR-008**: Existing CommerceSetup address, city, and country fields MUST remain compatible and be interpreted as Business Billing Address fallback values until renamed safely.
-- **FR-009**: Business Industry Type MUST belong to the Business/BusinessUnit and MUST remain separate from Commerce Preset.
-- **FR-010**: Commerce Preset MUST belong to CommerceSetup and MUST control only Commerce-specific defaults such as categories, units, templates, numbering, and recommendations.
-- **FR-011**: Industry Type MUST drive a Commerce Preset suggestion, not a forced preset application.
-- **FR-012**: Commerce Preset selection MUST follow Suggestion -> User Confirmation -> Apply.
-- **FR-013**: A user MUST be able to confirm the suggested preset or choose a different Commerce Preset without changing Business Industry Type.
-- **FR-014**: A manually confirmed Commerce Preset MUST NOT be overwritten by later Industry Type changes unless the user confirms a new preset.
-- **FR-015**: Preset application MUST affect Commerce-specific defaults only after user confirmation or an equivalent explicit setup action.
-- **FR-016**: Business Resources MUST be documented as the expandable business-level resource concept for logos, brand assets, certificates, banners, document assets, and similar resources.
-- **FR-017**: Current MediaAsset records scoped by Workspace and Business/BusinessUnit MUST be treated as the MVP mapping for Business Resources where safe.
-- **FR-018**: Business logo MUST be treated as a Business Resource; product image MUST remain a product resource scoped to Business and optionally Branch.
-- **FR-019**: Logo, image, and brand resource payloads MUST NOT be duplicated into orders, invoices, or document records.
-- **FR-020**: Business Resources MUST consume Workspace storage quota in the architecture model.
-- **FR-021**: Business Settings MUST be documented as Business-owned settings separate from Workspace settings, CommerceSetup, and Branch settings.
-- **FR-022**: Business Settings UI MUST NOT be introduced unless it is a low-risk extension of existing flows.
-- **FR-023**: OSEnablement MUST be documented as the bridge from OSSubscription to the actual usage target at Workspace, Business, or Branch scope.
-- **FR-024**: OSSubscription MUST represent the purchased license and MUST NOT imply that every Business can use the OS.
-- **FR-025**: Commerce MVP compatibility with the current selected Business/currentBusinessUnit flow MUST be preserved while remaining compatible with future OSEnablement.
-- **FR-026**: Workspace Employees and Business Employees MUST be documented as separate concepts.
-- **FR-027**: Existing team members/users MUST remain Workspace-level in the MVP, and Commerce POS cashier identity MUST continue to derive from the current user until a future employee model is specified.
-- **FR-028**: Business Warehouses MUST be documented as future Business-level inventory locations that can supply Branches under the same Business.
-- **FR-029**: Warehouse management UI MUST NOT be forced into the MVP by this spec.
-- **FR-030**: Future BranchCommerceSettings MUST be documented as branch-level operational overrides while keeping the primary CommerceSetup at Business level.
-- **FR-031**: BusinessUnit MAY remain the internal code name for Business where a global rename is risky.
-- **FR-032**: User-facing copy in touched surfaces MUST NOT show "BusinessUnit", "Business Unit", "Default Business Unit", or "BU"; it SHOULD use Business, Store, Activity, Branch, or Location.
-- **FR-033**: Branch MUST continue to belong to Business/BusinessUnit and Workspace.
-- **FR-034**: Existing Core Platform and Commerce OS MVP flows MUST continue working without backend work, storage wipes, or architecture redesign.
-- **FR-035**: Pages and components MUST NOT directly read or write localStorage/sessionStorage; existing shared storage/provider patterns MUST remain the access path.
-- **FR-036**: Runtime code MUST NOT import from `docs/claude.aidesign`.
-- **FR-037**: The feature MUST NOT introduce microservices, new backend APIs, Laravel work, or cross-OS hard dependencies.
-- **FR-038**: Implementation documentation MUST be created or updated at `docs/implementation/business-commerce-setup-addresses.md`.
-- **FR-039**: The implementation documentation MUST explain the current mapping: BusinessUnit in code equals Business in product language.
-- **FR-040**: The implementation documentation MUST explain Workspace vs Business vs Branch ownership, address separation, Industry Type vs Commerce Preset, Preset Suggestion -> Confirm -> Apply, Business Resources, Business Settings, OSEnablement, employee scope, warehouses, and future BranchCommerceSettings.
+```text
+Workspace
+→ Business
+   ├── Business Identity
+   ├── Business Billing
+   ├── Business Settings
+   ├── Business Resources
+   ├── CommerceSetup
+   ├── Branches
+   ├── Business Employees
+   └── Business Warehouses
+```
 
-### Key Entities
+Wrong:
 
-- **Workspace**: Company/group-level tenant that owns users/members, workspace-level employees, Businesses, OS subscriptions, billing, storage quota, global settings, Workspace Address, and global resources.
-- **Business / BusinessUnit**: Business line, brand, activity, or store concept under a Workspace. Current code may use BusinessUnit internally. It owns Business identity, Business Billing Address, Industry Type, CommerceSetup when Commerce OS is enabled, Branches, Business Resources, future Business Settings, future Business Employees, and future Business Warehouses.
-- **Branch**: Physical operating location under a Business. It owns operational address/location, POS execution context, sales/orders context, inventory/stock context, and future branch-specific operational overrides.
-- **OSSubscription**: Workspace-owned purchased license with OS, plan, and billing/subscription status. It does not decide where the OS is used.
-- **OSEnablement**: Relationship that connects an OSSubscription to the Workspace, Business, or Branch where the OS is actually enabled and indicates active/disabled/locked usage state.
-- **CommerceSetup**: Business-level Commerce OS configuration including identity, billing address, Commerce Preset, tax configuration, selling mode, categories, units, templates, numbering, and Commerce-specific defaults.
-- **Industry Type**: Business classification that answers what the Business is. It belongs to Business and is not the same as Commerce Preset.
-- **Commerce Preset**: Commerce OS configuration style that answers how Commerce should work. It is suggested from Industry Type but applied only after confirmation.
-- **Workspace Address**: Workspace/company/group address used for account-level and future legal workspace metadata.
-- **Business Billing Address**: Business legal and billing address used by receipts, invoices, tax invoices, reports, and customer-facing documents.
-- **Branch Address**: Physical operating address of a Branch used for POS, inventory location, pickup/delivery context, and branch-specific display.
-- **Business Resources**: Expandable Business-owned resource concept for logos, brand images, certificates, banners, document assets, templates, and similar assets. Current MVP mapping is MediaAsset scoped to Business/BusinessUnit where safe.
-- **MediaAsset**: Current resource record used for images and files. It should support Business Resource use cases without duplicating payloads into orders, invoices, or documents.
-- **Business Settings**: Future Business-level non-Commerce settings such as timezone override, currency override, locale, fiscal year, working days, and default language.
-- **Workspace Employee**: Workspace/group-level employee or role such as owner, CEO, finance, legal, HR, or group admin.
-- **Business Employee**: Future Business-level operational employee such as store manager, cashier, pharmacist, salesperson, inventory staff, or branch supervisor.
-- **Business Warehouse**: Future Business-level inventory location that can supply Branches under the same Business.
-- **BranchCommerceSettings**: Future Branch-level override entity for operational Commerce settings such as printer defaults, receipt footer override, default warehouse, and branch-specific tax registration override.
+```text
+Workspace
+→ Business
+   → Branch
+      → CommerceSetup
+```
 
-## Success Criteria
+Reason: a business can have multiple branches sharing the same main Commerce configuration: identity, VAT/tax settings, categories, units, templates, numbering defaults, preset, and brand resources. Branches may later override small operational settings, but the main CommerceSetup remains business-level.
 
-### Measurable Outcomes
+---
 
-- **SC-001**: Commerce setup can be reviewed and described as Business-level configuration in 100% of affected documentation and touched setup surfaces.
-- **SC-002**: Billing Address and Branch Address are visibly or structurally distinguishable in all affected setup, review, receipt, invoice, and branch-context surfaces.
-- **SC-003**: At least one verified scenario supports Industry Type and Commerce Preset having different values without data conflict.
-- **SC-004**: Existing Core Platform -> Product Hub -> Commerce setup -> Commerce Dashboard MVP flow remains completable.
-- **SC-005**: No touched user-facing surface displays "Default Business Unit", "BusinessUnit", or "BU".
-- **SC-006**: Implementation documentation explains all Spec 048 ownership boundaries and explicitly states that Spec 047 remains the architecture source of truth.
-- **SC-007**: No backend API, Laravel implementation, microservice, or cross-OS hard dependency is introduced by this spec.
-- **SC-008**: Existing records with only generic address/city/country values continue to render through Billing Address fallbacks.
-- **SC-009**: Resource documentation and mapping avoid duplicated logo/image payloads in orders, invoices, and document records.
-- **SC-010**: Validation for Core Platform and Commerce OS typecheck, lint, and build is expected to pass before implementation completion.
+## 2. OSEnablement Ownership Clarification
+OSEnablement bridges a purchased OSSubscription and the place where the OS is actually used.
 
-## Assumptions
+```text
+OSSubscription
+→ OSEnablement
+→ Business / Workspace / Branch depending scope
+```
 
-- Spec 047 Target Architecture v2.0 remains the canonical architecture source of truth; Spec 048 applies selected decisions to the MVP and documentation.
-- Current BusinessUnit code continues to represent Business internally until a safe dedicated rename spec exists.
-- Current MVP mock/local/session storage remains the source for frontend flows; no storage wipe or backend persistence is part of this spec.
-- Full Business Settings UI, HR employee management, warehouse management, and BranchCommerceSettings are future concepts unless a low-risk compatibility addition is identified during planning.
-- Existing CommerceSetup generic address fields represent Billing Address semantics until a safe field rename or migration path is implemented.
-- Existing team and access features remain Workspace-level; Commerce operational employee modeling is outside this spec.
-- Preset suggestion mappings and exact field-level changes will be finalized in the implementation plan and tasks while preserving the architecture boundaries defined here.
+For Commerce MVP:
+- OSSubscription: Commerce OS Pro purchased by Workspace.
+- OSEnablement: Commerce OS enabled for selected Business.
+
+Rules:
+- OSEnablement must include `workspaceId` for tenant isolation.
+- OSEnablement must reference `osSubscriptionId`.
+- OSEnablement must include `osId`.
+- OSEnablement must reference `businessUnitId` when `scope = "business"`.
+- OSEnablement may reference `branchIds` when `scope = "branch"`.
+- Workspace-wide OS products like HR or CRM may use `scope = "workspace"`.
+- OSSubscription does not imply every Business can use the OS.
+- OSEnablement decides where the OS is active.
+
+Suggested shape if not already implemented by Spec 047:
+
+```ts
+interface OSEnablement {
+  id: string;
+  workspaceId: string;
+  osId: string;
+  osSubscriptionId: string;
+  scope: "workspace" | "business" | "branch";
+  businessUnitId: string | null;
+  branchIds: string[];
+  status: "active" | "disabled" | "locked";
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+MVP:
+- Reuse OSEnablement from Spec 047 if it exists.
+- Do not duplicate the model.
+- If missing, this spec may add only low-risk compatibility helpers or documentation.
+- Existing MVP must continue using `currentBusinessUnitId` safely.
+- Commerce should remain compatible with future OSEnablement.
+
+---
+
+## 3. Workspace Employees vs Business Employees
+Workspace-level employees belong to the group/company level: CEO, Finance, Legal, HR, Group Admin, Workspace Owner.
+
+Business-level employees belong to a specific Business: Store Manager, Cashier, Pharmacist, Salesperson, Inventory Staff, Branch Supervisor.
+
+Rules:
+- Do not model all employees as belonging to Business only.
+- HR OS may later manage employees at workspace, business, or branch scope.
+- Commerce MVP only needs currentUser/cashier identity for POS.
+- Do not implement full HR employee management in this spec.
+
+MVP:
+- Existing users/team members remain workspace-level.
+- POS cashier still derives from currentUser.
+- Future Business Employees concept is documented, not fully implemented unless already safe.
+
+---
+
+## 4. Business Warehouses
+Business Warehouses are future business-level inventory locations.
+
+Example:
+
+```text
+Business: Mustafa Fashion
+- Warehouse: Main Warehouse
+- Branch: Nasr City
+- Branch: New Cairo
+```
+
+Rules:
+- Warehouses belong to Business, not Workspace directly.
+- Branches own operational selling location.
+- Warehouses may later supply multiple branches under the same Business.
+- Do not implement full warehouse management in this spec unless already safe.
+- Keep inventory MVP working as-is.
+
+MVP:
+- Current inventory remains branch/product-based.
+- Do not force warehouse UI.
+- Do not break POS stock deduction.
+
+---
+
+## 5. Business Resources
+Business Resources is the expandable business-level resource ownership concept. It is broader than Business Assets.
+
+Business Resources may include:
+- Media Assets
+- Documents
+- Templates
+- Certificates
+- Brand Assets
+- Brand Fonts future
+- Brand Colors future
+- Email/SMS/WhatsApp Templates future
+- Online Store banners future
+- Document branding assets future
+
+Relationship:
+
+```text
+Workspace
+→ Business
+→ Business Resources
+```
+
+MVP implementation:
+- Do not create a complex BusinessResources module.
+- Reuse existing `MediaAsset` for current MVP resource needs.
+- MediaAsset records scoped with `businessUnitId` represent current Business Resources.
+- Business logo is a Business Resource.
+- Store banners, brand images, certificates, and document assets should be modeled as Business Resources.
+- Business Resources consume Workspace storage quota.
+- Do not duplicate logo/image payloads into products/orders/invoices.
+
+MediaAsset ownerType should support or be ready for:
+- `business_logo`
+- `business_cover`
+- `brand_image`
+- `certificate`
+- `product_image`
+- `category_image`
+- `store_banner`
+- `document_asset`
+- `other`
+
+Rules:
+- Business logo is a Business Resource.
+- Product image is a Product Resource scoped to Business and optionally Branch.
+- Store banner is a Business/Commerce online store resource.
+- Invoice/receipt branding should reference Business Resources, not copy image payloads.
+- Certificates and tax documents should be modeled as Business Resources later.
+
+---
+
+## 6. Business Settings
+Business Settings are business-level settings that are not Commerce-specific and not Branch-specific.
+
+Examples:
+- Business timezone override
+- Business currency override
+- Business locale
+- Fiscal year
+- Working days
+- Default language
+- Business-level preferences
+
+Rules:
+- Business Settings belong to Business.
+- Business Settings are separate from CommerceSetup.
+- CommerceSetup configures Commerce OS only.
+- Branch settings configure operational branch behavior only.
+- Workspace settings remain global defaults.
+
+MVP:
+- Do not build full Business Settings UI unless already safe.
+- Document the concept.
+- Prepare types only if low-risk.
+- Do not confuse Business Settings with Commerce Settings.
+
+---
+
+## 7. Address Separation
+The platform must clearly separate three address concepts.
+
+### Workspace Address
+Purpose:
+- Company/group-level address.
+- Used for platform account, billing owner profile, and future legal workspace metadata.
+
+Fields:
+- `workspaceAddressLine1?`
+- `workspaceAddressLine2?`
+- `workspaceCity?`
+- `workspaceCountry`
+- `workspacePostalCode?`
+
+MVP:
+- Existing Workspace country/currency/timezone remain.
+- Add address fields only if safe and needed.
+- Do not force UI redesign.
+
+### Business Billing Address
+Purpose:
+- Legal/billing/invoice address for this Business.
+- Used on invoices, receipts, tax documents, legal documents.
+
+Fields:
+- `billingAddressLine1`
+- `billingAddressLine2?`
+- `billingCity`
+- `billingCountry`
+- `billingPostalCode?`
+
+Belongs to Business-level CommerceSetup / Business identity.
+
+Important: Billing Address is NOT Branch Address.
+
+### Branch Address
+Purpose:
+- Physical operating location of a branch.
+- Used for POS location, inventory location, receipts if branch-specific address is shown, delivery/pickup later.
+
+Fields:
+- `branchName`
+- `branchCity`
+- `branchAddressLine1?`
+- `branchAddressLine2?`
+- `branchCountry?`
+- `branchPostalCode?`
+
+Belongs to Branch.
+
+Rules:
+- Do not reuse generic city/country fields ambiguously where meaning matters.
+- In labels, say Billing City/Country/Address or Branch City/Address.
+- Receipt/invoice documents should use Business Billing Address by default.
+- POS branch context should use Branch name/address where needed.
+- If billing address is missing, fallback gracefully to existing `address/city/country` fields.
+
+---
+
+## 8. Business Industry Type vs Commerce Preset
+Industry Type belongs to Business and answers: What is your business?
+
+Examples:
+- Fashion
+- Pharmacy
+- Restaurant
+- Electronics
+- Supermarket
+- Services
+- Manufacturing
+- Custom
+
+Commerce Preset belongs only to Commerce OS configuration and answers: How should Commerce OS work?
+
+Examples:
+- Fashion Retail
+- Pharmacy
+- Restaurant POS
+- Supermarket
+- Electronics
+- Generic Retail
+
+Important:
+- Industry Type is not Commerce Preset.
+- Business `Mustafa Pharmacy` can have Industry Type `Pharmacy` and Commerce Preset `Generic Retail`.
+- User must be allowed to override the suggested preset.
+
+---
+
+## 9. Preset Suggestion Flow
+Correct flow:
+
+```text
+Business Industry Type
+→ Suggest Commerce Preset
+→ User confirms or changes
+→ Apply selected Commerce Preset
+```
+
+Rules:
+- Do not directly apply Commerce Preset just because the user selected Industry Type.
+- Industry Type should not overwrite Commerce Preset after user manually changes preset.
+- Preset suggestions are helpful, not mandatory.
+- Preset application is explicit or clearly triggered by confirmation.
+- Preset belongs to CommerceSetup, not Core Business.
+- Business industry belongs to Business.
+
+---
+
+## 10. Data Model Updates
+Current code may use `BusinessUnit`. Treat it as Business internally for now.
+
+BusinessUnit / Business should support:
+- `id`
+- `workspaceId`
+- `name`
+- `industryType`
+- `osSubscriptionId?` optional/legacy
+- `createdAt`
+- `updatedAt?`
+
+Do not rely on `preset/presetId` as Industry Type.
+
+Optional future BusinessSettings:
+- `id`
+- `workspaceId`
+- `businessUnitId`
+- `timezoneOverride?`
+- `currencyOverride?`
+- `locale?`
+- `fiscalYearStart?`
+- `workingDays?`
+- `createdAt`
+- `updatedAt`
+
+Branch should support:
+- `id`
+- `workspaceId`
+- `businessUnitId`
+- `name`
+- `city / branchCity`
+- `address / branchAddressLine1`
+- `country / branchCountry`
+- `postalCode?`
+- `isMain`
+- `createdAt`
+- `updatedAt?`
+
+CommerceSetup should support business-level identity:
+- `id`
+- `workspaceId`
+- `businessUnitId`
+- `osSubscriptionId`
+- `displayName`
+- `legalName`
+- `phone`
+- `email`
+- `billingAddressLine1`
+- `billingAddressLine2?`
+- `billingCity`
+- `billingCountry`
+- `billingPostalCode?`
+- `logo / logoMediaAssetId if available`
+- `presetId`
+- `commercePreset`
+- `mode`
+- tax fields
+- numbering fields
+- template fields
+- `categories`
+- `units`
+- timestamps
+
+Backward compatibility:
+- If current CommerceSetup fields are `address/city/country`, map them to billing address meaning.
+- Do not break existing forms.
+- Add comments/docs explaining `CommerceSetup.address/city/country` currently represent Billing Address until renamed safely.
+- If current product image field is `image`, keep compatible while preparing `mediaAssetId/imageThumbUrl` when safe.
+- Do not perform risky global rename from BusinessUnit to Business in this spec.
+
+---
+
+## 11. Core Onboarding Flow Alignment
+Conceptual flow:
+
+```text
+Welcome
+→ Create Workspace
+→ Create First Business
+→ Create Main Branch
+→ Choose Operating System
+→ Choose Plan
+→ Product Hub
+```
+
+Step 1 — Create Workspace:
+- Workspace Name
+- Country
+- Currency
+- Timezone
+- Language
+
+Step 2 — Create First Business:
+- Business Name
+- Industry Type
+
+Industry Type options:
+- Fashion
+- Restaurant
+- Pharmacy
+- Electronics
+- Supermarket
+- Services
+- Manufacturing
+- Custom
+
+Step 3 — Create Main Branch:
+- Branch Name
+- Branch City
+- Branch Address optional
+
+Step 4 — Choose Operating System:
+- Commerce OS
+- HR OS if already shown
+- Future: CRM, Healthcare, Gym, Maintenance
+
+Step 5 — Choose Plan:
+- Creates OSSubscription
+
+System action:
+- Create OSEnablement if available: Commerce OS → selected Business, scope business.
+
+MVP:
+- If OSEnablement is not implemented yet, keep current subscription/currentBusinessUnit flow working.
+- Do not introduce logic that blocks future OSEnablement.
+
+---
+
+## 12. Commerce Setup Flow Alignment
+Conceptual flow:
+
+```text
+Business Identity
+→ Commerce Preset Suggestion / Confirmation
+→ Tax & Selling Mode
+→ Templates / Numbering / Categories
+→ Review & Launch
+→ Commerce Dashboard
+```
+
+Commerce Step 1 — Business Identity:
+Inherited:
+- Business Name
+- Industry Type
+
+Editable:
+- Display Name
+- Legal Name
+- Phone
+- Email
+- Billing Address
+- Billing City
+- Billing Country
+- Billing Postal Code
+- Logo / Business Resource
+
+Important:
+- Billing Address is legal/invoice address.
+- Branch Address remains operational location.
+- Business Name should not include Branch.
+- Branch should not be concatenated into Business display name.
+- Logo should be treated as a Business Resource where safe.
+
+Commerce Step 2 — Commerce Preset:
+- Suggest preset based on Business industryType.
+- User can confirm or choose another preset.
+- Applies categories, units, templates, prefixes, and defaults only after confirmation.
+
+Commerce Step 3 — Tax & Selling Mode:
+- VAT Registered
+- VAT Number
+- VAT Rate
+- Selling Mode: Physical Store, Online Store, Both
+
+Commerce Step 4 — Templates / Defaults:
+- Categories
+- Units
+- Document templates
+- Receipt prefix
+- Invoice prefix
+- Numbering defaults
+
+Commerce Step 5 — Review & Launch:
+Show:
+- Workspace
+- Business
+- Industry
+- Commerce Preset
+- Branch
+- Plan
+- VAT
+- Selling Mode
+- Billing Address
+- Branch Address
+
+Launch:
+- Save CommerceSetup at Business level.
+- Route to Commerce Dashboard.
+
+---
+
+## 13. Branch-Level Operational Settings
+Do not move CommerceSetup under Branch.
+
+Future optional entity:
+
+```ts
+interface BranchCommerceSettings {
+  id: string;
+  workspaceId: string;
+  businessUnitId: string;
+  branchId: string;
+  receiptFooterOverride?: string;
+  defaultWarehouseId?: string;
+  defaultPrinterSize?: string;
+  taxRegistrationOverride?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+MVP:
+- Do not implement full BranchCommerceSettings unless easy and safe.
+- Document the future concept only.
+- Branch continues owning operational location and inventory/sales context.
+
+---
+
+## 14. Documents and Receipts
+Receipt/invoice rendering should use:
+
+Business-level data:
+- Display Name
+- Legal Name
+- Logo / Business Resource
+- Tax number
+- Billing Address
+- Billing City
+- Billing Country
+
+Branch-level data:
+- Branch Name
+- Branch Address if needed
+- Branch City
+
+Order-level data:
+- Cashier Name
+- Customer
+- Items
+- Payment
+- Totals
+- VAT
+
+Rules:
+- Invoice should show Billing Address as legal document address.
+- Receipt may show Branch name and possibly branch address.
+- Do not mix branch address as billing address unless no billing address exists.
+- If billing address is missing, fallback gracefully to existing address field.
+- Do not duplicate logo payload into each invoice/order.
+- Documents should reference Business identity/resources at render time.
+
+---
+
+## 15. UI Copy Rules
+Replace ambiguous labels where safe.
+
+Instead of generic:
+- City
+- Country
+- Address
+
+Use where relevant:
+- Billing City
+- Billing Country
+- Billing Address
+- Branch City
+- Branch Address
+
+Instead of:
+- Business Unit
+- Default Business Unit
+- BU
+
+Use:
+- Business
+- Store
+- Activity
+- Branch
+
+Commerce Setup labels:
+- Business Identity
+- Billing Address
+- Commerce Preset
+- Selling Mode
+- Tax Settings
+- Business Resources where relevant
+
+Core Onboarding labels:
+- Workspace
+- Business
+- Industry Type
+- Main Branch
+
+---
+
+## 16. Mock DB / Storage Rules
+- Continue using shared mock-db/local/session storage.
+- No direct localStorage/sessionStorage in pages/components.
+- Use shared storage helpers.
+- Preserve hydration safety.
+- Preserve existing reset behavior.
+
+Seed/demo data should clearly distinguish:
+- Workspace: Mustafa Group
+- Business: Mustafa Fashion or Mustafa Pharmacy
+- Industry Type: Fashion or Pharmacy
+- Branch: Nasr City Branch / Smouha Branch
+- Commerce Preset: Fashion Retail / Pharmacy / Generic Retail
+- Billing Address: Legal/invoice address
+- Branch Address: Physical operating address
+- Business Resources: Logo / brand resources scoped to businessUnitId through MediaAsset where safe
+
+Storage:
+- Business Resources consume Workspace storage quota.
+- Product images consume Workspace storage quota.
+- Do not store original full-size base64 images in large collections.
+- Do not duplicate images into orders/invoices.
+
+---
+
+## 17. Documentation
+Create or update:
+
+`docs/implementation/business-commerce-setup-addresses.md`
+
+Document:
+- Spec 048 depends on Spec 047.
+- Spec 047 is Source of Truth.
+- Workspace vs Business vs Branch.
+- Workspace owns global resources.
+- Business owns business configuration and identity.
+- Branch owns operational execution.
+- CommerceSetup belongs to Business.
+- CommerceSetup configures the Business for Commerce OS.
+- OSEnablement connects purchased software to Business/Workspace/Branch.
+- OSEnablement logical relationship: OSSubscription → OSEnablement → Business/Workspace/Branch.
+- Billing Address vs Branch Address.
+- Workspace Address vs Business Billing Address vs Branch Address.
+- Industry Type vs Commerce Preset.
+- Preset Suggestion → Confirm → Apply.
+- Business Resources.
+- Business Settings.
+- Business Employees vs Workspace Employees.
+- Business Warehouses.
+- Current code mapping: BusinessUnit in code = Business in product language.
+- Future BranchCommerceSettings, HR scopes, warehouses, and expanded Business Resources.
+
+---
+
+## 18. Acceptance Criteria
+### Functional acceptance
+- Existing MVP flow still works.
+- Commerce Setup remains accessible and saves correctly.
+- Business identity still appears in sidebar/POS/receipt/invoice.
+- Branch still appears separately from business name.
+- Commerce setup is treated/documented as Business-level, not Branch-level.
+- Branch address and billing address are not treated as the same concept.
+- Workspace address, billing address, and branch address are clearly separated in architecture/docs.
+- Industry Type and Commerce Preset are separate concepts.
+- Preset is suggested from Industry Type but user can change it.
+- Receipt/invoice use billing address for legal/business address.
+- POS/branch context uses branch name/address.
+- Business Resources concept is documented and mapped to MediaAsset where safe.
+- Business Settings concept is documented separately from Commerce Setup.
+- OSEnablement ownership/relationship is documented clearly.
+- Business Employees and Workspace Employees are not treated as the same concept.
+- Business Warehouses concept is documented as future-ready without breaking MVP.
+
+### Technical acceptance
+- No backend work.
+- No UI redesign beyond necessary label/field alignment.
+- No runtime imports from `docs/claude.aidesign`.
+- No direct localStorage/sessionStorage in pages/components.
+- BusinessUnit remains working as current internal Business model.
+- Branch always belongs to BusinessUnit.
+- CommerceSetup remains scoped by workspaceId + businessUnitId.
+- No new cross-OS dependency.
+- MediaAsset remains the base for current business resources if already present.
+- No duplicate image/logo payloads copied into products/orders/invoices.
+- Spec 048 does not contradict Spec 047.
+- core-platform tsc/lint/build pass.
+- commerce tsc/lint/build pass.
+
+## Validation commands
+```bash
+pnpm --filter core-platform exec tsc --noEmit
+pnpm --filter core-platform lint
+pnpm --filter core-platform build
+
+pnpm --filter commerce exec tsc --noEmit
+pnpm --filter commerce lint
+pnpm --filter commerce build
+
+pnpm build
+pnpm lint
+```
+
+## Suggested commit
+```bash
+feat(platform): align business commerce setup resources and addresses
+```

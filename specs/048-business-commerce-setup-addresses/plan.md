@@ -1,114 +1,93 @@
-# Implementation Plan: Business-Level Commerce Setup, Address Separation, and Business Resources
+# Plan: 048 Business Commerce Setup Addresses
 
-**Branch**: `048-business-commerce-setup-addresses` | **Date**: 2026-06-25 | **Spec**: [spec.md](./spec.md)  
-**Input**: Feature specification from `specs/048-business-commerce-setup-addresses/spec.md`
+## Objective
+Safely align the current MVP with Target Architecture v2.0 decisions around Business-level Commerce setup, address separation, Business Resources, OSEnablement ownership, and future-ready business concepts.
 
-## Summary
+This plan must keep the current Core Platform + Commerce MVP working.
 
-Align the current Core Platform + Commerce OS MVP with Spec 048 by documenting and applying the business-level Commerce setup model introduced by Spec 047. The plan preserves the existing `BusinessUnit` internal model while making product language and data flow clear: Commerce setup belongs to Business, Billing Address is separate from Branch Address, Industry Type suggests but does not force Commerce Preset, Business Resources map to scoped media assets where safe, and OSEnablement remains the bridge from workspace-level subscription to actual OS usage. This is a frontend/shared mock-store/documentation alignment only: no backend APIs, no microservices, no storage wipe, and no UI redesign beyond necessary label/data-flow alignment.
+## Scope
+- Clarify `BusinessUnit` as the current internal representation of Business.
+- Ensure CommerceSetup is treated as Business-level configuration.
+- Separate Workspace Address, Business Billing Address, and Branch Address in types/docs and labels where safe.
+- Preserve backward compatibility with existing `address/city/country` fields.
+- Separate Business `industryType` from Commerce `preset/presetId`.
+- Document and prepare preset suggestion flow.
+- Map Business Resources to current MediaAsset model.
+- Clarify OSEnablement as the OSSubscription usage bridge.
+- Document Business Settings, Business Employees, and Business Warehouses as future-ready concepts.
 
-## Technical Context
+## Non-goals
+- No Laravel/backend work.
+- No database migrations.
+- No major UI redesign.
+- No risky global rename from BusinessUnit to Business.
+- No full HR employee management.
+- No full warehouse management.
+- No full Business Resources module.
+- No cross-OS coupling.
 
-**Language/Version**: TypeScript strict mode in Next.js App Router apps  
-**Primary Dependencies**: Existing monorepo packages: `@nexoraxs/types`, `@nexoraxs/shared`, Core Platform app, Commerce app, shared UI/styles  
-**Storage**: Existing shared local/session mock data layer in `packages/shared/src/mock-db`; no backend persistence  
-**Testing**: `pnpm --filter core-platform exec tsc --noEmit`, `pnpm --filter core-platform lint`, `pnpm --filter core-platform build`, `pnpm --filter commerce exec tsc --noEmit`, `pnpm --filter commerce lint`, `pnpm --filter commerce build`, `pnpm build`, `pnpm lint`, `git diff --check`  
-**Target Platform**: Browser-based Core Platform and Commerce OS MVP  
-**Project Type**: Modular monolith web application with shared packages  
-**Performance Goals**: No measurable runtime performance regression; setup hydration and dashboard rendering remain equivalent to current MVP behavior  
-**Constraints**: Preserve existing mock/local/session storage data; no direct browser-storage reads from pages/components; no imports from `docs/claude.aidesign`; no backend APIs; no microservices; no Commerce business logic in Core; no broad `BusinessUnit` rename; no branch-owned Commerce setup  
-**Scale/Scope**: Shared type/mock-store compatibility, Commerce setup and document address semantics, existing Core/Product Hub handoff compatibility, implementation documentation, and validation
+## Implementation Phases
 
-## Constitution Check
+### Phase 1 — Type and schema audit
+- Review `packages/types/src/core.ts` and `packages/types/src/commerce.ts`.
+- Confirm existing BusinessUnit, Branch, CommerceSetup, MediaAsset, WorkspaceStorageUsage, and OSEnablement if present.
+- Identify safe additive fields only.
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+### Phase 2 — Low-risk model alignment
+- Add `industryType` to BusinessUnit if missing.
+- Add optional address fields to Workspace, Branch, and CommerceSetup only if safe.
+- Keep legacy fields working:
+  - CommerceSetup `address/city/country` = billing address compatibility fields.
+  - Branch `city/country` = branch location compatibility fields.
+- Extend MediaAsset owner types only if safe.
 
-- **Business Operating Platform**: PASS. The plan preserves Core Platform + independent Commerce OS and does not turn NexoraXS into a single Commerce/POS app.
-- **Core Platform Boundary**: PASS. Core remains responsible for Workspace, OS subscription, Product Hub, billing/team/access shells; Commerce setup details stay in Commerce OS/shared contracts.
-- **Independent Operating Systems**: PASS. OSEnablement clarifies usage scope without making Commerce depend on HR, CRM, Healthcare, Gym, or Maintenance.
-- **Workspace / Business Unit / Branch Model**: PASS WITH SPEC OVERRIDE. Constitution allows Business Unit UI exposure only when a spec explicitly expands it. Spec 047 and Spec 048 use Business as product language while retaining `BusinessUnit` internally where safe.
-- **Multi-Tenant Data Isolation**: PASS. All aligned entities remain workspace-scoped and Business/Branch-scoped where appropriate.
-- **OS Subscription and Access Model**: PASS. OSSubscription remains a workspace license; OSEnablement represents actual workspace/business/branch usage.
-- **Commerce OS Boundary**: PASS. Commerce Preset, tax, templates, categories, units, and selling mode remain Commerce-owned.
-- **Localization / UI Copy**: PASS. Touched user-facing labels must avoid Business Unit/Default Business Unit/BU and use Business, Store, Activity, Branch, Location, Billing Address, and Branch Address.
-- **MVP Discipline**: PASS. No backend, no warehouse UI, no HR employee UI, no full Business Settings UI, no microservices, and no architecture redesign.
-- **Storage and Runtime Discipline**: PASS. Pages/components continue to use existing providers/shared helpers rather than direct localStorage/sessionStorage access.
+### Phase 3 — Mock DB and seed alignment
+- Update seed/demo data to distinguish:
+  - Workspace: Mustafa Group
+  - Business: Mustafa Fashion / Mustafa Pharmacy
+  - Industry Type: Fashion / Pharmacy
+  - Branch: Nasr City Branch / Smouha Branch
+  - Commerce Preset: Fashion Retail / Pharmacy / Generic Retail
+  - Billing Address vs Branch Address
+- Preserve current reset/hydration/localStorage behavior.
 
-## Project Structure
+### Phase 4 — Commerce setup behavior
+- Treat CommerceSetup as Business-level configuration.
+- Do not nest CommerceSetup under Branch.
+- Use Business industryType only to suggest a Commerce Preset.
+- Allow user to confirm or change the Commerce Preset.
+- Apply preset defaults only after confirmation.
 
-### Documentation (this feature)
+### Phase 5 — Documents and identity
+- Receipt/invoice rendering should prefer Business billing address for legal/business address.
+- POS/branch context should use Branch name/address where needed.
+- Business identity must remain separate from branch name.
+- Do not duplicate logo/image payloads into orders/invoices.
 
-```text
-specs/048-business-commerce-setup-addresses/
-├── plan.md
-├── research.md
-├── data-model.md
-├── quickstart.md
-├── contracts/
-│   └── business-commerce-setup-contract.md
-└── tasks.md              # Created by /speckit-tasks, not by /speckit-plan
+### Phase 6 — Documentation
+- Add `docs/implementation/business-commerce-setup-addresses.md`.
+- Explain dependency on Spec 047.
+- Explain current code mapping: BusinessUnit in code = Business in product language.
+- Document Business Resources, Business Settings, Business Employees, Business Warehouses, and BranchCommerceSettings future override concept.
+
+### Phase 7 — Validation
+Run:
+
+```bash
+pnpm --filter core-platform exec tsc --noEmit
+pnpm --filter core-platform lint
+pnpm --filter core-platform build
+
+pnpm --filter commerce exec tsc --noEmit
+pnpm --filter commerce lint
+pnpm --filter commerce build
+
+pnpm build
+pnpm lint
 ```
 
-### Source Code (repository root)
-
-```text
-packages/
-├── types/
-│   └── src/
-│       ├── core.ts       # BusinessUnit, Branch, OSEnablement, MediaAsset shape alignment
-│       └── commerce.ts   # CommerceSetup billing-address compatibility fields
-└── shared/
-    └── src/
-        ├── mock-db/
-        │   ├── schema.ts
-        │   ├── seed.ts
-        │   ├── selectors.ts
-        │   ├── actions.ts
-        │   └── index.ts
-        └── commerce/
-            └── documents.ts
-
-apps/
-├── core-platform/
-│   ├── app/dashboard/apps/page.tsx
-│   ├── app/onboarding/page.tsx
-│   ├── components/onboarding/
-│   └── lib/store/AppProvider.tsx
-└── commerce/
-    ├── app/setup/page.tsx
-    ├── app/(commerce)/
-    │   ├── dashboard/page.tsx
-    │   ├── invoices/[id]/document/page.tsx
-    │   ├── returns/[id]/document/page.tsx
-    │   ├── settings/page.tsx
-    │   └── settings/documents/page.tsx
-    ├── components/shell/
-    └── lib/store/AppProvider.tsx
-
-docs/
-└── implementation/
-    └── business-commerce-setup-addresses.md
-```
-
-**Structure Decision**: Use the existing modular monolith structure. Shared domain shapes and compatibility helpers live in `packages/types` and `packages/shared`; Core and Commerce apps consume those through existing providers; Spec 048 architecture notes live under `docs/implementation/`. No backend, new app, service boundary, or direct docs runtime import is added.
-
-## Complexity Tracking
-
-No constitution violations requiring complexity exceptions.
-
-## Phase 0: Research Summary
-
-See [research.md](./research.md).
-
-## Phase 1: Design Summary
-
-See [data-model.md](./data-model.md), [contracts/business-commerce-setup-contract.md](./contracts/business-commerce-setup-contract.md), and [quickstart.md](./quickstart.md).
-
-## Post-Design Constitution Check
-
-- **Core/Commerce ownership**: PASS. Core keeps subscription/Product Hub/workspace responsibilities; Commerce owns setup, presets, tax, categories, templates, and document semantics.
-- **Business-level setup**: PASS. The design keeps CommerceSetup scoped to Workspace + Business/BusinessUnit and documents BranchCommerceSettings only as future overrides.
-- **No backend / no microservices**: PASS. All design artifacts target existing frontend and shared mock-store flows.
-- **Business language compatibility**: PASS. Internal `BusinessUnit` remains allowed; touched UI and docs use Business/Store/Activity/Branch language.
-- **Address separation**: PASS. Workspace Address, Business Billing Address, and Branch Address have separate ownership and fallback rules.
-- **Storage/access discipline**: PASS. The contract keeps pages/components behind providers/shared helpers and forbids direct localStorage/sessionStorage reads.
+## Risk controls
+- Add fields optionally rather than renaming required fields.
+- Keep all existing storage keys and record shapes compatible.
+- Do not break existing setup/product/POS/order/invoice flows.
+- Do not introduce a second source of truth conflicting with Spec 047.
