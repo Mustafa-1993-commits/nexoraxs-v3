@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Shell } from "./Shell";
+import { Shell, type NavGroup } from "./Shell";
 import { useApp } from "@/lib/store";
 
 interface CoreShellProps {
@@ -10,14 +10,14 @@ interface CoreShellProps {
 
 export function CoreShell({ children }: CoreShellProps) {
   const { t } = useApp();
-  const navGroups = [
+  const navGroups: NavGroup[] = [
     {
       items: [
-        { href: "/dashboard/apps", label: t("product_hub"), icon: "layout-grid" },
-        { href: "/dashboard/billing", label: t("billing"), icon: "credit-card" },
-        { href: "/dashboard/team", label: t("team"), icon: "users" },
-        { href: "/dashboard/integrations", label: t("integrations"), icon: "plug" },
-        { href: "/dashboard/settings", label: t("settings"), icon: "settings" },
+        { id: "product-hub", href: "/dashboard/apps", label: t("product_hub"), icon: "layout-grid", match: "exact", searchable: true },
+        { id: "billing", href: "/dashboard/billing", label: t("billing"), icon: "credit-card", match: "exact", searchable: true },
+        { id: "team", href: "/dashboard/team", label: t("team"), icon: "users", match: "exact", searchable: true },
+        { id: "integrations", href: "/dashboard/integrations", label: t("integrations"), icon: "plug", match: "exact", searchable: true },
+        { id: "settings", href: "/dashboard/settings", label: t("settings"), icon: "settings", match: "exact", searchable: true },
       ],
     },
   ];

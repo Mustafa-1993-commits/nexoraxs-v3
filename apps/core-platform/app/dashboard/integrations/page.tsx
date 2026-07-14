@@ -57,8 +57,7 @@ export default function IntegrationsPage() {
   const { showToast } = useApp();
 
   return (
-    <div className="nx-main-scroll">
-      <div style={{ padding: "24px 28px", maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ padding: "24px 28px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Integrations</h1>
           <p style={{ fontSize: 13, color: "var(--text-2)", marginTop: 4 }}>
@@ -104,7 +103,6 @@ export default function IntegrationsPage() {
             </div>
           ))}
         </div>
-      </div>
     </div>
   );
 }

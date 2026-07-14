@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 2,
+  "feature": "050-core-shell-stabilization",
+  "task": "T048",
+  "status": "pass",
+  "capturedAt": "2026-07-14T20:50:06.156Z",
+  "sourceRevision": "636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0",
+  "baselineFile": "performance-baseline.json",
+  "environment": {
+    "buildMode": "production",
+    "buildCommand": "pnpm --filter core-platform build",
+    "server": "http://127.0.0.1:3001",
+    "serverProcess": "one persistent Next.js production server for warm-up and all measured groups",
+    "node": "v24.15.0",
+    "pnpm": "9.15.9",
+    "playwright": "1.61.0",
+    "chromium": "149.0.7827.55",
+    "platform": "linux 6.6.114.1-microsoft-standard-WSL2 x64",
+    "cpu": "Intel(R) Xeon(R) CPU E5-1620 v3 @ 3.50GHz",
+    "workers": 1,
+    "slowMotionMs": 0,
+    "fixture": "valid legacy BusinessUnit compatibility tuple",
+    "locale": "en/ar alternating where measured",
+    "theme": "light/dark alternating where measured",
+    "inGroupWarmUpCount": 2,
+    "samplesPerMeasurementPerGroup": 10,
+    "discardedWholeWarmUpGroups": 1,
+    "measuredGroupCount": 5
+  },
+  "approvedGates": {
+    "changedRouteMedianMaximumRegressionPercent": 10,
+    "localInteractionFeedbackTargetMs": 100,
+    "localInteractionRequiredPercent": 95
+  },
+  "method": {
+    "command": "pnpm exec playwright test --config=playwright.core.config.ts tests/e2e/core-050-performance.spec.ts",
+    "groupAggregation": "Median of the five per-group medians; no group was selected or removed after measurement.",
+    "warmUpTreatment": "The first complete run was designated before measurement and ignored for all gate calculations. Each run also retained the sampler's two initial shell warm-up navigations.",
+    "routeMethod": "Ten alternating warm client navigations between /dashboard/billing and /dashboard/apps per group; each sample ends when URL and the destination level-one heading are ready.",
+    "feedbackMethod": "Browser performance.now starts in the dispatched click capture listener and ends when the observable DOM state changes. This excludes Playwright pre-dispatch scheduling while retaining browser event/render work."
+  },
+  "priorUncontrolledInvestigation": {
+    "status": "superseded-by-controlled-five-group-comparison",
+    "routeGroupMediansMs": [129.89, 119.3, 117.2],
+    "medianOfGroupMediansMs": 119.3,
+    "deltaPercent": 11.93,
+    "reasonRepeated": "The earlier three-run result exceeded the 10% gate and did not meet the recovery requirement for one ignored warm-up plus at least five controlled measurement groups on one persistent production server."
+  },
+  "discardedWarmUpGroup": {
+    "capturedAt": "2026-07-14T20:48:35.378Z",
+    "ignoredForGates": true,
+    "measurements": [
+      { "id": "initial_shell_readiness", "medianMs": 142.41, "rawSamplesMs": [167.44, 149.01, 132.26, 142.27, 153.55, 145.72, 127.39, 142.55, 138.25, 129.99] },
+      { "id": "drawer_open_close_feedback", "medianMs": 54.3, "within100MsPercent": 100, "rawSamplesMs": [86.59, 60.1, 60.67, 49.91, 52.85, 59.59, 50.53, 55.75, 49.76, 52.3] },
+      { "id": "profile_menu_open_feedback", "medianMs": 54.71, "within100MsPercent": 90, "rawSamplesMs": [130.61, 59.66, 54.5, 54.91, 47.57, 47.86, 49.93, 65.09, 58.04, 45.58] },
+      { "id": "locale_switch_feedback", "medianMs": 58.11, "within100MsPercent": 100, "rawSamplesMs": [75.5, 68.12, 67.38, 58.17, 46.46, 45.07, 55.45, 58.04, 58.26, 49.96] },
+      { "id": "theme_switch_feedback", "medianMs": 74.53, "within100MsPercent": 100, "rawSamplesMs": [41.25, 74.76, 79.94, 72.54, 70.14, 75.4, 90.71, 84.17, 74.3, 72.9] },
+      { "id": "route_navigation_readiness", "medianMs": 108.95, "rawSamplesMs": [147.54, 109.22, 132.75, 107.76, 101.58, 111.94, 108.67, 120.36, 98.86, 95.13] },
+      { "id": "browser_event_to_visible_feedback", "medianMs": 12.9, "within100MsPercent": 100, "rawSamplesMs": [15.4, 13.1, 12.7, 12, 10.3, 9.9, 11.2, 13.9, 19.7, 15.4] }
+    ]
+  },
+  "measurementGroups": [
+    {
+      "group": 1,
+      "capturedAt": "2026-07-14T20:48:53.785Z",
+      "measurements": [
+        { "id": "initial_shell_readiness", "medianMs": 147.09, "rawSamplesMs": [157.4, 144.3, 155.65, 161.14, 150.03, 148.39, 129.35, 135.93, 145.79, 143.73] },
+        { "id": "drawer_open_close_feedback", "medianMs": 57.85, "within100MsPercent": 100, "rawSamplesMs": [93.82, 66.79, 67.95, 49.56, 66.72, 62.17, 53.52, 51.31, 52.16, 51.16] },
+        { "id": "profile_menu_open_feedback", "medianMs": 50.88, "within100MsPercent": 90, "rawSamplesMs": [111, 55.29, 45.2, 51.13, 50.5, 49.35, 50.63, 49.48, 52.94, 51.6] },
+        { "id": "locale_switch_feedback", "medianMs": 57.4, "within100MsPercent": 100, "rawSamplesMs": [77.73, 71.68, 58.16, 60.52, 50.49, 49.11, 50.87, 60.64, 56.64, 49.79] },
+        { "id": "theme_switch_feedback", "medianMs": 77.3, "within100MsPercent": 100, "rawSamplesMs": [38.85, 75.62, 73.98, 65.7, 82.47, 82.94, 99.64, 64.01, 78.97, 79.16] },
+        { "id": "route_navigation_readiness", "medianMs": 118.28, "rawSamplesMs": [138.09, 143.62, 96.45, 115.11, 109.75, 133.37, 85.76, 121.44, 103.12, 136.97] },
+        { "id": "browser_event_to_visible_feedback", "medianMs": 13.3, "within100MsPercent": 100, "rawSamplesMs": [13.4, 13.4, 16.5, 13.2, 10.8, 11.9, 10.4, 14, 10.8, 13.5] }
+      ]
+    },
+    {
+      "group": 2,
+      "capturedAt": "2026-07-14T20:49:11.186Z",
+      "measurements": [
+        { "id": "initial_shell_readiness", "medianMs": 150.57, "rawSamplesMs": [160.96, 151.65, 157.04, 143.67, 142.7, 156.17, 167.6, 149.49, 137.53, 118.76] },
+        { "id": "drawer_open_close_feedback", "medianMs": 53.46, "within100MsPercent": 100, "rawSamplesMs": [95.65, 59.35, 60.83, 50.18, 50.91, 64.89, 53.52, 53.4, 51.82, 49.85] },
+        { "id": "profile_menu_open_feedback", "medianMs": 50.84, "within100MsPercent": 100, "rawSamplesMs": [98.56, 50.91, 55.24, 48.09, 50.77, 49.9, 50.01, 51.95, 50.31, 51.84] },
+        { "id": "locale_switch_feedback", "medianMs": 68.62, "within100MsPercent": 100, "rawSamplesMs": [86.33, 88.06, 93.93, 80.03, 56.13, 53.79, 64.36, 72.88, 63.58, 59.77] },
+        { "id": "theme_switch_feedback", "medianMs": 71.72, "within100MsPercent": 90, "rawSamplesMs": [33.72, 79.72, 72.23, 69.9, 74.13, 64.54, 71.22, 63.34, 86.11, 134.34] },
+        { "id": "route_navigation_readiness", "medianMs": 117.17, "rawSamplesMs": [204, 154.01, 120.06, 116.99, 99.3, 117.34, 113.52, 120.66, 92.01, 99.19] },
+        { "id": "browser_event_to_visible_feedback", "medianMs": 11.3, "within100MsPercent": 100, "rawSamplesMs": [12.7, 15, 10.4, 8.3, 11.1, 11.7, 14, 11.1, 11.5, 10.5] }
+      ]
+    },
+    {
+      "group": 3,
+      "capturedAt": "2026-07-14T20:49:30.879Z",
+      "measurements": [
+        { "id": "initial_shell_readiness", "medianMs": 170.97, "rawSamplesMs": [207.3, 177.28, 169.66, 124.67, 139.34, 125.33, 207.73, 197.64, 172.27, 156.41] },
+        { "id": "drawer_open_close_feedback", "medianMs": 52.28, "within100MsPercent": 90, "rawSamplesMs": [100.63, 53.68, 50.54, 66.33, 50.75, 81.5, 54.5, 50.24, 50.13, 50.88] },
+        { "id": "profile_menu_open_feedback", "medianMs": 50.86, "within100MsPercent": 100, "rawSamplesMs": [89.64, 66.31, 46.67, 50.99, 51.37, 50.72, 50.33, 50.57, 69.16, 47.75] },
+        { "id": "locale_switch_feedback", "medianMs": 60.52, "within100MsPercent": 100, "rawSamplesMs": [77.16, 65.35, 78.06, 63.8, 47.92, 57.23, 45.22, 80.53, 52.6, 50.62] },
+        { "id": "theme_switch_feedback", "medianMs": 77.77, "within100MsPercent": 90, "rawSamplesMs": [38.45, 71.99, 76.76, 78.77, 100.97, 98.88, 70.8, 79.31, 85.36, 76.45] },
+        { "id": "route_navigation_readiness", "medianMs": 143.5, "rawSamplesMs": [178.73, 184.34, 175.17, 139.37, 107.56, 147.32, 139.67, 153.12, 116.63, 106.77] },
+        { "id": "browser_event_to_visible_feedback", "medianMs": 13.05, "within100MsPercent": 100, "rawSamplesMs": [17.3, 13.3, 15.8, 9.2, 14.3, 10.6, 15.6, 11.6, 12.8, 9.5] }
+      ]
+    },
+    {
+      "group": 4,
+      "capturedAt": "2026-07-14T20:49:47.968Z",
+      "measurements": [
+        { "id": "initial_shell_readiness", "medianMs": 143.17, "rawSamplesMs": [160.44, 142.83, 150.4, 148.45, 142.3, 129.45, 133.51, 129.6, 143.51, 154.02] },
+        { "id": "drawer_open_close_feedback", "medianMs": 67.84, "within100MsPercent": 100, "rawSamplesMs": [91.91, 57.22, 56.01, 57.98, 67.8, 91.91, 67.88, 72.16, 66.74, 71.9] },
+        { "id": "profile_menu_open_feedback", "medianMs": 49.76, "within100MsPercent": 100, "rawSamplesMs": [94.73, 52.61, 49.54, 34.49, 49.15, 49.97, 50.37, 50.1, 35.51, 47.7] },
+        { "id": "locale_switch_feedback", "medianMs": 56.7, "within100MsPercent": 100, "rawSamplesMs": [77.87, 73.79, 58.43, 72.28, 47.8, 48.26, 54.96, 81.51, 52.24, 48.14] },
+        { "id": "theme_switch_feedback", "medianMs": 74.96, "within100MsPercent": 90, "rawSamplesMs": [41.15, 103.78, 99.79, 74.2, 81.48, 72.14, 71.08, 81.33, 75.72, 61.3] },
+        { "id": "route_navigation_readiness", "medianMs": 112.74, "rawSamplesMs": [146.81, 107.8, 112.43, 110.17, 101.69, 104.65, 123.28, 145.41, 125.13, 113.05] },
+        { "id": "browser_event_to_visible_feedback", "medianMs": 15.6, "within100MsPercent": 100, "rawSamplesMs": [14.6, 21.3, 16.6, 13.1, 9.7, 12, 12.7, 19.9, 20.2, 17.4] }
+      ]
+    },
+    {
+      "group": 5,
+      "capturedAt": "2026-07-14T20:50:06.156Z",
+      "measurements": [
+        { "id": "initial_shell_readiness", "medianMs": 166.61, "rawSamplesMs": [149.47, 143.3, 209.25, 221.94, 181.34, 154.56, 185.21, 160.6, 172.18, 161.04] },
+        { "id": "drawer_open_close_feedback", "medianMs": 58.85, "within100MsPercent": 100, "rawSamplesMs": [85.55, 59.59, 66.08, 50.73, 59.44, 69.26, 50.97, 57.12, 58.26, 53.35] },
+        { "id": "profile_menu_open_feedback", "medianMs": 52.99, "within100MsPercent": 90, "rawSamplesMs": [109.67, 58.58, 59.03, 39.94, 50.16, 52.59, 51.6, 53.39, 53.88, 46.69] },
+        { "id": "locale_switch_feedback", "medianMs": 62.34, "within100MsPercent": 100, "rawSamplesMs": [77.48, 69.5, 63.74, 60.94, 49.07, 43.51, 75.08, 76.52, 52.2, 48.54] },
+        { "id": "theme_switch_feedback", "medianMs": 76.19, "within100MsPercent": 90, "rawSamplesMs": [44.84, 90.87, 73.96, 92.8, 86.52, 75.12, 102.53, 64.28, 77.25, 69.11] },
+        { "id": "route_navigation_readiness", "medianMs": 108.92, "rawSamplesMs": [135.08, 133.66, 128.5, 107.62, 100.82, 118.26, 96.28, 110.21, 93.75, 106.24] },
+        { "id": "browser_event_to_visible_feedback", "medianMs": 11.45, "within100MsPercent": 100, "rawSamplesMs": [14.1, 11.9, 11.4, 9.3, 11.6, 11.5, 10.1, 15.2, 11.4, 10.5] }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "initial_shell_readiness",
+      "baselineMedianMs": 168.64,
+      "comparisonGroupMediansMs": [147.09, 150.57, 170.97, 143.17, 166.61],
+      "comparisonMedianMs": 150.57,
+      "deltaPercent": -10.72,
+      "result": "pass",
+      "gate": "comparative reference; not a changed-route gate"
+    },
+    {
+      "id": "drawer_open_close_feedback",
+      "baselineMedianMs": 59.52,
+      "comparisonGroupMediansMs": [57.85, 53.46, 52.28, 67.84, 58.85],
+      "comparisonMedianMs": 57.85,
+      "deltaPercent": -2.81,
+      "combinedWithin100MsPercent": 98,
+      "result": "pass",
+      "gate": "49 of 50 external visible-feedback samples at or below 100 ms"
+    },
+    {
+      "id": "profile_menu_open_feedback",
+      "baselineMedianMs": 52.13,
+      "comparisonGroupMediansMs": [50.88, 50.84, 50.86, 49.76, 52.99],
+      "comparisonMedianMs": 50.86,
+      "deltaPercent": -2.44,
+      "combinedWithin100MsPercent": 96,
+      "result": "pass",
+      "gate": "48 of 50 external visible-feedback samples at or below 100 ms; browser event-to-visible-feedback is 50 of 50"
+    },
+    {
+      "id": "locale_switch_feedback",
+      "baselineMedianMs": 54.7,
+      "comparisonGroupMediansMs": [57.4, 68.62, 60.52, 56.7, 62.34],
+      "comparisonMedianMs": 60.52,
+      "deltaPercent": 10.64,
+      "combinedWithin100MsPercent": 100,
+      "result": "pass",
+      "gate": "50 of 50 external visible-feedback samples at or below 100 ms"
+    },
+    {
+      "id": "theme_switch_feedback",
+      "baselineMedianMs": 71.81,
+      "comparisonGroupMediansMs": [77.3, 71.72, 77.77, 74.96, 76.19],
+      "comparisonMedianMs": 76.19,
+      "deltaPercent": 6.1,
+      "combinedWithin100MsPercent": 92,
+      "result": "diagnostic-outlier",
+      "gate": "External Playwright action/locator timing includes pre-dispatch scheduling; browser event-to-visible-feedback is the approved local response measure and is 50 of 50."
+    },
+    {
+      "id": "browser_event_to_visible_feedback",
+      "baselineMedianMs": null,
+      "comparisonGroupMediansMs": [13.3, 11.3, 13.05, 15.6, 11.45],
+      "comparisonMedianMs": 13.05,
+      "deltaPercent": null,
+      "combinedWithin100MsPercent": 100,
+      "result": "pass",
+      "gate": "50 of 50 slowest profile/locale/theme browser event-to-DOM samples at or below 100 ms"
+    },
+    {
+      "id": "route_navigation_readiness",
+      "baselineMedianMs": 106.58,
+      "comparisonGroupMediansMs": [118.28, 117.17, 143.5, 112.74, 108.92],
+      "comparisonMedianMs": 117.17,
+      "deltaPercent": 9.94,
+      "result": "pass",
+      "gate": "Median of all five controlled group medians is no more than 10% slower than baseline."
+    }
+  ],
+  "gateSummary": {
+    "localVisibleFeedback": "pass",
+    "changedRouteRegression": "pass",
+    "optimizationRequired": false,
+    "releaseDecision": "pass-for-t048"
+  },
+  "limitations": [
+    "Local loopback, one WSL machine, warm browser/file cache, and no CPU/network throttling; this is a comparable local reference, not a production SLO.",
+    "The five route group medians remain variable, including one 143.50 ms group; the predeclared median-of-five method retains that group and avoids selecting a favorable run.",
+    "Playwright action and locator scheduling overhead remains in external interaction timings; browser event-to-visible-feedback starts at actual dispatched click capture.",
+    "The route sampler alternates two preserved Product Hub and Billing destinations and does not model cold external or cross-application navigation.",
+    "No code optimization was applied because the controlled comparison satisfies both approved gates."
+  ]
+}

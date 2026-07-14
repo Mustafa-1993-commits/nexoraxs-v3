@@ -93,7 +93,7 @@ test.describe("Commerce Spec 044 branch inventory, transfers, returns", () => {
     const newBranchCard = page.getByTestId(`branch-card-${branchSlug(BRANCH_B)}`);
     await expect(page.getByTestId("branch-list").getByText(BRANCH_B, { exact: true })).toBeVisible();
     await expect(newBranchCard.getByTestId("branch-card-name")).toContainText(BRANCH_B);
-    await expect(newBranchCard.getByTestId("branch-card-city")).toHaveText("Cairo");
+    await expect(newBranchCard.getByTestId("branch-card-city")).toHaveText("Cairo, Egypt");
 
     await switchBranch(page, BRANCH_A);
     await setProductStock(page, 10);

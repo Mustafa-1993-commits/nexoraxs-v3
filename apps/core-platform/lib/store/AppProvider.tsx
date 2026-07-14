@@ -15,6 +15,7 @@ import type {
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
   OSEnablement, WorkspaceStorageUsage,
 } from "@nexoraxs/types";
+import type { ShellContextSnapshot } from "@/lib/shell/contracts";
 
 // ---- types ----
 export type { User, Workspace, Branch, OSSubscription, OSEnablement, BusinessUnit, WorkspaceMember, CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem };
@@ -48,6 +49,7 @@ interface AppContextType {
   currentOSSubscription: OSSubscription | null;
   currentOSEnablement: OSEnablement | null;
   onboardingState: OnboardingState;
+  shellContextSnapshot: ShellContextSnapshot;
   // ui
   lang: Lang;
   setLang: (l: Lang) => void;
@@ -285,6 +287,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isCommerceSetupComplete = !!state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId);
 
   const currentUserDisplayName = getUserDisplayName(currentUser);
+
+  const shellContextSnapshot = useMemo((): ShellContextSnapshot => ({
+    actorId: state.currentUserId,
+    workspaceId: state.currentWorkspaceId,
+    workspace: currentWorkspace,
+    legacyBusinessUnitId: state.currentBusinessUnitId,
+    legacyBusinessUnit: currentBU,
+    branchId: state.currentBranchId,
+    branch: currentBranch,
+  }), [
+    currentBU,
+    currentBranch,
+    currentWorkspace,
+    state.currentBranchId,
+    state.currentBusinessUnitId,
+    state.currentUserId,
+    state.currentWorkspaceId,
+  ]);
 
   const COMMERCE_PLAN = useMemo((): CommercePlanInfo | null => {
     if (!currentOSSubscription) return null;
@@ -645,6 +665,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const ctx: AppContextType = {
     isHydrated,
     currentUser, currentWorkspace, currentBranch, currentBU, currentOSSubscription, currentOSEnablement, onboardingState: state.onboardingState,
+    shellContextSnapshot,
     lang: state.lang, setLang, theme: state.theme, toggleTheme,
     toasts, showToast, dismissToast,
     isAuthenticated, isOnboardingComplete, isCommerceOSActive, isCommerceSetupComplete,

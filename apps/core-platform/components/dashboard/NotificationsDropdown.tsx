@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect } from "react";
 import { Bell, Package, AlertTriangle, ShoppingBag, CreditCard } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { useShellPresentation } from "@/lib/shell/useShellPresentation";
 
-export function NotificationsDropdown() {
-  const { products, orders, COMMERCE_PLAN, money } = useApp();
+export const NotificationsDropdown = memo(function NotificationsDropdown() {
+  const { t } = useApp();
+  const { notifications } = useShellPresentation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function close(e: MouseEvent) {
@@ -17,64 +21,80 @@ export function NotificationsDropdown() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  const outOfStock = products.filter((p) => (p.stock ?? 0) === 0);
-  const lowStock = products.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) <= (p.lowStockThreshold || 5));
-  const latestOrder = orders.length > 0 ? orders[orders.length - 1] : null;
-  const hasNotifs = outOfStock.length > 0 || lowStock.length > 0 || !!COMMERCE_PLAN;
+  useEffect(() => {
+    if (!open) return;
+    surfaceRef.current?.focus();
+    function dismiss(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [open]);
+
+  const hasNotifs = notifications.hasIndicator;
+  const icons = {
+    plan: CreditCard,
+    "out-of-stock": AlertTriangle,
+    "low-stock": Package,
+    "latest-order": ShoppingBag,
+  } as const;
+  const colors = {
+    plan: "var(--accent)",
+    "out-of-stock": "var(--danger)",
+    "low-stock": "var(--warn)",
+    "latest-order": "var(--pos)",
+  } as const;
 
   return (
     <div ref={ref} className="nx-pop-wrap">
-      <button className="nx-icon-btn" onClick={() => setOpen((o) => !o)} aria-label="Notifications">
-        <Bell size={16} />
-        {hasNotifs && <span className="nx-notif-dot" />}
+      <button
+        ref={triggerRef}
+        type="button"
+        className="nx-icon-btn"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={t("notifications")}
+        aria-controls="notifications-menu"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+      >
+        <Bell aria-hidden size={16} />
+        {hasNotifs && <span aria-hidden className="nx-notif-dot" />}
       </button>
 
       {open && (
-        <div className="nx-dd" style={{ minWidth: 280 }}>
-          <div className="nx-dd-label">Notifications</div>
+        <div
+          ref={surfaceRef}
+          id="notifications-menu"
+          className="nx-dd"
+          role="dialog"
+          aria-label={t("notifications")}
+          tabIndex={-1}
+          style={{ minWidth: 280 }}
+        >
+          <div className="nx-dd-label">{t("notifications")}</div>
 
-          {COMMERCE_PLAN && (
-            <div className="nx-dd-item" style={{ cursor: "default" }}>
-              <CreditCard size={16} style={{ color: "var(--accent)", flexShrink: 0 }} />
-              <span style={{ fontSize: 13 }}>
-                <strong>{COMMERCE_PLAN.name}</strong> plan — {COMMERCE_PLAN.status}
-              </span>
-            </div>
-          )}
-
-          {outOfStock.map((p) => (
-            <div key={p.id} className="nx-dd-item" style={{ cursor: "default" }}>
-              <AlertTriangle size={16} style={{ color: "var(--danger)", flexShrink: 0 }} />
-              <span style={{ fontSize: 13 }}>Out of stock: <strong>{p.name}</strong></span>
-            </div>
-          ))}
-
-          {lowStock.map((p) => (
-            <div key={p.id} className="nx-dd-item" style={{ cursor: "default" }}>
-              <Package size={16} style={{ color: "var(--warn)", flexShrink: 0 }} />
-              <span style={{ fontSize: 13 }}>Low stock: <strong>{p.name}</strong> ({p.stock} left)</span>
-            </div>
-          ))}
-
-          {latestOrder && (
-            <>
-              <div className="nx-dd-sep" />
-              <div className="nx-dd-item" style={{ cursor: "default" }}>
-                <ShoppingBag size={16} style={{ color: "var(--pos)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13 }}>
-                  New order <strong>{latestOrder.orderNumber}</strong> — {money(latestOrder.total)}
-                </span>
+          {notifications.items.map((item, index) => {
+            const ItemIcon = icons[item.kind];
+            return (
+              <div key={item.id}>
+                {item.kind === "latest-order" && index > 0 && <div className="nx-dd-sep" />}
+                <div className="nx-dd-item" style={{ cursor: "default" }}>
+                  <ItemIcon aria-hidden size={16} style={{ color: colors[item.kind], flexShrink: 0 }} />
+                  <span dir="auto" style={{ fontSize: 13 }}>{item.message}</span>
+                </div>
               </div>
-            </>
-          )}
+            );
+          })}
 
-          {!hasNotifs && !latestOrder && (
+          {notifications.state === "empty" && (
             <div style={{ padding: "12px 11px", fontSize: 13, color: "var(--text-3)" }}>
-              No new notifications
+              {t("no_new_notifications")}
             </div>
           )}
         </div>
       )}
     </div>
   );
-}
+});

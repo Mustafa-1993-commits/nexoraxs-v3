@@ -34,8 +34,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="nx-main-scroll">
-      <div className="nx-page" style={{ paddingBlock: "24px" }}>
+    <div className="nx-page" style={{ paddingBlock: "24px" }}>
 
         {/* Page header */}
         <div className="nx-page-head">
@@ -197,7 +196,6 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }

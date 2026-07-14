@@ -4,25 +4,38 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
 import { CoreShell } from "@/components/shell/CoreShell";
+import { ShellStateNotice } from "@/components/shell/ShellStateNotice";
+import { useShellPresentation } from "@/lib/shell/useShellPresentation";
+import { createShellPresentationState } from "@/lib/shell/presentation";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isHydrated, isAuthenticated, isOnboardingComplete } = useApp();
+  const { isHydrated, isAuthenticated, onboardingState } = useApp();
+  const { context, retryContext, state } = useShellPresentation();
+  const hasCompletedCommerceOnboarding = onboardingState.completedOS.includes("commerce");
   const router = useRouter();
 
   useEffect(() => {
     if (!isHydrated) return;
     if (!isAuthenticated) {
       router.replace("/login");
-    } else if (!isOnboardingComplete) {
+    } else if (!hasCompletedCommerceOnboarding) {
       router.replace("/onboarding");
     }
-  }, [isHydrated, isAuthenticated, isOnboardingComplete, router]);
+  }, [hasCompletedCommerceOnboarding, isHydrated, isAuthenticated, router]);
 
-  if (!isHydrated || !isAuthenticated || !isOnboardingComplete) {
+  if (!isHydrated || !isAuthenticated || !hasCompletedCommerceOnboarding) {
     return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0c0e14" }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #4f46e5", borderTopColor: "transparent", animation: "nx-spin 0.8s linear infinite" }} />
+      <div className="nx-shell-loading-frame">
+        <ShellStateNotice state={createShellPresentationState("loading")} />
       </div>
+    );
+  }
+
+  if (state.kind !== "ready") {
+    return (
+      <CoreShell>
+        <ShellStateNotice state={state} contextStatus={context.status} onAction={retryContext} />
+      </CoreShell>
     );
   }
 
