@@ -400,3 +400,9 @@ Before writing or approving code, answer:
 
 If any answer is unclear because architecture is missing or contradictory, stop the affected work
 and report the exact sources. Do not invent the answer.
+
+<!-- SPECKIT START -->
+## Active Spec Kit Plan
+
+- `specs/050-core-shell-stabilization/plan.md`
+<!-- SPECKIT END -->
