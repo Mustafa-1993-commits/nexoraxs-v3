@@ -1,0 +1,51 @@
+import { describe, expect, it, vi } from "vitest";
+import { LegacyProductRepositoryError } from "@nexoraxs/contracts";
+import { createCommerceServices } from "../createCommerceServices";
+import { MemoryCommerceStore } from "../MemoryCommerceStore";
+import { MockProductsRepository } from "../MockProductsRepository";
+
+describe("Commerce Product composition root", () => {
+  it("constructs mock services over an injected isolated store", () => {
+    const store = new MemoryCommerceStore();
+
+    const services = createCommerceServices({ dataSource: "mock" }, { store });
+
+    expect(services.productsRepository).toBeInstanceOf(MockProductsRepository);
+  });
+
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid deterministic mock latency %s",
+    (mockLatencyMs) => {
+      expect(() => createCommerceServices({ dataSource: "mock", mockLatencyMs })).toThrowError(
+        expect.objectContaining({ code: "configuration" }),
+      );
+    },
+  );
+
+  it("rejects an unknown runtime source", () => {
+    expect(() => createCommerceServices({ dataSource: "unknown" as "mock" })).toThrowError(
+      expect.objectContaining({
+        code: "configuration",
+        messageKey: "products.errors.configuration.data_source",
+      }),
+    );
+  });
+
+  it("requires a base URL for future HTTP selection", () => {
+    expect(() => createCommerceServices({ dataSource: "http" })).toThrowError(
+      expect.objectContaining({
+        code: "configuration",
+        messageKey: "products.errors.configuration.api_base_url",
+      }),
+    );
+  });
+
+  it("reports configured HTTP as unavailable without issuing a network request", () => {
+    const request = vi.fn();
+    vi.stubGlobal("fetch", request);
+
+    expect(() => createCommerceServices({ dataSource: "http", apiBaseUrl: "https://api.example.test" }))
+      .toThrowError(LegacyProductRepositoryError);
+    expect(request).not.toHaveBeenCalled();
+  });
+});

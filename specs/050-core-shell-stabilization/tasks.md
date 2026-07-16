@@ -762,7 +762,7 @@ Design Memory and local execution documentation, and close the final Constitutio
   - **Expected output**: Auditable relative performance evidence for all approved measures and gates.
   - **Evidence**: `performance-comparison.json` with raw data, computed deltas, gate outcomes, and limitations.
 
-- [ ] T049 Run the final boundary and compatibility scan across the changed tree and record zero app-to-app source imports, route changes, storage-key changes, seeded-ID changes, Commerce operational writes, canonical Business additions, BusinessUnit renames, Repository abstractions, backend/Laravel/API/SDK/auth work, OSEnablement replacement, or shell duplication in `specs/050-core-shell-stabilization/evidence/characterization.md`.
+- [X] T049 Run the final boundary and compatibility scan across the changed tree and record zero app-to-app source imports, route changes, storage-key changes, seeded-ID changes, Commerce operational writes, canonical Business additions, BusinessUnit renames, Repository abstractions, backend/Laravel/API/SDK/auth work, OSEnablement replacement, or shell duplication in `specs/050-core-shell-stabilization/evidence/characterization.md`.
   - **Dependencies**: T046.
   - **Exact files**: `apps/core-platform/`, `packages/ui/src/styles/core-theme.css`, `packages/shared/src/mock-db/schema.ts`, `tests/e2e/`, `package.json`, `pnpm-lock.yaml`, `specs/050-core-shell-stabilization/evidence/characterization.md`.
   - **Validation**: Use documented `rg`, route-list, storage snapshot, seeded-ID snapshot, import graph, and diff checks; compare against Phase A inventory and the compatibility map in `plan.md`.

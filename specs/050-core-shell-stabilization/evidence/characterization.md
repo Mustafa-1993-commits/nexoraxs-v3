@@ -746,3 +746,184 @@ usability, rollback, final Constitution completion, or release approval claim is
 
 The final WSL-aware release handoff is `docs/12-release/FEATURE-050-VALIDATION-REPORT.md` and its
 native Windows checklist is `docs/12-release/WINDOWS-VALIDATION.md`.
+
+## Release Closure Audit — 2026-07-16
+
+This audit starts from the merged Feature 050 tree on closure branch
+`chore/050-release-closure`. It does not reopen implementation or treat earlier partial release
+checks as completion evidence for tasks that remained unchecked.
+
+### Starting task and evidence status
+
+| Task | Status at closure-audit entry | Evidence and dependency result |
+|---|---|---|
+| T047 | **BLOCKED BY HUMAN WINDOWS VALIDATION** | Automated rows pass, but the required current-stable Windows/NVDA/Chrome review and Edge parity pass have no human evidence. |
+| T049 | **NOT STARTED at audit entry; completed below** | Earlier release evidence included a recovery-pass boundary scan while also stating that T049 was not authorized. A new Phase A baseline comparison was required. |
+| T050 | **BLOCKED** | Depends on T047, T048, and T049. T048 passes and T049 is completed below; T047 and the 20-person study remain incomplete. Preparation artifacts may be created without claiming results. |
+| T051 | **NOT STARTED / dependency-blocked** | Depends on completed T047 and T050 plus named approvers. This closure pass must stop before it. |
+| T052 | **NOT STARTED / dependency-blocked** | Depends on T051. `evidence/rollback-validation.md` does not exist. |
+| T053 | **NOT STARTED / dependency-blocked** | Depends on T052. Earlier static commands are historical partial evidence, not T053 completion. |
+| T054 | **NOT STARTED / dependency-blocked** | Depends on T053. No final Constitution closure or release decision is authorized. |
+
+Evidence present at audit entry:
+
+- `accessibility-localization-matrix.md`
+- `characterization.md`
+- `performance-baseline.json`
+- `performance-comparison.json`
+- `t046-commerce-regression.md`
+
+Evidence missing at audit entry:
+
+- `design-quality-checklist.md`
+- `usability-validation.md`
+- `rollback-validation.md`
+
+Executable now and authorized by this closure pass: the complete T049 source/diff/import/route/
+storage/seed/boundary scan, preparation of the T047 operator checklist, preparation of T050 study
+and Design Quality records, link/path review for the new evidence, and `git diff --check` for the
+closure diff. Builds, lint, TypeScript, Core/Commerce Playwright, rollback rehearsal, and the final
+Constitution trace are technically executable but belong to T053/T052/T054 and remain dependency-
+blocked by the explicit stop instruction.
+
+Human-only work:
+
+- T047 requires a real Windows reviewer using recorded Windows, Chrome, Edge, and NVDA versions,
+  with observed focus and spoken announcements.
+- T050 requires 20 real representative Core users: 10 English/LTR and 10 Arabic/RTL. Automated
+  agents, synthetic participants, proxies without approval, and invented outcomes are prohibited.
+
+### Reconciled contradictions and limitations
+
+1. `docs/12-release/FEATURE-050-VALIDATION-REPORT.md` and the earlier recovery ledger say the
+   boundary scan passed, but both the report and this file also state T049 was not authorized or
+   started. The earlier scan remains supporting evidence only; the fresh scan below is the T049
+   completion record.
+2. The prior report's whitespace PASS used the then-current working diff. The exact comparison
+   `git diff --check 636952f7..HEAD` reports pre-existing Markdown hard-break spaces in merged
+   Feature 050 evidence. Those matches are not boundary violations. The closure working diff must
+   still pass `git diff --check` before handoff.
+3. T047 asks a human to observe an error announcement, while the approved runtime fixtures expose
+   loading, empty, unavailable, unauthorized, and recovering states; `error` is contract-tested but
+   has no approved deterministic manual browser trigger. A reviewer must not fabricate that row or
+   modify product code to create a result; it remains blocked until an approved trigger or linked
+   defect disposition exists.
+4. SC-009 requires one identical authenticated/onboarded starting state but does not name the
+   fixture. The prepared study pins `unavailable-context`, which preserves the valid Workspace and
+   exposes bounded context recovery so all seven required elements are observable. The script and
+   fixture revision must be frozen before recruitment and used unchanged for all participants.
+5. The repository baseline already contains Core mock-facade Commerce actions and Core-local
+   Commerce compatibility branches. T049 governs the Feature 050 changed tree. The scan therefore
+   proves zero new or modified unauthorized Commerce writes and zero expanded compatibility mode;
+   it does not misstate the pre-existing repository as free of legacy debt.
+6. The canonical Design Quality source uses Pass/Fail/N/A, while T050 and this closure instruction
+   require PASS/BLOCKED/N/A. The Feature 050 evidence uses PASS/BLOCKED/N/A so missing human evidence
+   cannot be mistaken for a failure, waiver, or pass.
+
+## T049 — Final Boundary and Compatibility Scan
+
+**Execution date**: 2026-07-16
+
+**Exact comparison baseline**: Phase A source revision
+`636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0`, as recorded at the top of this file and in
+`performance-baseline.json`.
+
+**Reviewed target**: merged Feature 050 revision
+`99a6e9de9fa2f8b2a4e5aa88f9da2aad573cc7e6` on `chore/050-release-closure`.
+
+### Commands and reviewed matches
+
+| Concern | Command or comparison | Reviewed result |
+|---|---|---|
+| Baseline ancestry and complete changed tree | `git merge-base --is-ancestor 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0 HEAD`; `git diff --name-status 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD` | PASS. The Phase A revision is an ancestor. The full merge diff was reviewed; T049's product/test/package scope contains 28 changed files. |
+| App-to-app source imports | Added-import review plus `rg` for `apps/commerce`, `apps/landing`, and app package aliases under `apps/core-platform` | PASS. Zero match. Added imports are React/Next/Lucide, shared package types/i18n, or Core-local shell files. |
+| Core writes to Commerce facts | Added-line scans for create/add/update/delete/remove/save/write/mutate calls targeting Product, Inventory, Stock, Order, Payment, Tax, Invoice, Return, Transfer, Customer, or Commerce; reviewed `AppProvider.tsx` diff | PASS for the changed tree. Zero added write match. The only provider delta is a read-only `shellContextSnapshot`; legacy Commerce actions predate the baseline and were not changed or invoked by the shell seam. |
+| Route files and URLs | Sorted baseline/current Core `page.tsx` inventories hashed with SHA-256; route-file name-status review; added route-literal review | PASS. Both route inventories hash to `b418ecf05cec10e24f940fd2fed2661c55e5d1b95088ef8ab64c118b455c558d`. No route file was added/deleted. Added literals are the five existing sidebar/search destinations. The approved stale-context recovery change preserves authentication and incomplete-onboarding destinations. |
+| Storage keys | Extracted `STORAGE_KEYS` block from baseline/current `schema.ts` and hashed with SHA-256 | PASS. Both hashes are `0913226b67c340fd12db52f2607e2010bc37e6455e49fbdc6f3865e23539a3e8`. A broad `core_` search matched only new translation keys such as `search_core_destinations`; manual review confirmed no storage-key addition, rename, or deletion. |
+| Seeded IDs and relationships | Baseline/current `packages/shared/src/mock-db/seed.ts` SHA-256 plus protected-ID added/removed-line scan | PASS. Both seed-file hashes are `7e3ffd401097a9f0be3de2c946dbd7439735ba4ad6640bfc564d369bcec3e73c`. Zero protected-ID diff. The test fixture asserts, rather than changes, `user_001`, `ws_001`, `sub_001`, `bu_001`, `br_001`, `ose_001`, `tm_001`, `cs_001`, `p1`, and `p2`. |
+| Canonical Business and `BusinessUnit` | Added model/type/identifier scan for canonical `Business`; removed/rename/migration scan for `BusinessUnit` | PASS. Zero product-source match. New contracts explicitly retain `legacyBusinessUnitId` and `legacyBusinessUnit`; no canonical Business model or identifier was added. |
+| Repository abstraction | Added-line scan for `Repository`, repository interfaces/factories, and Repository Pattern wording in product/test/package changes | PASS. Zero match. The shell uses the approved app-local read-only presentation seam. |
+| Backend/Laravel/API/SDK/auth | Name-status diff for `backend`, `packages/sdk`, `packages/auth`, and Core API routes; root package diff review | PASS. Zero scoped file change. The only root dependency addition is test-only `@axe-core/playwright`. |
+| `OSEnablement` replacement | Added/removed-line scan for `OSEnablement`/`osEnablement` across Core/shared/types | PASS. Zero match. The unresolved legacy model was neither replaced nor evolved. |
+| Shell duplication | Baseline/current shell-file inventory and added shell-file review | PASS. No new `Shell`, `CoreShell`, sidebar, topbar, or shared shell primitive was added. `ShellSearch` and `ShellStateNotice` are the two app-local components classified **Missing** and authorized by the Phase 0 map. Existing Core/Commerce shells and the dormant Core Commerce mode predate the baseline. |
+| Commerce runtime | `git diff --name-status 636952f7..HEAD -- apps/commerce` | PASS. Zero Commerce application file change. The separate Commerce E2E assertion correction is evidence-only test maintenance recorded by T046. |
+
+### Exact command ledger
+
+Commands below were executed from the repository root. `rg` exit 1 means zero match for the
+prohibited pattern and is the expected passing result for the corresponding zero-result scan.
+
+```bash
+git merge-base --is-ancestor 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0 HEAD
+git rev-parse HEAD
+git diff --name-status 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD
+git diff --stat 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform packages/ui/src/styles/core-theme.css packages/shared/src/mock-db/schema.ts tests/e2e package.json pnpm-lock.yaml
+
+git diff --name-status 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform/app
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform | rg '^\+[^+].*(href|router\.(push|replace)|location\.(href|assign|replace)|url:|path:).*[/]'
+git ls-tree -r --name-only 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0 -- apps/core-platform/app | rg '/page\.tsx$|apps/core-platform/app/page\.tsx$' | sort | sha256sum
+rg --files apps/core-platform/app | rg '/page\.tsx$|apps/core-platform/app/page\.tsx$' | sort | sha256sum
+
+git show 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0:packages/shared/src/mock-db/schema.ts | awk '/^export const STORAGE_KEYS = \{/{capture=1} capture{print} capture && /^\} as const;/{exit}' | sha256sum
+awk '/^export const STORAGE_KEYS = \{/{capture=1} capture{print} capture && /^\} as const;/{exit}' packages/shared/src/mock-db/schema.ts | sha256sum
+git show 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0:packages/shared/src/mock-db/seed.ts | sha256sum
+sha256sum packages/shared/src/mock-db/seed.ts
+git diff --name-status 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- packages/shared/src/mock-db/seed.ts
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform packages/shared/src/mock-db/schema.ts packages/shared/src/mock-db/seed.ts | rg "^[+-][^+-].*(user_001|ws_001|sub_001|bu_001|br_001|ose_001|tm_001|cs_001|[\"']p1[\"']|[\"']p2[\"'])"
+
+rg -n "(from|import\()\s*[({]*[\"']([^\"']*apps/(commerce|landing)|@nexoraxs/(commerce|landing)|\.\./\.\./\.\./(commerce|landing))" apps/core-platform
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform | rg '^\+\s*(import|export).*from'
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform | rg '^\+[^+].*(add|create|update|delete|remove|write|mutate|save|set)[A-Za-z_]*(Product|Inventory|Stock|Order|Payment|Tax|Invoice|Return|Transfer|Customer|Commerce)'
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform | rg '^\+[^+].*\.(add|create|update|delete|remove|save|write|mutate)[A-Z_]*(Product|Inventory|Stock|Order|Payment|Tax|Invoice|Return|Transfer|Customer|Commerce)'
+
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform packages/shared packages/types | rg '^\+[^+].*(interface|type|class|const|let|var|function|businessId|business_id).*[[:<:]]Business[[:>:]]|^\+[^+].*(businessId|business_id)'
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform packages/shared packages/types | rg '^-.*(BusinessUnit|businessUnit|business_unit)|^\+[^+].*(rename|migrat).*(BusinessUnit|businessUnit|business_unit)'
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform packages tests/e2e package.json | rg '^\+[^+].*(Repository|repository pattern|I[A-Za-z]+Repository|createRepository|new Repository)'
+git diff --name-status 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- backend packages/sdk packages/auth apps/core-platform/app/api
+git diff --unified=0 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/core-platform packages/shared packages/types | rg '^[+-][^+-].*(OSEnablement|osEnablement|os_enablement)'
+
+git ls-tree -r --name-only 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0 -- apps packages | rg '(^|/)(CoreShell|Shell|Sidebar|Topbar|ShellSearch|ShellStateNotice)\.(tsx|ts)$|shell/(contracts|presentation|useShellPresentation)\.(tsx|ts)$'
+rg --files apps packages | rg '(^|/)(CoreShell|Shell|Sidebar|Topbar|ShellSearch|ShellStateNotice)\.(tsx|ts)$|shell/(contracts|presentation|useShellPresentation)\.(tsx|ts)$'
+git diff --name-status 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- apps/commerce
+git diff --unified=2 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD -- package.json
+git diff --check 636952f7ccb49d9c697b8cbbf0250ccbcf2c93b0..HEAD
+```
+
+The final command exits 2 on existing Markdown hard-break whitespace in merged Feature 050
+documents. The matches were reviewed and do not alter a route, key, ID, import, owner, model,
+lifecycle, package, or shell. The closure working-tree `git diff --check` is a separate required
+handoff gate and passes after the evidence changes.
+
+### T049 conclusion
+
+| Required zero-violation result | Conclusion |
+|---|---|
+| Unauthorized app-to-app source imports | **PASS — zero** |
+| Unauthorized Core shell writes to Commerce operational facts | **PASS — zero changed-tree writes** |
+| Unauthorized route additions, deletions, URL changes, or redirect changes | **PASS — zero** |
+| Storage-key changes | **PASS — zero** |
+| Seeded-ID or seed-relationship changes | **PASS — zero** |
+| `BusinessUnit` rename or canonical Business addition | **PASS — zero** |
+| Repository abstraction | **PASS — zero** |
+| Backend, Laravel, API, SDK, or auth work | **PASS — zero** |
+| `OSEnablement` replacement | **PASS — zero** |
+| Unauthorized shell duplication | **PASS — zero** |
+
+**Decision**: **PASS — T049 complete.** The conclusion is limited to the exact Feature 050
+baseline-to-merged-target delta. Pre-existing compatibility debt remains visible below and is not
+whitelisted, redesigned, or silently represented as resolved.
+
+## Post-050 Follow-up Findings
+
+These findings are not implementation authorization and do not modify frozen architecture or the
+historical frontend audit.
+
+| # | Finding | Classification | Feature 050 disposition |
+|---:|---|---|---|
+| 1 | Core Dashboard currently depends on Commerce onboarding completion. | product lifecycle follow-up | Record for a bounded future lifecycle feature; do not change the current guard in closure. |
+| 2 | Core-local `Shell` retains Commerce compatibility mode. | technical-debt follow-up | Preserve compatibility behavior; separate removal needs consumer proof, tests, and an approved feature. |
+| 3 | Core shell contains a hardcoded local Commerce URL. | technical-debt follow-up | Preserve D-30 compatibility; future URL/handoff work requires its own approved boundary. |
+| 4 | Core and Commerce shell separation needs a bounded future feature. | architecture follow-up | Route through an approved spec and applicable governance without changing frozen ownership here. |
+| 5 | GitHub CI status and branch-protection enforcement need an infrastructure feature. | infrastructure follow-up | Do not infer enforcement from local validation or implement repository infrastructure in Feature 050. |
+| 6 | Future pull requests must remain bounded by concern. | process follow-up | Keep documentation, product, test, and infrastructure concerns reviewable and explicitly scoped. |
+| 7 | Feature 050 performance passed close to the allowed regression threshold and should remain monitored. | technical-debt follow-up | Preserve raw evidence and monitor future shell deltas; the recorded result is +9.94% against a +10% limit. |

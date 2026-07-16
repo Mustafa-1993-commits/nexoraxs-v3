@@ -21,6 +21,8 @@ import type {
   OSEnablement, WorkspaceStorageUsage, MediaAsset, MediaOwnerType,
   BranchInventory, StockMovement, StockTransfer, CommerceReturn, CommerceReturnItem, RefundMethod,
 } from "@nexoraxs/types";
+import type { LegacyProductRecord, LegacyProductScope } from "@nexoraxs/contracts";
+import { useCommerceServices } from "@/lib/commerce/CommerceServicesProvider";
 
 // ---- types ----
 export type { User, Workspace, Branch, OSSubscription, OSEnablement, BusinessUnit, WorkspaceMember, CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem };
@@ -118,9 +120,6 @@ interface AppContextType {
   storageUsageLabel: string;
   // commerce actions
   attachMedia: (input: { file: File; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => Promise<{ asset: MediaAsset; reference: { mediaAssetId: string; thumbnailUrl: string } } | null>;
-  addProduct: (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt"> & { imageFile?: File | null }) => Promise<CommerceProduct>;
-  updateProduct: (id: string, data: Partial<CommerceProduct> & { imageFile?: File | null }) => Promise<void>;
-  deleteProduct: (id: string) => void;
   adjustStock: (data: {
     productId: string;
     branchId?: string;
@@ -353,13 +352,20 @@ function applyCommerceHandoffFromUrl(): void {
   writeSession(STORAGE_KEYS.onboardingState, { phase: null, step: 0, completedOS: ["commerce"] });
 }
 
-function loadState(): RuntimeState {
-  if (typeof window === "undefined") return emptyRuntimeState();
+interface LoadedRuntimeState {
+  readonly state: RuntimeState;
+  readonly demoProducts: readonly CommerceProduct[] | null;
+}
+
+function loadState(): LoadedRuntimeState {
+  if (typeof window === "undefined") return { state: emptyRuntimeState(), demoProducts: null };
 
   const demoFlag = readSession<string | null>(STORAGE_KEYS.demo, null);
+  let demoProducts: readonly CommerceProduct[] | null = null;
   if (demoFlag === "1" || demoFlag === "true") {
     const seeded = seedDB();
     persistAll(seeded);
+    demoProducts = seeded.commerceProducts;
     sessionStorage.removeItem(STORAGE_KEYS.demo);
   }
 
@@ -368,7 +374,7 @@ function loadState(): RuntimeState {
   const theme = (localStorage.getItem(STORAGE_KEYS.theme) as "light" | "dark" | null) || "light";
   const lang = (readSession<string | null>(STORAGE_KEYS.locale, null) || "en") as Lang;
 
-  return {
+  return { state: {
     currentUserId: readSession<string | null>(STORAGE_KEYS.currentUserId, null),
     currentWorkspaceId: readSession<string | null>(STORAGE_KEYS.currentWorkspaceId, null),
     currentOSId: readSession<string | null>(STORAGE_KEYS.currentOSId, null),
@@ -386,7 +392,7 @@ function loadState(): RuntimeState {
     businessUnits: readCollection<BusinessUnit>(STORAGE_KEYS.businessUnits),
     teamMembers: readCollection<WorkspaceMember>(STORAGE_KEYS.teamMembers),
     commerceSetups: readCollection<CommerceSetup>(STORAGE_KEYS.commerceSetups),
-    products: readCollection<CommerceProduct>(STORAGE_KEYS.products),
+    products: [],
     orders: readCollection<CommerceOrder>(STORAGE_KEYS.orders),
     customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
     invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
@@ -396,7 +402,7 @@ function loadState(): RuntimeState {
     commerceReturns: readCollection<CommerceReturn>(STORAGE_KEYS.commerceReturns),
     mediaAssets: readCollection<MediaAsset>(STORAGE_KEYS.mediaAssets),
     workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
-  };
+  }, demoProducts };
 }
 
 function persistAll(data: ReturnType<typeof seedDB>): void {
@@ -408,7 +414,6 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   writeCollection(STORAGE_KEYS.businessUnits, data.businessUnits);
   writeCollection(STORAGE_KEYS.teamMembers, data.teamMembers);
   writeCollection(STORAGE_KEYS.commerceSetups, data.commerceSetups);
-  writeCollection(STORAGE_KEYS.products, data.commerceProducts);
   writeCollection(STORAGE_KEYS.orders, data.commerceOrders);
   writeCollection(STORAGE_KEYS.customers, data.commerceCustomers);
   writeCollection(STORAGE_KEYS.invoices, data.commerceInvoices);
@@ -425,46 +430,67 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   localStorage.setItem(STORAGE_KEYS.theme, data.theme);
 }
 
-// attachMedia()-produced thumbnails are quota-checked data URLs capped at ~60KB binary
-// (~90KB once base64-encoded); blob: URLs are ephemeral object URLs that never survive
-// a reload, so those — and any oversized data URL — must still be stripped before persisting.
-const MAX_PERSISTABLE_IMAGE_CHARS = 90 * 1024;
-
-function isPersistableProductImage(image: string | null | undefined): image is string {
-  if (!image) return false;
-  if (image.startsWith("blob:")) return false;
-  if (image.startsWith("data:")) return image.length <= MAX_PERSISTABLE_IMAGE_CHARS;
-  return true;
-}
-
-function sanitizeProductForStorage(product: CommerceProduct): CommerceProduct {
-  const sanitized: CommerceProduct = { ...product };
-  if (!isPersistableProductImage(sanitized.image)) {
-    delete sanitized.image;
-  }
-  return sanitized;
-}
-
-function sanitizeProductPatch(data: Partial<CommerceProduct>): Partial<CommerceProduct> {
-  if (!("image" in data)) return data;
-  return {
-    ...data,
-    image: isPersistableProductImage(data.image) ? data.image : null,
-  };
-}
-
 // ---- AppProvider ----
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { services } = useCommerceServices();
   const [state, setState] = useState<RuntimeState>(emptyRuntimeState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
-    // Hydrate browser-only mock storage after the SSR/client initial render matches.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState(loadState());
-    setIsHydrated(true);
-  }, []);
+    let active = true;
+    const hydrate = async () => {
+      const loaded = loadState();
+      if (loaded.demoProducts) {
+        await services.productsFacade.seedCompatibleProducts(
+          loaded.demoProducts as readonly LegacyProductRecord[],
+        );
+      }
+      let products: CommerceProduct[] = [];
+      if (loaded.state.currentWorkspaceId && loaded.state.currentBusinessUnitId) {
+        const result = await services.productsFacade.list({
+          workspaceId: loaded.state.currentWorkspaceId,
+          legacyBusinessUnitId: loaded.state.currentBusinessUnitId,
+          ...(loaded.state.currentBranchId ? { branchId: loaded.state.currentBranchId } : {}),
+        });
+        products = result.items.map((product) => ({ ...product }));
+      }
+      if (!active) return;
+      // Hydrate browser-only mock storage after the SSR/client initial render matches.
+      setState({ ...loaded.state, products });
+      setIsHydrated(true);
+    };
+    void hydrate().catch(() => {
+      if (active) setIsHydrated(true);
+    });
+    return () => { active = false; };
+  }, [services.productsFacade]);
+
+  useEffect(() => services.productsFacade.subscribe((scope, records) => {
+    setState((previous) => {
+      const retained = previous.products.filter((product) => !(
+        product.workspaceId === scope.workspaceId
+        && product.businessUnitId === scope.legacyBusinessUnitId
+      ));
+      return { ...previous, products: [...retained, ...records.map((product) => ({ ...product }))] };
+    });
+  }), [services.productsFacade]);
+
+  useEffect(() => {
+    if (!isHydrated || !state.currentWorkspaceId || !state.currentBusinessUnitId) return;
+    const scope: LegacyProductScope = {
+      workspaceId: state.currentWorkspaceId,
+      legacyBusinessUnitId: state.currentBusinessUnitId,
+      ...(state.currentBranchId ? { branchId: state.currentBranchId } : {}),
+    };
+    void services.productsFacade.list(scope).catch(() => undefined);
+  }, [
+    isHydrated,
+    services.productsFacade,
+    state.currentWorkspaceId,
+    state.currentBusinessUnitId,
+    state.currentBranchId,
+  ]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -832,57 +858,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writeCollection(STORAGE_KEYS.commerceSetups, newSetups);
     setState((prev) => ({ ...prev, commerceSetups: newSetups }));
   }, [state.commerceSetups, state.currentBusinessUnitId, state.currentWorkspaceId, state.currentOSSubscriptionId]);
-
-  // ---- products ----
-  const addProduct = useCallback(async (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt"> & { imageFile?: File | null }): Promise<CommerceProduct> => {
-    const { imageFile, ...rest } = data;
-    const id = uid("p");
-    let image = rest.image ?? null;
-    if (imageFile) {
-      const result = await attachMedia({ file: imageFile, ownerType: "product_image", ownerId: id, fileName: imageFile.name });
-      image = result ? result.reference.thumbnailUrl : null;
-    }
-    const product = sanitizeProductForStorage({
-      id, workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
-      branchId: state.currentBranchId!, osSubscriptionId: state.currentOSSubscriptionId!,
-      createdAt: nowISO(), updatedAt: nowISO(), ...rest, image,
-    });
-    const newProducts = [...state.products, product].map(sanitizeProductForStorage);
-    try {
-      writeCollection(STORAGE_KEYS.products, newProducts);
-      setState((prev) => ({ ...prev, products: newProducts }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save product.";
-      showToast(message, "error");
-      throw error;
-    }
-    return product;
-  }, [state.products, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.currentOSSubscriptionId, showToast, attachMedia]);
-
-  const updateProduct = useCallback(async (id: string, data: Partial<CommerceProduct> & { imageFile?: File | null }) => {
-    const { imageFile, ...rest } = data;
-    let patch = sanitizeProductPatch(rest);
-    if (imageFile) {
-      const result = await attachMedia({ file: imageFile, ownerType: "product_image", ownerId: id, fileName: imageFile.name });
-      patch = { ...patch, image: result ? result.reference.thumbnailUrl : null };
-    }
-    const newProducts = state.products
-      .map((p) => p.id === id ? sanitizeProductForStorage({ ...p, ...patch, updatedAt: nowISO() }) : sanitizeProductForStorage(p));
-    try {
-      writeCollection(STORAGE_KEYS.products, newProducts);
-      setState((prev) => ({ ...prev, products: newProducts }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save product.";
-      showToast(message, "error");
-      throw error;
-    }
-  }, [state.products, showToast, attachMedia]);
-
-  const deleteProduct = useCallback((id: string) => {
-    const newProducts = state.products.filter((p) => p.id !== id).map(sanitizeProductForStorage);
-    writeCollection(STORAGE_KEYS.products, newProducts);
-    setState((prev) => ({ ...prev, products: newProducts }));
-  }, [state.products]);
 
   // ---- branch inventory ----
   const adjustStock = useCallback((data: {
@@ -1303,7 +1278,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     branchInventory: state.branchInventory, stockMovements: state.stockMovements,
     stockTransfers: state.stockTransfers, commerceReturns,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
-    addProduct, updateProduct, deleteProduct, adjustStock, transferStock, createReturn, createOrder, createInvoice, createCustomer, updateCustomer,
+    adjustStock, transferStock, createReturn, createOrder, createInvoice, createCustomer, updateCustomer,
     attachMedia,
     setCurrent,
   };

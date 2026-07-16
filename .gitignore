@@ -4,10 +4,17 @@ node_modules
 .env
 .env.local
 dist
+build
 coverage
+*.log
+*.tmp
+*.swp
 playwright-report
 test-results
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
 *:Zone.Identifier
 .next/
 node_modules/
