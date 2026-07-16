@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppProvider } from "@/lib/store";
+import { CommerceProviders } from "@/lib/commerce/CommerceProviders";
 import { ToastHost } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -32,10 +32,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full" suppressHydrationWarning>
-        <AppProvider>
+        <CommerceProviders>
           {children}
           <ToastHost />
-        </AppProvider>
+        </CommerceProviders>
       </body>
     </html>
   );

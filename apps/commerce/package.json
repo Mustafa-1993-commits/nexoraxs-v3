@@ -9,9 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@nexoraxs/contracts": "workspace:*",
+    "@nexoraxs/sdk": "workspace:*",
     "@nexoraxs/shared": "workspace:*",
     "@nexoraxs/types": "workspace:*",
     "@nexoraxs/ui": "workspace:*",
+    "@tanstack/react-query": "^5.101.2",
     "lucide-react": "^1.14.0",
     "next": "16.2.6",
     "react": "19.2.4",

@@ -27,6 +27,102 @@ observation. Record defects with reproducible steps and leave the affected item 
 Use the approved Feature 050 seeded mock session. Preserve its routes, storage keys, seeded IDs,
 legacy BusinessUnit-as-Business compatibility, and current UI while validating.
 
+## Concise operator run sheet
+
+This run sheet is preparation, not evidence. Every result field stays unchecked until a human
+reviewer observes it on Windows.
+
+### 1. Record the environment
+
+- [ ] Windows edition, version, and build: ____________________
+- [ ] Display scaling and physical resolution: ____________________
+- [ ] Current-stable Chrome version: ____________________
+- [ ] Current-stable Edge version: ____________________
+- [ ] Current-stable NVDA version: ____________________
+- [ ] Keyboard/layout: ____________________
+- [ ] Feature revision/build: ____________________
+- [ ] Reviewer, date, and local time: ____________________
+- [ ] Screenshot, speech-viewer note, and defect-link folder: ____________________
+
+### 2. Pin the exact seeded state
+
+Use `http://127.0.0.1:3001` and an isolated browser profile seeded by
+`tests/e2e/fixtures/core-050.ts`. Record how the fixture was installed. Do not clear or rename keys,
+edit IDs, or create canonical Business data.
+
+| Field | Required starting value |
+|---|---|
+| Fixture | `valid`, English, light theme; use only the named variants below for their stated journey |
+| User | `user_001` — Mustafa Hassan |
+| Workspace | `ws_001` — Mustafa Group |
+| OS Subscription | `sub_001` |
+| Legacy Business-labelled `BusinessUnit` | `bu_001` — Mustafa Pharmacy |
+| Branch | `br_001` — Smouha Branch |
+| Legacy `OSEnablement` | `ose_001` |
+| Team member / Commerce setup | `tm_001` / `cs_001` |
+| Protected products | `p1`, `p2` |
+| OS and onboarding | `commerce`; `completedOS` contains `commerce` |
+| Locale/direction | `en` / `ltr` initially |
+| Theme | `light` initially |
+
+Exact shell URLs:
+
+- `http://127.0.0.1:3001/dashboard`
+- `http://127.0.0.1:3001/dashboard/apps`
+- `http://127.0.0.1:3001/dashboard/billing`
+- `http://127.0.0.1:3001/dashboard/team`
+- `http://127.0.0.1:3001/dashboard/integrations`
+- `http://127.0.0.1:3001/dashboard/settings`
+
+Redirect smoke URLs are `/`, `/login`, `/onboarding`, `/register`, `/verify`, `/verify-email`,
+`/forgot-password`, `/reset-password`, and `/welcome`. Record the observed destination; do not
+change an expected route to make the checklist pass.
+
+### 3. Execute the exact normal-shell journeys
+
+| Journey | Expected keyboard focus | Expected NVDA/semantic observation |
+|---|---|---|
+| Skip link | First Tab exposes the link; activation focuses the single `main` region. | Skip-link name is understandable; one main is announced. |
+| Primary navigation | Focus follows the existing five destinations in their existing order. | One named “Primary navigation” landmark; active destination is announced as current page. |
+| Compact drawer at 375/768 | Menu opens the dialog; focus stays inside; Escape, Close menu, selection, or scrim closes it and returns focus to Menu. | Menu exposes expanded state; open surface is named “Navigation menu”; hidden drawer is not active content. |
+| Search | Opening/focusing search places focus in the Search combobox; Arrow keys move the active option, Enter follows it, Escape restores focus. | Search/results/no-results are named; results contain only existing Core destinations and never claim API, command, AI, or Commerce search. |
+| Notifications | Trigger opens its dialog; Escape/outside dismissal returns focus to Notifications. | Trigger expanded state and “Notifications” dialog name are announced; projected items or “No new notifications” are understandable without the colored dot. Use `populated` only for the projected-item journey. |
+| Profile | Trigger opens the User menu; keyboard reaches Account, Billing, Team, and Sign out; dismissal restores focus. | Menu name, expanded state, and item names are announced; no unintended item activates. |
+| Workspace menu | Trigger retains/restores focus after dismissal. | “Workspace menu”, current selection, and checked state are announced; user-entered names are read as displayed. |
+| Locale | English and Arabic controls retain predictable focus after activation. | English is `lang="en" dir="ltr"`; Arabic is `lang="ar" dir="rtl"`; pressed state matches the active locale. |
+| Theme | Theme button retains predictable focus after activation/reload. | In light mode the action is “Switch to dark mode”; in dark mode it is “Switch to light mode”; pressed state and stored theme agree. |
+| Route navigation | After activation, the next Tab stop remains predictable and focus is never trapped in a closed surface. | New active route is announced through current-page semantics without duplicate live announcements. |
+
+Repeat the normal-shell journeys in Chrome and Edge at 375, 768, 1024, and 1440 CSS pixels; repeat
+skip-link validation in English/LTR and Arabic/RTL in both browsers. At 1024/1440, confirm the
+sidebar is persistent. At 375/768, confirm drawer behavior. Also inspect 879/881 around the 880-pixel
+breakpoint, browser zoom at 200%, reduced motion, dark/light, and Windows forced colors.
+
+### 4. Execute the exact state journeys
+
+| State | Deterministic method | Expected announcement/focus result |
+|---|---|---|
+| Loading | Open `/dashboard/apps` with JavaScript disabled in the isolated profile. | One polite busy status: “Loading Core Platform” and “Preparing your saved Core Platform session.” Arabic equivalent must be observed in the Arabic pass. |
+| Empty | Use `missing-context-complete`. | One polite status: “Workspace context is missing”; Retry context is reachable. |
+| Unavailable | Use `stale` or `unavailable-context`. | One polite status: “Workspace context is unavailable”; no foreign record is announced. |
+| Unauthorized mock-session mismatch | Use `cross-scope`. | One polite status: “Context is not available for this session”; no foreign Workspace, Business, or Branch name is announced. |
+| Recovering | From `stale`, activate Retry context. | “Checking Workspace context” is announced once, focus remains predictable, and the state returns to unavailable without changing storage. |
+| Error | No approved deterministic manual browser fixture currently exposes this contract state. | **BLOCKED**: do not fabricate an announcement or modify product code. Link an approved trigger/defect disposition before checking the existing error item. Expected contract copy is “Core Platform could not be displayed” / “The current presentation read failed. Retry it without changing saved data.” |
+
+Arabic state titles expected in the Arabic/RTL pass are: “جارٍ تحميل المنصة الأساسية”، “سياق مساحة
+العمل مفقود”، “سياق مساحة العمل غير متاح”، “السياق غير متاح لهذه الجلسة”، “جارٍ فحص سياق مساحة
+العمل”، and—only when an approved error trigger exists—“تعذر عرض المنصة الأساسية”. Record the
+actual spoken output; these strings are expectations, not pre-filled results.
+
+### 5. Record every result
+
+For every journey record locale/direction, theme, CSS viewport, browser/version, NVDA version,
+fixture, expected result, observed focus destination, concise spoken announcement or speech-viewer
+evidence, PASS/BLOCKED, defect link, reviewer, and date. Do not record secrets or participant data.
+Any unchecked item, missing version, unobservable state, duplicate/stale announcement, focus loss,
+critical/serious accessibility finding, route/storage/context regression, or Chrome/Edge mismatch
+keeps T047 blocked.
+
 ## Chrome
 
 - [ ] Open Core Platform in current-stable Chrome with a clean browser profile or documented
