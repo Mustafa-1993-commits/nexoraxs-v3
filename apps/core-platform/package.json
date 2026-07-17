@@ -6,9 +6,12 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings=0",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@nexoraxs/contracts": "workspace:*",
+    "@nexoraxs/sdk": "workspace:*",
     "@nexoraxs/shared": "workspace:*",
     "@nexoraxs/types": "workspace:*",
     "@nexoraxs/ui": "workspace:*",

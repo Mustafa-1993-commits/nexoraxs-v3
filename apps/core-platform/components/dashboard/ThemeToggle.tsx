@@ -3,14 +3,13 @@
 import { memo } from "react";
 import { Sun, Moon } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { STORAGE_KEYS } from "@nexoraxs/shared";
+import { applyCoreTheme } from "@/lib/infrastructure/browser/core-theme-storage";
 
 export const ThemeToggle = memo(function ThemeToggle() {
   const { theme, toggleTheme, t } = useApp();
   function changeTheme() {
     const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = nextTheme;
-    localStorage.setItem(STORAGE_KEYS.theme, nextTheme);
+    applyCoreTheme(nextTheme);
     window.setTimeout(toggleTheme, 0);
   }
   return (

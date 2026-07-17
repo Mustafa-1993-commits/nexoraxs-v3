@@ -24,12 +24,12 @@ function LegacyProductEditorProvider({ children }: { readonly children: ReactNod
       service: new LegacyProductEditorService(
         services.productsRepository,
         {
-          saveProductImage: async ({ productId, file }) => {
+          saveProductImage: async ({ productId, source }) => {
             const result = await currentAttachMedia({
-              file,
+              source,
               ownerType: "product_image",
               ownerId: productId,
-              fileName: file.name,
+              fileName: source.fileName,
             });
             return result?.reference.thumbnailUrl ?? null;
           },

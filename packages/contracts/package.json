@@ -12,6 +12,15 @@
     "./commerce/customers": "./src/commerce/customers/index.ts",
     "./commerce/inventory": "./src/commerce/inventory/index.ts",
     "./commerce/orders": "./src/commerce/orders/index.ts",
-    "./commerce/invoices": "./src/commerce/invoices/index.ts"
+    "./commerce/invoices": "./src/commerce/invoices/index.ts",
+    "./commerce/operations": "./src/commerce/operations/index.ts",
+    "./core": "./src/core/index.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nexoraxs/types": "workspace:*"
   }
 }

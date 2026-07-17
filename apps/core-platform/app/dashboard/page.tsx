@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Store, Stethoscope, UsersRound, GitBranch, Dumbbell, Wrench, ArrowRight, ExternalLink } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { OPERATING_SYSTEMS } from "@/lib/store";
-import { commerceDashboardUrl, commerceSetupUrl } from "@/lib/commerce-url";
+import { buildCommerceDashboardUrl, buildCommerceSetupHandoffUrl } from "@/lib/commerce/CommerceHandoffAdapter";
 
 const OS_ICONS: Record<string, React.ReactNode> = {
   store: <Store size={22} />,
@@ -30,13 +30,26 @@ export default function DashboardPage() {
     storageUsageLabel,
     t,
   } = useApp();
-  const setupHref = commerceSetupUrl({
-    user: currentUser,
-    workspace: currentWorkspace,
-    businessUnit: currentBU,
-    branch: currentBranch,
-    subscription: currentOSSubscription,
-  });
+  const setupHref = currentUser && currentWorkspace && currentOSSubscription
+    ? buildCommerceSetupHandoffUrl({
+        actor: { id: currentUser.id, displayName: currentUserDisplayName, email: currentUser.email },
+        workspace: currentWorkspace,
+        legacyBusinessUnit: currentBU ? {
+          id: currentBU.id,
+          name: currentBU.name,
+          preset: currentBU.presetId || currentBU.preset,
+          industryType: currentBU.industryType,
+        } : null,
+        branch: currentBranch ? {
+          id: currentBranch.id,
+          name: currentBranch.name,
+          city: currentBranch.branchCity || currentBranch.city,
+          address: currentBranch.branchAddressLine1 || currentBranch.address,
+        } : null,
+        subscription: currentOSSubscription,
+        action: "setup",
+      })
+    : "/dashboard/apps";
 
   return (
     <div style={{ padding: "24px 28px", maxWidth: 1100, margin: "0 auto" }}>
@@ -80,7 +93,7 @@ export default function DashboardPage() {
                     <div style={{ fontSize: 11.5, color: os.accent, fontWeight: 600, marginTop: 2 }}>{os.tagline}</div>
                   </div>
                   {active && isCommerceSetupComplete && (
-                    <Link href={commerceDashboardUrl()} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--accent)", textDecoration: "none", fontWeight: 600, marginTop: "auto" }}>
+                    <Link href={buildCommerceDashboardUrl()} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--accent)", textDecoration: "none", fontWeight: 600, marginTop: "auto" }}>
                       Open Commerce OS <ArrowRight size={13} />
                     </Link>
                   )}

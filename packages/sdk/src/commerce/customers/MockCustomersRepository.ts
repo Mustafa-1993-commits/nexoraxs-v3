@@ -60,8 +60,9 @@ export class MockCustomersRepository implements LegacyCustomersRepository {
     return this.behavior.execute({ operation: "customers.getById", scope: scopeInput, resourceId: customerId, action: async () => {
       const scope = normalizeLegacyBusinessUnitScope(scopeInput, "customers.getById");
       if (!customerId) throw new LegacyCommerceRepositoryError({ code: "validation", operation: "customers.getById" });
-      const record = (await this.read()).find((candidate) => candidate.id === customerId && inScope(candidate, scope));
+      const record = (await this.read()).find((candidate) => candidate.id === customerId);
       if (!record) throw missing("customers.getById");
+      if (!inScope(record, scope)) throw new LegacyCommerceRepositoryError({ code: "scope_mismatch", operation: "customers.getById" });
       return structuredClone(record);
     } });
   }

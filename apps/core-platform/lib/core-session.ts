@@ -1,4 +1,10 @@
 // @deprecated — use lib/store/ instead
+import {
+  readCoreSessionText,
+  removeCoreSessionValue,
+  writeCoreSessionText,
+} from "./infrastructure/browser/core-session-storage";
+
 const KEYS = {
   THEME:                "core_theme",
   WORKSPACE_NAME:       "core_workspace_name",
@@ -16,13 +22,11 @@ const KEYS = {
 export const CORE_SESSION_KEYS = Object.values(KEYS);
 
 function ss(key: string): string | null {
-  if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(key);
+  return readCoreSessionText(key);
 }
 
 function sw(key: string, value: string): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.setItem(key, value);
+  writeCoreSessionText(key, value);
 }
 
 export const getWorkspaceName    = () => ss(KEYS.WORKSPACE_NAME);
@@ -50,8 +54,7 @@ export const isOnboardingDone  = () => ss(KEYS.ONBOARDING_DONE) === "true";
 export const completeOnboarding= () => sw(KEYS.ONBOARDING_DONE, "true");
 
 export function clearCoreSession(): void {
-  if (typeof window === "undefined") return;
   for (const key of CORE_SESSION_KEYS) {
-    sessionStorage.removeItem(key);
+    removeCoreSessionValue(key);
   }
 }

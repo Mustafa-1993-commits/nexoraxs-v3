@@ -5,3 +5,5 @@ export * from "./commerce/customers";
 export * from "./commerce/inventory";
 export * from "./commerce/orders";
 export * from "./commerce/invoices";
+export * from "./commerce/operations";
+export * from "./core";

@@ -16,7 +16,7 @@ const snapshots: Array<{
   orders: unknown;
   invoices: unknown;
   customerHistory: unknown;
-  readCoordinator: unknown;
+  stockAdjustments: unknown;
 }> = [];
 
 function IdentityProbe({ renderNumber }: { renderNumber: number }) {
@@ -25,7 +25,7 @@ function IdentityProbe({ renderNumber }: { renderNumber: number }) {
   useApp();
   snapshots.push({
     repository: services.productsRepository,
-    facade: services.productsFacade,
+    facade: services.productsCompatibility,
     queryClient,
     editor,
     customers: services.customersRepository,
@@ -33,7 +33,7 @@ function IdentityProbe({ renderNumber }: { renderNumber: number }) {
     orders: services.ordersRepository,
     invoices: services.invoicesRepository,
     customerHistory: services.customerHistoryService,
-    readCoordinator: services.readCoordinator,
+    stockAdjustments: services.stockAdjustments,
   });
   return <output>{renderNumber}</output>;
 }
@@ -63,6 +63,6 @@ describe("CommerceProviders service identity", () => {
     expect(new Set(snapshots.map((snapshot) => snapshot.orders)).size).toBe(1);
     expect(new Set(snapshots.map((snapshot) => snapshot.invoices)).size).toBe(1);
     expect(new Set(snapshots.map((snapshot) => snapshot.customerHistory)).size).toBe(1);
-    expect(new Set(snapshots.map((snapshot) => snapshot.readCoordinator)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.stockAdjustments)).size).toBe(1);
   });
 });

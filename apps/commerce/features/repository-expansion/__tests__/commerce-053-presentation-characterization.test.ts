@@ -9,7 +9,7 @@ function source(path: string): string {
 describe("Feature 053 pre-change presentation characterization", () => {
   it("derives Inventory from the existing Product effective-stock overlay", () => {
     const provider = source("apps/commerce/lib/store/AppProvider.tsx");
-    expect(provider).toContain("effectiveStockFor(p, state.currentBranchId, state.branchInventory)");
+    expect(provider).toContain("legacyEffectiveStock(p, state.currentBranchId, state.branchInventory)");
     expect(provider).toContain("stock: eff.qty, lowStockThreshold: eff.lowStockThreshold");
   });
 

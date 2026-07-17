@@ -1,28 +1,33 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
-import { STORAGE_KEYS, PLAN_CATALOG, DEFAULT_SETUP, planIdFor } from "@nexoraxs/shared";
+import { STORAGE_KEYS, PLAN_CATALOG, planIdFor } from "@nexoraxs/shared";
 import {
   uid, nowISO, normalizeEmail, getUserDisplayName,
-  readCollection, writeCollection, readSession, writeSession, clearAllStorage,
+  readCollection, readSession, writeSession, clearAllStorage,
+  readBrowserStorage, writeBrowserStorage, removeBrowserStorage,
   seedDB, storageUsagePercent, formatBytes,
-  compressImageToThumbnail, canAttachMedia, buildMediaAsset, applyUsageDelta,
-  effectiveStockFor, buildStockMovement, buildStockTransfer, buildCommerceReturn,
-  getCurrentOSEnablement, ensureCommerceBusinessEnablement, isBranchNameAvailableForBusiness,
-  suggestCommercePresetForIndustry,
+  getCurrentOSEnablement,
   normalizeOSEnablement,
 } from "@nexoraxs/shared";
-import { computeReturnTotals } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
 import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
   CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
   OSEnablement, WorkspaceStorageUsage, MediaAsset, MediaOwnerType,
-  BranchInventory, StockMovement, StockTransfer, CommerceReturn, CommerceReturnItem, RefundMethod,
+  BranchInventory, StockMovement, StockTransfer, CommerceReturn, RefundMethod,
 } from "@nexoraxs/types";
-import type { LegacyProductRecord, LegacyProductScope } from "@nexoraxs/contracts";
+import type {
+  CommerceHandoffPort,
+  LegacyCommerceHandoffContext,
+  LegacyMediaSource,
+  LegacyProductRecord,
+  LegacyProductScope,
+} from "@nexoraxs/contracts";
 import { useCommerceServices } from "@/lib/commerce/CommerceServicesProvider";
+import { legacyEffectiveStock } from "@/features/inventory/application/legacy-inventory-policy";
+import { legacyCommerceDemoSeed } from "@/features/setup/infrastructure/legacy-commerce-demo-seed";
 
 // ---- types ----
 export type { User, Workspace, Branch, OSSubscription, OSEnablement, BusinessUnit, WorkspaceMember, CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem };
@@ -119,7 +124,7 @@ interface AppContextType {
   storageUsagePercent: number;
   storageUsageLabel: string;
   // commerce actions
-  attachMedia: (input: { file: File; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => Promise<{ asset: MediaAsset; reference: { mediaAssetId: string; thumbnailUrl: string } } | null>;
+  attachMedia: (input: { source: LegacyMediaSource; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => Promise<{ asset: MediaAsset; reference: { mediaAssetId: string; thumbnailUrl: string } } | null>;
   adjustStock: (data: {
     productId: string;
     branchId?: string;
@@ -208,11 +213,20 @@ function emptyRuntimeState(): RuntimeState {
   };
 }
 
-function applyCommerceHandoffFromUrl(): void {
-  if (typeof window === "undefined") return;
+interface AcceptedCommerceHandoffProjection {
+  readonly context: LegacyCommerceHandoffContext;
+  readonly user: User;
+  readonly workspace: Workspace;
+  readonly subscription: OSSubscription;
+  readonly businessUnit: BusinessUnit;
+  readonly branch: Branch | null;
+}
+
+function readCommerceHandoffFromUrl(): AcceptedCommerceHandoffProjection | null {
+  if (typeof window === "undefined") return null;
 
   const params = new URLSearchParams(window.location.search);
-  if (params.get("nx_handoff") !== "commerce") return;
+  if (params.get("nx_handoff") !== "commerce") return null;
 
   const currentUserId = params.get("currentUserId");
   const currentWorkspaceId = params.get("currentWorkspaceId");
@@ -220,11 +234,14 @@ function applyCommerceHandoffFromUrl(): void {
   const currentOSSubscriptionId = params.get("currentOSSubscriptionId");
   const currentBranchId = params.get("currentBranchId");
   const currentOSId = params.get("currentOSId");
-  const currentOSEnablementId = params.get("currentOSEnablementId");
-  const enablementScope = params.get("enablementScope");
-
-  if (!currentUserId || !currentWorkspaceId || !currentOSSubscriptionId || currentOSId !== "commerce") {
-    return;
+  if (
+    !currentUserId
+    || !currentWorkspaceId
+    || !currentBusinessUnitId
+    || !currentOSSubscriptionId
+    || currentOSId !== "commerce"
+  ) {
+    return null;
   }
 
   const created = nowISO();
@@ -233,7 +250,7 @@ function applyCommerceHandoffFromUrl(): void {
   const workspaceCurrency = params.get("workspaceCurrency") || "EGP";
   const workspaceTimezone = params.get("workspaceTimezone") || "Africa/Cairo";
   const userName = params.get("userName") || "Workspace Owner";
-  const userEmail = params.get("userEmail") || "owner@nexoraxs.local";
+  const userEmail = params.get("userEmail") || "";
   const branchName = params.get("branchName") || "Main Branch";
   const branchCity = params.get("branchCity") || "";
   const branchAddress = params.get("branchAddress") || "";
@@ -242,134 +259,102 @@ function applyCommerceHandoffFromUrl(): void {
   const industryType = params.get("businessIndustryType") || preset;
   const plan = params.get("plan") || "starter";
   const planId = params.get("planId") || "commerce_starter";
-
-  const users = readCollection<User>(STORAGE_KEYS.users);
-  if (!users.some((u) => u.id === currentUserId)) {
-    writeCollection(STORAGE_KEYS.users, [...users, {
-      id: currentUserId, fullName: userName, name: userName, email: userEmail,
-      passwordHash: "", role: "owner", createdAt: created, updatedAt: created,
-    }]);
-  }
-
-  const workspaces = readCollection<Workspace>(STORAGE_KEYS.workspaces);
-  if (!workspaces.some((w) => w.id === currentWorkspaceId)) {
-    writeCollection(STORAGE_KEYS.workspaces, [...workspaces, {
-      id: currentWorkspaceId, name: workspaceName, country: workspaceCountry,
-      currency: workspaceCurrency, timezone: workspaceTimezone,
-      language: "en", ownerUserId: currentUserId, createdAt: created,
-    }]);
-  }
-
-  const subscriptions = readCollection<OSSubscription>(STORAGE_KEYS.osSubscriptions);
-  if (!subscriptions.some((s) => s.id === currentOSSubscriptionId)) {
-    writeCollection(STORAGE_KEYS.osSubscriptions, [...subscriptions, {
-      id: currentOSSubscriptionId, workspaceId: currentWorkspaceId,
-      os: "commerce", osId: "commerce", plan, planId,
-      status: "trialing" as const, startedAt: created,
-      trialEndsAt: params.get("trialEndsAt") || undefined,
-      renewsAt: params.get("renewsAt") || undefined,
-    }]);
-  }
-
-  const enablements = readCollection<OSEnablement>(STORAGE_KEYS.osEnablements).map(normalizeOSEnablement);
-  let nextEnablements = enablements;
-  if (currentOSEnablementId && !nextEnablements.some((e) => e.id === currentOSEnablementId)) {
-    nextEnablements = [...nextEnablements, {
-      id: currentOSEnablementId,
-      osSubscriptionId: currentOSSubscriptionId,
+  return {
+    context: {
+      actorId: currentUserId,
       workspaceId: currentWorkspaceId,
+      legacyBusinessUnitId: currentBusinessUnitId,
+      branchId: currentBranchId,
       osId: "commerce",
-      businessUnitId: currentBusinessUnitId,
-      branchIds: currentBranchId ? [currentBranchId] : [],
-      scope: enablementScope === "business" || enablementScope === "branch" ? enablementScope : "workspace",
-      status: "active",
+      osSubscriptionId: currentOSSubscriptionId,
+      action: params.get("action") || "setup",
+    },
+    user: {
+      id: currentUserId,
+      fullName: userName,
+      name: userName,
+      email: userEmail,
+      passwordHash: "",
+      role: "owner",
       createdAt: created,
       updatedAt: created,
-    }];
-  }
-  if (currentBusinessUnitId) {
-    const ensured = ensureCommerceBusinessEnablement({
-      enablements: nextEnablements,
-      subscriptions: subscriptions.some((s) => s.id === currentOSSubscriptionId)
-        ? subscriptions
-        : [...subscriptions, {
-            id: currentOSSubscriptionId, workspaceId: currentWorkspaceId,
-            os: "commerce", osId: "commerce", plan, planId,
-            status: "trialing" as const, startedAt: created,
-            trialEndsAt: params.get("trialEndsAt") || undefined,
-            renewsAt: params.get("renewsAt") || undefined,
-          }],
+    },
+    workspace: {
+      id: currentWorkspaceId,
+      name: workspaceName,
+      country: workspaceCountry,
+      currency: workspaceCurrency,
+      timezone: workspaceTimezone,
+      language: "en",
+      ownerUserId: currentUserId,
+      createdAt: created,
+    },
+    subscription: {
+      id: currentOSSubscriptionId,
+      workspaceId: currentWorkspaceId,
+      os: "commerce",
+      osId: "commerce",
+      plan,
+      planId,
+      status: "trialing",
+      startedAt: created,
+      trialEndsAt: params.get("trialEndsAt") || undefined,
+      renewsAt: params.get("renewsAt") || undefined,
+    },
+    businessUnit: {
+      id: currentBusinessUnitId,
+      workspaceId: currentWorkspaceId,
+      osSubscriptionId: currentOSSubscriptionId,
+      os: "commerce",
+      osId: "commerce",
+      selectedOS: "commerce",
+      branchIds: currentBranchId ? [currentBranchId] : [],
+      branchId: currentBranchId || "",
+      name: businessUnitName,
+      industryType,
+      preset,
+      presetId: preset,
+      createdAt: created,
+    },
+    branch: currentBranchId ? {
+      id: currentBranchId,
       workspaceId: currentWorkspaceId,
       businessUnitId: currentBusinessUnitId,
-      branchIds: currentBranchId ? [currentBranchId] : [],
-    });
-    nextEnablements = ensured.enablements;
-  }
-  writeCollection(STORAGE_KEYS.osEnablements, nextEnablements);
-
-  const usageRows = readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage);
-  if (!usageRows.some((u) => u.workspaceId === currentWorkspaceId)) {
-    const planMeta = PLAN_CATALOG.find((p) => p.id === planId);
-    const limitBytes = planMeta?.limits.storageLimitBytes ?? 500 * 1024 * 1024;
-    writeCollection(STORAGE_KEYS.workspaceStorageUsage, [...usageRows, {
-      workspaceId: currentWorkspaceId, usedBytes: 0, limitBytes, updatedAt: created,
-    }]);
-  }
-
-  const branches = readCollection<Branch>(STORAGE_KEYS.branches);
-  if (currentBusinessUnitId && currentBranchId && !branches.some((b) => b.id === currentBranchId)) {
-    writeCollection(STORAGE_KEYS.branches, [...branches, {
-      id: currentBranchId, workspaceId: currentWorkspaceId,
-      businessUnitId: currentBusinessUnitId, name: branchName,
+      name: branchName,
       city: branchCity || undefined,
       branchCity: branchCity || undefined,
       address: branchAddress || undefined,
       branchAddressLine1: branchAddress || undefined,
-      country: workspaceCountry, currency: workspaceCurrency,
-      isMain: true, createdAt: created,
-    }]);
-  }
+      country: workspaceCountry,
+      currency: workspaceCurrency,
+      isMain: true,
+      createdAt: created,
+    } : null,
+  };
+}
 
-  const businessUnits = readCollection<BusinessUnit>(STORAGE_KEYS.businessUnits);
-  if (currentBusinessUnitId && !businessUnits.some((b) => b.id === currentBusinessUnitId)) {
-    writeCollection(STORAGE_KEYS.businessUnits, [...businessUnits, {
-      id: currentBusinessUnitId, workspaceId: currentWorkspaceId,
-      osSubscriptionId: currentOSSubscriptionId, os: "commerce", osId: "commerce",
-      selectedOS: "commerce", branchIds: currentBranchId ? [currentBranchId] : [],
-      branchId: currentBranchId || "", name: businessUnitName,
-      industryType, preset, presetId: preset, createdAt: created,
-    }]);
-  }
-
-  writeSession(STORAGE_KEYS.currentUserId, currentUserId);
-  writeSession(STORAGE_KEYS.currentWorkspaceId, currentWorkspaceId);
-  writeSession(STORAGE_KEYS.currentOSId, "commerce");
-  writeSession(STORAGE_KEYS.currentOSSubscriptionId, currentOSSubscriptionId);
-  if (currentBusinessUnitId) writeSession(STORAGE_KEYS.currentBusinessUnitId, currentBusinessUnitId);
-  if (currentBranchId) writeSession(STORAGE_KEYS.currentBranchId, currentBranchId);
-  writeSession(STORAGE_KEYS.onboardingState, { phase: null, step: 0, completedOS: ["commerce"] });
+async function acceptCommerceHandoff(
+  port: CommerceHandoffPort,
+  projection: AcceptedCommerceHandoffProjection | null,
+): Promise<AcceptedCommerceHandoffProjection | null> {
+  if (!projection) return null;
+  await port.accept(projection.context);
+  return projection;
 }
 
 interface LoadedRuntimeState {
   readonly state: RuntimeState;
-  readonly demoProducts: readonly CommerceProduct[] | null;
+  readonly demoRequested: boolean;
 }
 
 function loadState(): LoadedRuntimeState {
-  if (typeof window === "undefined") return { state: emptyRuntimeState(), demoProducts: null };
+  if (typeof window === "undefined") return { state: emptyRuntimeState(), demoRequested: false };
 
   const demoFlag = readSession<string | null>(STORAGE_KEYS.demo, null);
-  let demoProducts: readonly CommerceProduct[] | null = null;
-  if (demoFlag === "1" || demoFlag === "true") {
-    const seeded = seedDB();
-    persistAll(seeded);
-    demoProducts = seeded.commerceProducts;
-    sessionStorage.removeItem(STORAGE_KEYS.demo);
-  }
+  const demoRequested = demoFlag === "1" || demoFlag === "true";
+  if (demoRequested) removeBrowserStorage(STORAGE_KEYS.demo, "session");
 
-  applyCommerceHandoffFromUrl();
-
-  const theme = (localStorage.getItem(STORAGE_KEYS.theme) as "light" | "dark" | null) || "light";
+  const theme = (readBrowserStorage(STORAGE_KEYS.theme, "local") as "light" | "dark" | null) || "light";
   const lang = (readSession<string | null>(STORAGE_KEYS.locale, null) || "en") as Lang;
 
   return { state: {
@@ -400,23 +385,10 @@ function loadState(): LoadedRuntimeState {
     commerceReturns: readCollection<CommerceReturn>(STORAGE_KEYS.commerceReturns),
     mediaAssets: readCollection<MediaAsset>(STORAGE_KEYS.mediaAssets),
     workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
-  }, demoProducts };
+  }, demoRequested };
 }
 
-function persistAll(data: ReturnType<typeof seedDB>): void {
-  writeCollection(STORAGE_KEYS.users, data.users);
-  writeCollection(STORAGE_KEYS.workspaces, data.workspaces);
-  writeCollection(STORAGE_KEYS.branches, data.branches);
-  writeCollection(STORAGE_KEYS.osSubscriptions, data.subscriptions);
-  writeCollection(STORAGE_KEYS.osEnablements, data.osEnablements);
-  writeCollection(STORAGE_KEYS.businessUnits, data.businessUnits);
-  writeCollection(STORAGE_KEYS.teamMembers, data.teamMembers);
-  writeCollection(STORAGE_KEYS.commerceSetups, data.commerceSetups);
-  writeCollection(STORAGE_KEYS.orders, data.commerceOrders);
-  writeCollection(STORAGE_KEYS.customers, data.commerceCustomers);
-  writeCollection(STORAGE_KEYS.invoices, data.commerceInvoices);
-  writeCollection(STORAGE_KEYS.mediaAssets, data.mediaAssets);
-  writeCollection(STORAGE_KEYS.workspaceStorageUsage, data.workspaceStorageUsage);
+function persistDemoContext(data: ReturnType<typeof seedDB>): void {
   if (data.currentUserId) writeSession(STORAGE_KEYS.currentUserId, data.currentUserId);
   if (data.currentWorkspaceId) writeSession(STORAGE_KEYS.currentWorkspaceId, data.currentWorkspaceId);
   if (data.currentOSId) writeSession(STORAGE_KEYS.currentOSId, data.currentOSId);
@@ -425,7 +397,7 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   if (data.currentBranchId) writeSession(STORAGE_KEYS.currentBranchId, data.currentBranchId);
   writeSession(STORAGE_KEYS.onboardingState, data.onboardingState);
   writeSession(STORAGE_KEYS.locale, data.locale);
-  localStorage.setItem(STORAGE_KEYS.theme, data.theme);
+  writeBrowserStorage(STORAGE_KEYS.theme, data.theme, "local");
 }
 
 // ---- AppProvider ----
@@ -438,33 +410,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     const hydrate = async () => {
-      const loaded = loadState();
-      if (loaded.demoProducts) {
-        await services.productsFacade.seedCompatibleProducts(
-          loaded.demoProducts as readonly LegacyProductRecord[],
+      const handoff = await acceptCommerceHandoff(
+        services.commerceHandoff,
+        readCommerceHandoffFromUrl(),
+      );
+      let loaded = loadState();
+      if (loaded.demoRequested) {
+        const seeded = seedDB();
+        const commerceSeed = legacyCommerceDemoSeed();
+        services.corePlatformCompatibility.persistDemoState({
+          users: seeded.users, workspaces: seeded.workspaces, branches: seeded.branches,
+          subscriptions: seeded.subscriptions, businessUnits: seeded.businessUnits,
+          enablements: seeded.osEnablements, teamMembers: seeded.teamMembers,
+          storageUsage: seeded.workspaceStorageUsage,
+        });
+        services.demoBootstrap.bootstrap({
+          setups: commerceSeed.commerceSetups, orders: commerceSeed.commerceOrders,
+          invoices: commerceSeed.commerceInvoices, mediaAssets: commerceSeed.mediaAssets,
+        });
+        persistDemoContext(seeded);
+        await services.productsCompatibility.seedCompatibleProducts(
+          commerceSeed.commerceProducts as unknown as readonly LegacyProductRecord[],
         );
+        loaded = loadState();
       }
       let products: CommerceProduct[] = [];
       if (loaded.state.currentWorkspaceId && loaded.state.currentBusinessUnitId) {
-        const result = await services.productsFacade.list({
+        const result = await services.productsCompatibility.list({
           workspaceId: loaded.state.currentWorkspaceId,
           legacyBusinessUnitId: loaded.state.currentBusinessUnitId,
           ...(loaded.state.currentBranchId ? { branchId: loaded.state.currentBranchId } : {}),
         });
         products = result.items.map((product) => ({ ...product }));
       }
+      const acceptedState = handoff ? {
+        ...loaded.state,
+        users: loaded.state.users.some((item) => item.id === handoff.user.id)
+          ? loaded.state.users : [...loaded.state.users, handoff.user],
+        workspaces: loaded.state.workspaces.some((item) => item.id === handoff.workspace.id)
+          ? loaded.state.workspaces : [...loaded.state.workspaces, handoff.workspace],
+        subscriptions: loaded.state.subscriptions.some((item) => item.id === handoff.subscription.id)
+          ? loaded.state.subscriptions : [...loaded.state.subscriptions, handoff.subscription],
+        businessUnits: loaded.state.businessUnits.some((item) => item.id === handoff.businessUnit.id)
+          ? loaded.state.businessUnits : [...loaded.state.businessUnits, handoff.businessUnit],
+        branches: !handoff.branch || loaded.state.branches.some((item) => item.id === handoff.branch?.id)
+          ? loaded.state.branches : [...loaded.state.branches, handoff.branch],
+      } : loaded.state;
       if (!active) return;
       // Hydrate browser-only mock storage after the SSR/client initial render matches.
-      setState({ ...loaded.state, products });
+      setState({ ...acceptedState, products });
       setIsHydrated(true);
     };
     void hydrate().catch(() => {
       if (active) setIsHydrated(true);
     });
     return () => { active = false; };
-  }, [services.productsFacade]);
+  }, [services.commerceHandoff, services.corePlatformCompatibility, services.demoBootstrap, services.productsCompatibility]);
 
-  useEffect(() => services.productsFacade.subscribe((scope, records) => {
+  useEffect(() => services.productsCompatibility.subscribe((scope, records) => {
     setState((previous) => {
       const retained = previous.products.filter((product) => !(
         product.workspaceId === scope.workspaceId
@@ -472,9 +475,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ));
       return { ...previous, products: [...retained, ...records.map((product) => ({ ...product }))] };
     });
-  }), [services.productsFacade]);
+  }), [services.productsCompatibility]);
 
-  useEffect(() => services.customersFacade.subscribe(({ scope, customers }) => {
+  useEffect(() => services.customersCompatibility.subscribe(({ scope, customers }) => {
     setState((previous) => {
       const retained = previous.customers.filter((customer) => !(
         customer.workspaceId === scope.workspaceId
@@ -487,7 +490,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }));
       return { ...previous, customers: [...retained, ...compatible] };
     });
-  }), [services.customersFacade]);
+  }), [services.customersCompatibility]);
 
   useEffect(() => {
     if (!isHydrated || !state.currentWorkspaceId || !state.currentBusinessUnitId) return;
@@ -496,10 +499,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       legacyBusinessUnitId: state.currentBusinessUnitId,
       ...(state.currentBranchId ? { branchId: state.currentBranchId } : {}),
     };
-    void services.productsFacade.list(scope).catch(() => undefined);
+    void services.productsCompatibility.list(scope).catch(() => undefined);
   }, [
     isHydrated,
-    services.productsFacade,
+    services.productsCompatibility,
     state.currentWorkspaceId,
     state.currentBusinessUnitId,
     state.currentBranchId,
@@ -514,24 +517,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isHydrated) return;
     document.documentElement.setAttribute("data-theme", state.theme);
-    localStorage.setItem(STORAGE_KEYS.theme, state.theme);
+    writeBrowserStorage(STORAGE_KEYS.theme, state.theme, "local");
   }, [isHydrated, state.theme]);
 
   useEffect(() => {
     if (!isHydrated) return;
     if (typeof window === "undefined") return;
     if (state.currentUserId) writeSession(STORAGE_KEYS.currentUserId, state.currentUserId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentUserId);
+    else removeBrowserStorage(STORAGE_KEYS.currentUserId, "session");
     if (state.currentWorkspaceId) writeSession(STORAGE_KEYS.currentWorkspaceId, state.currentWorkspaceId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentWorkspaceId);
+    else removeBrowserStorage(STORAGE_KEYS.currentWorkspaceId, "session");
     if (state.currentOSId) writeSession(STORAGE_KEYS.currentOSId, state.currentOSId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentOSId);
+    else removeBrowserStorage(STORAGE_KEYS.currentOSId, "session");
     if (state.currentOSSubscriptionId) writeSession(STORAGE_KEYS.currentOSSubscriptionId, state.currentOSSubscriptionId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentOSSubscriptionId);
+    else removeBrowserStorage(STORAGE_KEYS.currentOSSubscriptionId, "session");
     if (state.currentBusinessUnitId) writeSession(STORAGE_KEYS.currentBusinessUnitId, state.currentBusinessUnitId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentBusinessUnitId);
+    else removeBrowserStorage(STORAGE_KEYS.currentBusinessUnitId, "session");
     if (state.currentBranchId) writeSession(STORAGE_KEYS.currentBranchId, state.currentBranchId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentBranchId);
+    else removeBrowserStorage(STORAGE_KEYS.currentBranchId, "session");
     writeSession(STORAGE_KEYS.onboardingState, state.onboardingState);
     writeSession(STORAGE_KEYS.locale, state.lang);
   }, [isHydrated, state.currentUserId, state.currentWorkspaceId, state.currentOSId,
@@ -605,7 +608,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     .filter((p) => p.businessUnitId === state.currentBusinessUnitId)
     .map((p) => {
       if (!state.currentBranchId) return p;
-      const eff = effectiveStockFor(p, state.currentBranchId, state.branchInventory);
+      const eff = legacyEffectiveStock(p, state.currentBranchId, state.branchInventory);
       return { ...p, stock: eff.qty, lowStockThreshold: eff.lowStockThreshold };
     }), [state.products, state.currentBusinessUnitId, state.currentBranchId, state.branchInventory]);
   const allOrders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
@@ -641,48 +644,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ---- media ----
-  const attachMedia = useCallback(async (input: { file: File; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => {
-    const compressed = await compressImageToThumbnail(input.file);
-    if (!compressed) {
-      showToast(memoT("image_too_large"), "error");
-      return null;
-    }
-    if (!canAttachMedia(workspaceStorageUsage, compressed.sizeBytes)) {
-      showToast(memoT("storage_limit_reached"), "error");
-      return null;
-    }
-    const asset = buildMediaAsset({
+  const attachMedia = useCallback(async (input: { source: LegacyMediaSource; ownerType: MediaOwnerType; ownerId?: string | null; fileName: string }) => {
+    const outcome = await services.productMedia.attach({
+      source: input.source,
       workspaceId: state.currentWorkspaceId ?? "",
-      businessUnitId: state.currentBusinessUnitId,
+      legacyBusinessUnitId: state.currentBusinessUnitId,
       branchId: state.currentBranchId,
       ownerType: input.ownerType,
       ownerId: input.ownerId ?? null,
       fileName: input.fileName,
-      compressed,
     });
-    const newAssets = [...state.mediaAssets, asset];
-    writeCollection(STORAGE_KEYS.mediaAssets, newAssets);
-
-    const newUsage = workspaceStorageUsage
-      ? state.workspaceStorageUsage.map((u) => (u.workspaceId === workspaceStorageUsage.workspaceId ? applyUsageDelta(u, asset.sizeBytes) : u))
-      : state.workspaceStorageUsage;
-    writeCollection(STORAGE_KEYS.workspaceStorageUsage, newUsage);
-
-    setState((prev) => ({ ...prev, mediaAssets: newAssets, workspaceStorageUsage: newUsage }));
-
-    return { asset, reference: { mediaAssetId: asset.id, thumbnailUrl: asset.thumbnailUrl ?? asset.url } };
-  }, [state.mediaAssets, state.workspaceStorageUsage, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, workspaceStorageUsage, showToast, memoT]);
+    if (!outcome.ok) {
+      showToast(memoT(outcome.error), "error");
+      return null;
+    }
+    setState((prev) => ({
+      ...prev,
+      mediaAssets: [...outcome.mediaAssets],
+      workspaceStorageUsage: [...outcome.storageUsage],
+    }));
+    return { asset: outcome.asset, reference: outcome.reference };
+  }, [memoT, services.productMedia, showToast, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- auth ----
   const createUser = useCallback((data: { fullName: string; email: string; password: string }): "success" | "email_taken" => {
-    const email = normalizeEmail(data.email);
-    if (state.users.find((u) => normalizeEmail(u.email) === email)) return "email_taken";
-    const user: User = { id: uid("user"), fullName: data.fullName, email, passwordHash: data.password, role: "owner", createdAt: nowISO(), updatedAt: nowISO() };
-    const newUsers = [...state.users, user];
-    writeCollection(STORAGE_KEYS.users, newUsers);
-    setState((prev) => ({ ...prev, users: newUsers, currentUserId: user.id }));
+    const result = services.corePlatformCompatibility.createUser({ users: state.users, ...data });
+    if (!result.ok) return result.error;
+    setState((prev) => ({ ...prev, users: [...result.users], currentUserId: result.user.id }));
     return "success";
-  }, [state.users]);
+  }, [services.corePlatformCompatibility, state.users]);
 
   const loginUser = useCallback((email: string, password: string): "success" | "invalid_credentials" => {
     const em = normalizeEmail(email);
@@ -699,12 +689,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- workspace ----
   const createWorkspace = useCallback((data: { name: string; country: string; currency: string; timezone: string }): Workspace => {
-    const ws: Workspace = { id: uid("ws"), name: data.name, country: data.country, currency: data.currency, timezone: data.timezone, language: state.lang, ownerUserId: state.currentUserId!, createdAt: nowISO() };
-    const newWS = [...state.workspaces, ws];
-    writeCollection(STORAGE_KEYS.workspaces, newWS);
-    setState((prev) => ({ ...prev, workspaces: newWS, currentWorkspaceId: ws.id }));
-    return ws;
-  }, [state.workspaces, state.currentUserId, state.lang]);
+    const result = services.corePlatformCompatibility.createWorkspace({ workspaces: state.workspaces, ownerUserId: state.currentUserId!, language: state.lang, ...data });
+    setState((prev) => ({ ...prev, workspaces: [...result.workspaces], currentWorkspaceId: result.workspace.id }));
+    return result.workspace;
+  }, [services.corePlatformCompatibility, state.workspaces, state.currentUserId, state.lang]);
 
   // ---- onboarding ----
   const setLocale = useCallback((locale: Lang) => {
@@ -712,62 +700,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const createBranch = useCallback((data: { name: string; city?: string; address?: string; country?: string; currency?: string; isMain: boolean }): Branch => {
-    const businessUnitId = state.currentBusinessUnitId || "";
-    if (businessUnitId && !isBranchNameAvailableForBusiness(state.branches, businessUnitId, data.name)) {
-      throw new Error("branch_name_exists");
-    }
-    const branch: Branch = {
-      id: uid("br"), workspaceId: state.currentWorkspaceId!, businessUnitId,
-      name: data.name, city: data.city || undefined, branchCity: data.city || undefined,
-      address: data.address || undefined,
-      branchAddressLine1: data.address || undefined,
-      country: data.country || currentWorkspace?.country, currency: data.currency || currentWorkspace?.currency,
-      isMain: data.isMain, createdAt: nowISO(),
-    };
-    const newBranches = [...state.branches, branch];
-    const newEnablements = state.currentOSSubscriptionId
-      ? state.osEnablements.map((e) => e.osSubscriptionId === state.currentOSSubscriptionId
-        ? {
-            ...e,
-            businessUnitId: businessUnitId || e.businessUnitId,
-            branchIds: [...new Set([...(e.branchIds || []), branch.id])],
-            scope: e.scope === "workspace" && businessUnitId ? "business" as const : e.scope,
-            updatedAt: nowISO(),
-          }
-        : e)
-      : state.osEnablements;
-    writeCollection(STORAGE_KEYS.branches, newBranches);
-    writeCollection(STORAGE_KEYS.osEnablements, newEnablements);
-    setState((prev) => ({ ...prev, branches: newBranches, osEnablements: newEnablements, currentBranchId: branch.id }));
-    return branch;
-  }, [state.branches, state.osEnablements, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentOSSubscriptionId, currentWorkspace]);
+    const result = services.corePlatformCompatibility.createBranch({
+      branches: state.branches, enablements: state.osEnablements, workspaceId: state.currentWorkspaceId!,
+      businessUnitId: state.currentBusinessUnitId || "", osSubscriptionId: state.currentOSSubscriptionId,
+      workspaceCountry: currentWorkspace?.country, workspaceCurrency: currentWorkspace?.currency, ...data,
+    });
+    setState((prev) => ({ ...prev, branches: [...result.branches], osEnablements: [...result.enablements], currentBranchId: result.branch.id }));
+    return result.branch;
+  }, [currentWorkspace, services.corePlatformCompatibility, state.branches, state.currentBusinessUnitId, state.currentOSSubscriptionId, state.currentWorkspaceId, state.osEnablements]);
 
   const addBranch = useCallback((data: { name: string; city?: string; address?: string }): Branch => {
-    if (!isBranchNameAvailableForBusiness(state.branches, state.currentBusinessUnitId, data.name)) {
-      throw new Error("branch_name_exists");
-    }
-    const branch: Branch = {
-      id: uid("br"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
-      name: data.name, city: data.city || undefined, branchCity: data.city || undefined,
-      address: data.address || undefined,
-      branchAddressLine1: data.address || undefined,
-      country: currentWorkspace?.country, currency: currentWorkspace?.currency,
-      isMain: false, createdAt: nowISO(),
-    };
-    const newBranches = [...state.branches, branch];
-    const newEnablements = state.osEnablements.map((e) =>
-      e.workspaceId === state.currentWorkspaceId &&
-      e.osId === "commerce" &&
-      e.businessUnitId === state.currentBusinessUnitId &&
-      e.status === "active"
-        ? { ...e, branchIds: [...new Set([...(e.branchIds || []), branch.id])], updatedAt: nowISO() }
-        : e,
-    );
-    writeCollection(STORAGE_KEYS.branches, newBranches);
-    writeCollection(STORAGE_KEYS.osEnablements, newEnablements);
-    setState((prev) => ({ ...prev, branches: newBranches, osEnablements: newEnablements, currentBranchId: branch.id }));
-    return branch;
-  }, [state.branches, state.osEnablements, state.currentWorkspaceId, state.currentBusinessUnitId, currentWorkspace]);
+    const result = services.corePlatformCompatibility.addBranch({
+      branches: state.branches, enablements: state.osEnablements, workspaceId: state.currentWorkspaceId!,
+      businessUnitId: state.currentBusinessUnitId!, workspaceCountry: currentWorkspace?.country,
+      workspaceCurrency: currentWorkspace?.currency, ...data,
+    });
+    setState((prev) => ({ ...prev, branches: [...result.branches], osEnablements: [...result.enablements], currentBranchId: result.branch.id }));
+    return result.branch;
+  }, [currentWorkspace, services.corePlatformCompatibility, state.branches, state.currentBusinessUnitId, state.currentWorkspaceId, state.osEnablements]);
 
   const selectOS = useCallback((osId: string) => {
     setState((prev) => ({ ...prev, currentOSId: osId }));
@@ -775,43 +725,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const selectPlan = useCallback((planKey: "starter" | "pro" | "business") => {
     const planId = planIdFor(state.currentOSId || "commerce", planKey);
-    const sub: OSSubscription = {
-      id: uid("sub"), workspaceId: state.currentWorkspaceId!, os: state.currentOSId || "commerce",
-      osId: state.currentOSId || "commerce", plan: planKey, planId,
-      status: "trialing", startedAt: nowISO(),
-      trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-      renewsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-    };
-    const newSubs = [...state.subscriptions, sub];
-    writeCollection(STORAGE_KEYS.osSubscriptions, newSubs);
-    setState((prev) => ({ ...prev, subscriptions: newSubs, currentOSSubscriptionId: sub.id }));
-  }, [state.subscriptions, state.currentWorkspaceId, state.currentOSId]);
+    const result = services.corePlatformCompatibility.selectPlan({ subscriptions: state.subscriptions, workspaceId: state.currentWorkspaceId!, osId: state.currentOSId || "commerce", planKey, planId });
+    setState((prev) => ({ ...prev, subscriptions: [...result.subscriptions], currentOSSubscriptionId: result.subscription.id }));
+  }, [services.corePlatformCompatibility, state.subscriptions, state.currentWorkspaceId, state.currentOSId]);
 
   const createBusinessUnit = useCallback((data: { name: string; preset: string; osId: string; industryType?: string }): BusinessUnit => {
-    const bu: BusinessUnit = {
-      id: uid("bu"), workspaceId: state.currentWorkspaceId!, osSubscriptionId: state.currentOSSubscriptionId!,
-      os: data.osId, osId: data.osId, selectedOS: data.osId,
-      branchIds: state.currentBranchId ? [state.currentBranchId] : [],
-      branchId: state.currentBranchId || "",
-      name: data.name, industryType: data.industryType || data.preset,
-      preset: data.preset, presetId: data.preset, createdAt: nowISO(),
-    };
-    const updatedBranches = state.branches.map((b) => b.id === state.currentBranchId ? { ...b, businessUnitId: bu.id } : b);
-    const newBUs = [...state.businessUnits, bu];
-    const ensured = ensureCommerceBusinessEnablement({
-      enablements: state.osEnablements,
-      subscriptions: state.subscriptions,
-      workspaceId: state.currentWorkspaceId,
-      businessUnitId: bu.id,
-      branchIds: bu.branchIds,
+    const result = services.corePlatformCompatibility.createBusinessUnit({
+      businessUnits: state.businessUnits, branches: state.branches, enablements: state.osEnablements,
+      subscriptions: state.subscriptions, workspaceId: state.currentWorkspaceId!,
+      osSubscriptionId: state.currentOSSubscriptionId!, currentBranchId: state.currentBranchId, ...data,
     });
-    const newEnablements = ensured.enablements;
-    writeCollection(STORAGE_KEYS.businessUnits, newBUs);
-    writeCollection(STORAGE_KEYS.branches, updatedBranches);
-    writeCollection(STORAGE_KEYS.osEnablements, newEnablements);
-    setState((prev) => ({ ...prev, businessUnits: newBUs, branches: updatedBranches, osEnablements: newEnablements, currentBusinessUnitId: bu.id }));
-    return bu;
-  }, [state.businessUnits, state.branches, state.osEnablements, state.subscriptions, state.currentWorkspaceId, state.currentOSSubscriptionId, state.currentBranchId]);
+    setState((prev) => ({ ...prev, businessUnits: [...result.businessUnits], branches: [...result.branches], osEnablements: [...result.enablements], currentBusinessUnitId: result.businessUnit.id }));
+    return result.businessUnit;
+  }, [services.corePlatformCompatibility, state.businessUnits, state.branches, state.currentBranchId, state.currentOSSubscriptionId, state.currentWorkspaceId, state.osEnablements, state.subscriptions]);
 
   const completeOnboarding = useCallback(() => {
     const newState: OnboardingState = {
@@ -826,433 +752,126 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- commerce setup ----
   const getCommerceSetup = useCallback((): CommerceSetup => {
-    const existing = state.commerceSetups.find((cs) =>
-      cs.workspaceId === state.currentWorkspaceId &&
-      cs.businessUnitId === state.currentBusinessUnitId
-    );
-    if (existing) return existing;
-    const buPreset = suggestCommercePresetForIndustry(currentBU?.industryType || currentBU?.presetId || "retail");
-    return {
-      id: "", workspaceId: state.currentWorkspaceId || "", businessUnitId: state.currentBusinessUnitId || "",
-      osSubscriptionId: state.currentOSSubscriptionId || "", createdAt: "", updatedAt: "",
-      ...DEFAULT_SETUP, presetId: buPreset, businessType: buPreset, preset: buPreset,
-      categories: [],
-    };
-  }, [state.commerceSetups, state.currentBusinessUnitId, state.currentWorkspaceId, state.currentOSSubscriptionId, currentBU]);
+    return services.setupCommands.read({
+      workspaceId: state.currentWorkspaceId || "",
+      legacyBusinessUnitId: state.currentBusinessUnitId || "",
+      osSubscriptionId: state.currentOSSubscriptionId || "",
+      industryOrPreset: currentBU?.industryType || currentBU?.presetId || "retail",
+    });
+  }, [currentBU, services.setupCommands, state.currentBusinessUnitId, state.currentOSSubscriptionId, state.currentWorkspaceId]);
 
   const saveCommerceSetup = useCallback((data: Partial<CommerceSetup>) => {
-    const existing = state.commerceSetups.find((cs) =>
-      cs.workspaceId === state.currentWorkspaceId &&
-      cs.businessUnitId === state.currentBusinessUnitId
-    );
-    let newSetups: CommerceSetup[];
-    if (existing) {
-      newSetups = state.commerceSetups.map((cs) => cs.id === existing.id ? {
-        ...cs,
-        ...data,
-        workspaceId: existing.workspaceId,
-        businessUnitId: existing.businessUnitId,
-        osSubscriptionId: existing.osSubscriptionId,
-        updatedAt: nowISO(),
-      } : cs);
-    } else {
-      const setupData = { ...data };
-      delete setupData.id;
-      delete setupData.createdAt;
-      delete setupData.updatedAt;
-      const newSetup: CommerceSetup = {
-        ...DEFAULT_SETUP, categories: [], ...setupData,
-        id: uid("cs"), createdAt: nowISO(), updatedAt: nowISO(),
-        workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
+    const result = services.setupCommands.save({
+      context: {
+        workspaceId: state.currentWorkspaceId!,
+        legacyBusinessUnitId: state.currentBusinessUnitId!,
         osSubscriptionId: state.currentOSSubscriptionId!,
-      };
-      newSetups = [...state.commerceSetups, newSetup];
-    }
-    writeCollection(STORAGE_KEYS.commerceSetups, newSetups);
-    setState((prev) => ({ ...prev, commerceSetups: newSetups }));
-  }, [state.commerceSetups, state.currentBusinessUnitId, state.currentWorkspaceId, state.currentOSSubscriptionId]);
+        industryOrPreset: currentBU?.industryType || currentBU?.presetId || "retail",
+      },
+      changes: data,
+    });
+    setState((prev) => ({ ...prev, commerceSetups: [...result.setups] }));
+  }, [currentBU, services.setupCommands, state.currentBusinessUnitId, state.currentOSSubscriptionId, state.currentWorkspaceId]);
 
   // ---- branch inventory ----
   const adjustStock = useCallback((data: {
     productId: string; branchId?: string; qty: number; lowStockThreshold?: number;
   }): { ok: true } | { ok: false; error: string } => {
-    const branchId = data.branchId ?? state.currentBranchId;
-    if (!branchId || !state.currentWorkspaceId || !state.currentBusinessUnitId) {
-      return { ok: false, error: "no_active_branch" };
-    }
-    const product = state.products.find((p) => p.id === data.productId);
-    if (!product) return { ok: false, error: "product_not_found" };
-
-    const current = effectiveStockFor(product, branchId, state.branchInventory);
-    const qtyChange = data.qty - current.qty;
-    const lowStockThreshold = data.lowStockThreshold ?? current.lowStockThreshold;
-    const existing = state.branchInventory.find((bi) => bi.productId === product.id && bi.branchId === branchId);
-
-    let recordId: string;
-    let newBranchInventory: BranchInventory[];
-    if (existing) {
-      recordId = existing.id;
-      newBranchInventory = state.branchInventory.map((bi) =>
-        bi.id === existing.id ? { ...bi, qty: data.qty, lowStockThreshold, updatedAt: nowISO() } : bi
-      );
-    } else {
-      recordId = uid("bi");
-      newBranchInventory = [...state.branchInventory, {
-        id: recordId, workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
-        branchId, productId: product.id, qty: data.qty, lowStockThreshold, updatedAt: nowISO(),
-      }];
-    }
-    writeCollection(STORAGE_KEYS.branchInventory, newBranchInventory);
-
-    let newStockMovements = state.stockMovements;
-    if (qtyChange !== 0) {
-      const movement = buildStockMovement({
-        workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
-        branchId, productId: product.id, qtyChange, reason: "adjustment",
-        reference: { type: "adjustment", id: recordId },
-        performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Unknown",
-      });
-      newStockMovements = [...state.stockMovements, movement];
-      writeCollection(STORAGE_KEYS.stockMovements, newStockMovements);
-    }
-
-    setState((prev) => ({ ...prev, branchInventory: newBranchInventory, stockMovements: newStockMovements }));
-    void services.readCoordinator.inventoryCommitted({
-      workspaceId: state.currentWorkspaceId,
-      legacyBusinessUnitId: state.currentBusinessUnitId,
-      branchId,
-    });
+    const result = services.stockAdjustments.adjust({
+      workspaceId: state.currentWorkspaceId || "",
+      legacyBusinessUnitId: state.currentBusinessUnitId || "",
+      branchId: state.currentBranchId,
+      actorId: currentUser?.id ?? "",
+      actorDisplayName: getUserDisplayName(currentUser) || "Unknown",
+      osId: "commerce", action: "inventory.adjust", resourceId: data.productId,
+    }, data);
+    if (!result.ok) return result;
+    setState((prev) => ({ ...prev, branchInventory: [...result.branchInventory], stockMovements: [...result.stockMovements] }));
     return { ok: true };
-  }, [state.products, state.branchInventory, state.stockMovements, state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser, services.readCoordinator]);
+  }, [currentUser, services.stockAdjustments, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- stock transfers ----
   const transferStock = useCallback((data: {
     toBranchId: string; items: { productId: string; qty: number }[]; note?: string;
   }): { ok: true; transfer: StockTransfer } | { ok: false; error: string } => {
-    const fromBranchId = state.currentBranchId;
-    if (!fromBranchId || !state.currentWorkspaceId || !state.currentBusinessUnitId) {
-      return { ok: false, error: "transfer_rejected" };
-    }
-    if (data.toBranchId === fromBranchId) {
-      return { ok: false, error: "transfer_rejected" };
-    }
-    const toBranch = state.branches.find((b) => b.id === data.toBranchId);
-    if (!toBranch || toBranch.businessUnitId !== state.currentBusinessUnitId) {
-      return { ok: false, error: "transfer_rejected" };
-    }
-    if (!data.items || data.items.length === 0) {
-      return { ok: false, error: "transfer_rejected" };
-    }
-
-    const resolvedItems: { product: CommerceProduct; qty: number }[] = [];
-    for (const item of data.items) {
-      const product = state.products.find((p) => p.id === item.productId);
-      if (!product) return { ok: false, error: "transfer_rejected" };
-      if (!Number.isInteger(item.qty) || item.qty <= 0) return { ok: false, error: "insufficient_stock" };
-      const eff = effectiveStockFor(product, fromBranchId, state.branchInventory);
-      if (eff.qty < item.qty) return { ok: false, error: "insufficient_stock" };
-      resolvedItems.push({ product, qty: item.qty });
-    }
-
-    const existingTransfers = state.stockTransfers.filter((tr) => tr.businessUnitId === state.currentBusinessUnitId);
-    const transferNumber = `TRF-${String(existingTransfers.length + 1).padStart(4, "0")}`;
-    const transfer = buildStockTransfer({
-      transferNumber,
-      workspaceId: state.currentWorkspaceId,
-      businessUnitId: state.currentBusinessUnitId,
-      fromBranchId,
-      toBranchId: data.toBranchId,
-      items: resolvedItems.map(({ product, qty }) => ({ productId: product.id, name: product.name, qty })),
-      performedBy: currentUser?.id ?? "",
-      performedByName: getUserDisplayName(currentUser) || "Unknown",
-      note: data.note,
-    });
-
-    let nextBranchInventory = state.branchInventory;
-    const newMovements: StockMovement[] = [];
-    for (const { product, qty } of resolvedItems) {
-      const sourceEff = effectiveStockFor(product, fromBranchId, nextBranchInventory);
-      const sourceExisting = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === fromBranchId);
-      const sourceNewQty = sourceEff.qty - qty;
-      if (sourceExisting) {
-        nextBranchInventory = nextBranchInventory.map((bi) =>
-          bi.id === sourceExisting.id ? { ...bi, qty: sourceNewQty, updatedAt: nowISO() } : bi
-        );
-      } else {
-        nextBranchInventory = [...nextBranchInventory, {
-          id: uid("bi"), workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
-          branchId: fromBranchId, productId: product.id, qty: sourceNewQty, lowStockThreshold: sourceEff.lowStockThreshold, updatedAt: nowISO(),
-        }];
-      }
-
-      const destEff = effectiveStockFor(product, data.toBranchId, nextBranchInventory);
-      const destExisting = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === data.toBranchId);
-      const destNewQty = destEff.qty + qty;
-      if (destExisting) {
-        nextBranchInventory = nextBranchInventory.map((bi) =>
-          bi.id === destExisting.id ? { ...bi, qty: destNewQty, updatedAt: nowISO() } : bi
-        );
-      } else {
-        nextBranchInventory = [...nextBranchInventory, {
-          id: uid("bi"), workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
-          branchId: data.toBranchId, productId: product.id, qty: destNewQty, lowStockThreshold: destEff.lowStockThreshold, updatedAt: nowISO(),
-        }];
-      }
-
-      newMovements.push(buildStockMovement({
-        workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
-        branchId: fromBranchId, productId: product.id, qtyChange: -qty, reason: "transfer_out",
-        reference: { type: "transfer", id: transfer.id },
-        performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Unknown",
-      }));
-      newMovements.push(buildStockMovement({
-        workspaceId: state.currentWorkspaceId, businessUnitId: state.currentBusinessUnitId,
-        branchId: data.toBranchId, productId: product.id, qtyChange: qty, reason: "transfer_in",
-        reference: { type: "transfer", id: transfer.id },
-        performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Unknown",
-      }));
-    }
-
-    writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
-    const newStockMovements = [...state.stockMovements, ...newMovements];
-    writeCollection(STORAGE_KEYS.stockMovements, newStockMovements);
-    const newStockTransfers = [...state.stockTransfers, transfer];
-    writeCollection(STORAGE_KEYS.stockTransfers, newStockTransfers);
-
+    const result = services.transfers.transfer({
+      workspaceId: state.currentWorkspaceId || "",
+      legacyBusinessUnitId: state.currentBusinessUnitId || "",
+      branchId: state.currentBranchId,
+      actorId: currentUser?.id ?? "",
+      actorDisplayName: getUserDisplayName(currentUser) || "Unknown",
+      osId: "commerce", action: "inventory.transfer",
+    }, data);
+    if (!result.ok) return result;
     setState((prev) => ({
       ...prev,
-      branchInventory: nextBranchInventory,
-      stockMovements: newStockMovements,
-      stockTransfers: newStockTransfers,
+      branchInventory: [...result.branchInventory],
+      stockMovements: [...result.stockMovements],
+      stockTransfers: [...result.stockTransfers],
     }));
-    void Promise.all([
-      services.readCoordinator.inventoryCommitted({ workspaceId: state.currentWorkspaceId, legacyBusinessUnitId: state.currentBusinessUnitId, branchId: fromBranchId }),
-      services.readCoordinator.inventoryCommitted({ workspaceId: state.currentWorkspaceId, legacyBusinessUnitId: state.currentBusinessUnitId, branchId: data.toBranchId }),
-    ]);
-    return { ok: true, transfer };
-  }, [state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, state.branches, state.products, state.branchInventory, state.stockMovements, state.stockTransfers, currentUser, services.readCoordinator]);
+    return { ok: true, transfer: result.transfer };
+  }, [currentUser, services.transfers, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- returns ----
   const createReturn = useCallback((data: {
     orderId: string; items: { productId: string; qty: number }[]; reason: string;
     refundMethod: RefundMethod; restock: boolean;
   }): { ok: true; return: CommerceReturn } | { ok: false; error: string } => {
-    const order = state.orders.find((o) => o.id === data.orderId);
-    if (!order || order.workspaceId !== state.currentWorkspaceId || order.businessUnitId !== state.currentBusinessUnitId) {
-      return { ok: false, error: "return_rejected" };
-    }
-    if (!data.items || data.items.length === 0) {
-      return { ok: false, error: "return_rejected" };
-    }
-
-    const existingReturns = state.commerceReturns.filter((r) => r.orderId === order.id);
-    const returnedQtyByProduct: Record<string, number> = {};
-    existingReturns.forEach((r) => {
-      r.items.forEach((it) => {
-        returnedQtyByProduct[it.productId] = (returnedQtyByProduct[it.productId] || 0) + it.qty;
-      });
-    });
-
-    for (const item of data.items) {
-      if (!Number.isInteger(item.qty) || item.qty <= 0) return { ok: false, error: "return_rejected" };
-      const orderItem = order.items.find((oi) => oi.productId === item.productId || oi.id === item.productId);
-      if (!orderItem) return { ok: false, error: "return_rejected" };
-      const remaining = orderItem.qty - (returnedQtyByProduct[item.productId] || 0);
-      if (item.qty > remaining) return { ok: false, error: "return_rejected" };
-    }
-
-    const totals = computeReturnTotals(order, data.items);
-    const returnItems: CommerceReturnItem[] = totals.lines.map((line) => {
-      const orderItem = order.items.find((oi) => oi.productId === line.productId || oi.id === line.productId);
-      return {
-        productId: line.productId, name: line.name, sku: orderItem?.sku,
-        qty: line.qty, price: line.price, taxable: orderItem?.taxable !== false,
-      };
-    });
-
-    const invoice = state.invoices.find((i) => i.orderId === order.id) ?? null;
-    const buReturns = state.commerceReturns.filter((r) => r.businessUnitId === state.currentBusinessUnitId);
-    const returnNumber = `RET-${String(buReturns.length + 1).padStart(4, "0")}`;
-    const newReturn = buildCommerceReturn({
-      returnNumber, workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
-      branchId: order.branchId, orderId: order.id, invoiceId: invoice?.id ?? null,
-      items: returnItems, reason: data.reason, refundMethod: data.refundMethod, restock: data.restock,
-      totals: { subtotal: totals.subtotal, vat: totals.vat, total: totals.total },
-      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
-    });
-
-    let nextBranchInventory = state.branchInventory;
-    const newMovements: StockMovement[] = [];
-    if (data.restock) {
-      for (const item of data.items) {
-        const product = state.products.find((p) => p.id === item.productId);
-        if (!product) continue;
-        const eff = effectiveStockFor(product, order.branchId, nextBranchInventory);
-        const existing = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === order.branchId);
-        const newQty = eff.qty + item.qty;
-        if (existing) {
-          nextBranchInventory = nextBranchInventory.map((bi) =>
-            bi.id === existing.id ? { ...bi, qty: newQty, updatedAt: nowISO() } : bi
-          );
-        } else {
-          nextBranchInventory = [...nextBranchInventory, {
-            id: uid("bi"), workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
-            branchId: order.branchId, productId: product.id, qty: newQty, lowStockThreshold: eff.lowStockThreshold, updatedAt: nowISO(),
-          }];
-        }
-        newMovements.push(buildStockMovement({
-          workspaceId: order.workspaceId, businessUnitId: order.businessUnitId, branchId: order.branchId,
-          productId: product.id, qtyChange: item.qty, reason: "return",
-          reference: { type: "return", id: newReturn.id },
-          performedBy: currentUser?.id ?? "", performedByName: getUserDisplayName(currentUser) || "Cashier",
-        }));
-      }
-    }
-
-    let fullyReturned = true;
-    for (const oi of order.items) {
-      const key = oi.productId || oi.id || "";
-      const returnedAfter = (returnedQtyByProduct[key] || 0) + (data.items.find((i) => i.productId === key)?.qty || 0);
-      if (returnedAfter < oi.qty) { fullyReturned = false; break; }
-    }
-
-    const newOrders = state.orders.map((o) => o.id === order.id ? {
-      ...o,
-      returnStatus: (fullyReturned ? "returned" : "partial") as "returned" | "partial",
-      returnedTotal: (o.returnedTotal || 0) + totals.total,
-      returnIds: [...(o.returnIds || []), newReturn.id],
-    } : o);
-    writeCollection(STORAGE_KEYS.orders, newOrders);
-
-    let newInvoices = state.invoices;
-    if (invoice) {
-      newInvoices = state.invoices.map((i) => i.id === invoice.id ? { ...i, returnIds: [...(i.returnIds || []), newReturn.id] } : i);
-      writeCollection(STORAGE_KEYS.invoices, newInvoices);
-    }
-
-    const newReturns = [...state.commerceReturns, newReturn];
-    writeCollection(STORAGE_KEYS.commerceReturns, newReturns);
-
-    if (data.restock) {
-      writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
-      writeCollection(STORAGE_KEYS.stockMovements, [...state.stockMovements, ...newMovements]);
-    }
-
+    const result = services.returns.create({
+      workspaceId: state.currentWorkspaceId || "",
+      legacyBusinessUnitId: state.currentBusinessUnitId || "",
+      branchId: state.currentBranchId,
+      actorId: currentUser?.id ?? "",
+      actorDisplayName: getUserDisplayName(currentUser) || "Cashier",
+      osId: "commerce", action: "return.create", resourceId: data.orderId,
+    }, data);
+    if (!result.ok) return result;
     setState((prev) => ({
       ...prev,
-      orders: newOrders,
-      invoices: newInvoices,
-      commerceReturns: newReturns,
-      branchInventory: data.restock ? nextBranchInventory : prev.branchInventory,
-      stockMovements: data.restock ? [...prev.stockMovements, ...newMovements] : prev.stockMovements,
+      orders: [...result.orders],
+      invoices: [...result.invoices],
+      commerceReturns: [...result.returns],
+      branchInventory: [...result.branchInventory],
+      stockMovements: [...result.stockMovements],
     }));
-    const committedScope = { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId: order.branchId };
-    void services.readCoordinator.orderCommitted(committedScope, order.id, order.customerId);
-    if (invoice) void services.readCoordinator.invoiceCommitted(committedScope, invoice.id, order.id);
-    if (data.restock) void services.readCoordinator.inventoryCommitted(committedScope);
-    return { ok: true, return: newReturn };
-  }, [state.orders, state.invoices, state.commerceReturns, state.products, state.branchInventory, state.stockMovements, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser, services.readCoordinator]);
+    return { ok: true, return: result.returnRecord };
+  }, [currentUser, services.returns, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- orders ----
   const createOrder = useCallback((data: {
     items: OrderItem[]; customerId: string | null; payment: "cash" | "card" | "wallet";
     discount: number; vat: number; subtotal: number; total: number; net: number;
   }): CommerceOrder => {
-    const branchId = state.currentBranchId!;
-    const stockItems: { item: OrderItem; product: CommerceProduct }[] = [];
-    const requestedByProduct: Record<string, number> = {};
-    for (const item of data.items) {
-      if (!item.productId) continue;
-      const product = state.products.find((p) => p.id === item.productId);
-      if (!product) continue;
-      const existing = state.branchInventory.find((bi) => bi.productId === product.id && bi.branchId === branchId);
-      const isTracked = product.stock !== null || !!existing;
-      if (!isTracked) continue;
-      const eff = effectiveStockFor(product, branchId, state.branchInventory);
-      const requestedQty = (requestedByProduct[product.id] ?? 0) + item.qty;
-      requestedByProduct[product.id] = requestedQty;
-      if (requestedQty > eff.qty) {
-        throw new Error("insufficient_stock");
-      }
-      stockItems.push({ item, product });
-    }
-
-    const existingOrders = readCollection<CommerceOrder>(STORAGE_KEYS.orders);
-    const buOrders = existingOrders.filter((o) => o.businessUnitId === state.currentBusinessUnitId);
-    const orderNum = `ORD-${String(buOrders.length + 1).padStart(4, "0")}`;
-    const order: CommerceOrder = {
-      id: uid("ord"), orderNumber: orderNum, workspaceId: state.currentWorkspaceId!,
-      businessUnitId: state.currentBusinessUnitId!, branchId,
-      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
-      createdAt: nowISO(), ...data,
-    };
-    const newOrders = [...existingOrders, order];
-    writeCollection(STORAGE_KEYS.orders, newOrders);
-
-    // deduct branch inventory and record a "sale" stock movement per item
-    let nextBranchInventory = state.branchInventory;
-    const newMovements: StockMovement[] = [];
-    for (const { item, product } of stockItems) {
-      const eff = effectiveStockFor(product, order.branchId, nextBranchInventory);
-      const existing = nextBranchInventory.find((bi) => bi.productId === product.id && bi.branchId === order.branchId);
-      const newQty = eff.qty - item.qty;
-      if (existing) {
-        nextBranchInventory = nextBranchInventory.map((bi) =>
-          bi.id === existing.id ? { ...bi, qty: newQty, updatedAt: nowISO() } : bi
-        );
-      } else {
-        nextBranchInventory = [...nextBranchInventory, {
-          id: uid("bi"), workspaceId: order.workspaceId, businessUnitId: order.businessUnitId,
-          branchId: order.branchId, productId: product.id, qty: newQty, lowStockThreshold: eff.lowStockThreshold, updatedAt: nowISO(),
-        }];
-      }
-      newMovements.push(buildStockMovement({
-        workspaceId: order.workspaceId, businessUnitId: order.businessUnitId, branchId: order.branchId,
-        productId: product.id, qtyChange: -item.qty, reason: "sale",
-        reference: { type: "order", id: order.id },
-        performedBy: order.cashierId, performedByName: order.cashierName,
-      }));
-    }
-
-    let newStockMovements = state.stockMovements;
-    if (newMovements.length > 0) {
-      newStockMovements = [...state.stockMovements, ...newMovements];
-      writeCollection(STORAGE_KEYS.branchInventory, nextBranchInventory);
-      writeCollection(STORAGE_KEYS.stockMovements, newStockMovements);
-    }
-
-    setState((prev) => ({ ...prev, orders: newOrders, branchInventory: nextBranchInventory, stockMovements: newStockMovements }));
-    const committedScope = { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId: order.branchId };
-    void services.readCoordinator.orderCommitted(committedScope, order.id, order.customerId);
-    void services.readCoordinator.inventoryCommitted(committedScope);
-    return order;
-  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.products, state.branchInventory, state.stockMovements, currentUser, services.readCoordinator]);
+    const result = services.orderCommands.create({
+      workspaceId: state.currentWorkspaceId || "",
+      legacyBusinessUnitId: state.currentBusinessUnitId || "",
+      branchId: state.currentBranchId,
+      actorId: currentUser?.id ?? "",
+      actorDisplayName: getUserDisplayName(currentUser) || "Cashier",
+      osId: "commerce", action: "order.create",
+    }, data);
+    setState((prev) => ({
+      ...prev,
+      orders: [...result.orders],
+      branchInventory: [...result.branchInventory],
+      stockMovements: [...result.stockMovements],
+    }));
+    return result.order;
+  }, [currentUser, services.orderCommands, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- invoices ----
   const createInvoice = useCallback((orderId: string): CommerceInvoice => {
-    const order = state.orders.find((o) => o.id === orderId) || readCollection<CommerceOrder>(STORAGE_KEYS.orders).find((o) => o.id === orderId);
-    if (!order) throw new Error("Order not found: " + orderId);
-    const setup = getCommerceSetup();
-    const existingInvoices = readCollection<CommerceInvoice>(STORAGE_KEYS.invoices);
-    const buInvoices = existingInvoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId);
-    const invNum = `${setup.invoicePrefix}-${(setup.invoiceStart || 1001) + buInvoices.length}`;
-    const invoice: CommerceInvoice = {
-      id: uid("inv"), invoiceNumber: invNum, orderId, workspaceId: order.workspaceId,
-      businessUnitId: order.businessUnitId, branchId: order.branchId, customerId: order.customerId,
-      items: order.items, subtotal: order.subtotal, discount: order.discount,
-      vat: order.vat, total: order.total, net: order.net,
-      cashierId: order.cashierId, cashierName: order.cashierName, createdAt: nowISO(),
-    };
-    const newInvoices = [...existingInvoices, invoice];
-    writeCollection(STORAGE_KEYS.invoices, newInvoices);
-    setState((prev) => ({ ...prev, invoices: newInvoices }));
-    void services.readCoordinator.invoiceCommitted({
-      workspaceId: invoice.workspaceId,
-      legacyBusinessUnitId: invoice.businessUnitId,
-      branchId: invoice.branchId,
-    }, invoice.id, order.id);
-    return invoice;
-  }, [state.orders, state.currentBusinessUnitId, getCommerceSetup, services.readCoordinator]);
+    const result = services.invoiceCommands.create({
+      workspaceId: state.currentWorkspaceId || "",
+      legacyBusinessUnitId: state.currentBusinessUnitId || "",
+      branchId: state.currentBranchId,
+      actorId: currentUser?.id ?? "",
+      actorDisplayName: getUserDisplayName(currentUser) || "Cashier",
+      osId: "commerce", action: "invoice.create", resourceId: orderId,
+    }, { orderId });
+    setState((prev) => ({ ...prev, invoices: [...result.invoices] }));
+    return result.invoice;
+  }, [currentUser, services.invoiceCommands, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {

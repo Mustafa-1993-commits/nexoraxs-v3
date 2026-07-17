@@ -15,8 +15,7 @@ export function useShellPresentation(): ShellPresentationView {
     currentUser,
     currentUserDisplayName,
     lang,
-    products,
-    orders,
+    commerceProjection,
     COMMERCE_PLAN,
     money,
     shellContextSnapshot,
@@ -39,12 +38,12 @@ export function useShellPresentation(): ShellPresentationView {
     [context, recovering],
   );
   const notifications = useMemo(() => projectShellNotifications({
-    products,
-    orders,
+    products: commerceProjection.products,
+    orders: commerceProjection.orders,
     plan: COMMERCE_PLAN,
     money,
     locale: lang,
-  }), [COMMERCE_PLAN, lang, money, orders, products]);
+  }), [COMMERCE_PLAN, commerceProjection.orders, commerceProjection.products, lang, money]);
 
   return useMemo(() => ({
     actor: {

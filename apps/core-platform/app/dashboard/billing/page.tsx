@@ -20,7 +20,7 @@ export default function BillingPage() {
     BRANCHES,
     COMMERCE_PLAN,
     showToast,
-    getCommerceSetup,
+    commerceProjection,
     money,
     workspaceStorageUsage,
     storageUsagePercent,
@@ -28,14 +28,16 @@ export default function BillingPage() {
     t,
   } = useApp();
 
-  const setup = getCommerceSetup();
+  const setup = commerceProjection.setup;
 
   const [billingName, setBillingName] = useState(currentWorkspace?.name ?? "");
   const [billingEmail, setBillingEmail] = useState(currentUser?.email ?? "billing@company.com");
   const [billingAddress, setBillingAddress] = useState(
-    setup.address ? `${setup.address}${setup.city ? `, ${setup.city}` : ""}` : ""
+    setup?.billingAddressLine1
+      ? `${setup.billingAddressLine1}${setup.billingCity ? `, ${setup.billingCity}` : ""}`
+      : ""
   );
-  const [taxNumber, setTaxNumber] = useState(setup.taxNumber ?? "");
+  const [taxNumber, setTaxNumber] = useState(setup?.vatNumber ?? "");
   const [billingCountry, setBillingCountry] = useState(currentWorkspace?.country ?? "Egypt");
 
   const lim = COMMERCE_PLAN?.limits;

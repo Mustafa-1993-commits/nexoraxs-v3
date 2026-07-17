@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { seedDB, STORAGE_KEYS } from "../../../packages/shared/src";
+import { legacyCommerceDemoSeed } from "../../../apps/commerce/features/setup/infrastructure/legacy-commerce-demo-seed";
 import type {
   Branch,
   BusinessUnit,
@@ -52,6 +53,12 @@ export const CORE_050_SEED_IDS = Object.freeze({
   osId: "commerce",
 });
 
+function fullDemoSeed(locale: "en" | "ar" = "en", theme: "light" | "dark" = "light") {
+  return { ...seedDB(locale, theme), ...legacyCommerceDemoSeed() };
+}
+
+type FullDemoSeed = ReturnType<typeof fullDemoSeed>;
+
 export const CORE_050_STORAGE_KEYS = Object.freeze(
   Object.values(STORAGE_KEYS).slice().sort(),
 );
@@ -68,7 +75,7 @@ function json(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function assertSeedContract(data: ReturnType<typeof seedDB>): void {
+function assertSeedContract(data: FullDemoSeed): void {
   const errors = [
     data.currentUserId === CORE_050_SEED_IDS.userId || "current user ID drifted",
     data.currentWorkspaceId === CORE_050_SEED_IDS.workspaceId || "current Workspace ID drifted",
@@ -88,7 +95,7 @@ function assertSeedContract(data: ReturnType<typeof seedDB>): void {
   }
 }
 
-function encodeSeed(data: ReturnType<typeof seedDB>): StoragePayload {
+function encodeSeed(data: FullDemoSeed): StoragePayload {
   const local: Record<string, string> = {
     [STORAGE_KEYS.users]: json(data.users),
     [STORAGE_KEYS.workspaces]: json(data.workspaces),
@@ -123,7 +130,7 @@ function encodeSeed(data: ReturnType<typeof seedDB>): StoragePayload {
   return { local, session };
 }
 
-function addPopulatedNotificationData(data: ReturnType<typeof seedDB>): void {
+function addPopulatedNotificationData(data: FullDemoSeed): void {
   const createdAt = "2026-07-14T10:00:00.000Z";
   const products: CommerceProduct[] = [
     {
@@ -172,7 +179,7 @@ function addPopulatedNotificationData(data: ReturnType<typeof seedDB>): void {
   data.commerceOrders.push(order);
 }
 
-function addCrossScopeData(data: ReturnType<typeof seedDB>): void {
+function addCrossScopeData(data: FullDemoSeed): void {
   const createdAt = "2026-07-14T11:00:00.000Z";
   const workspace: Workspace = {
     id: "fixture_ws_foreign",
@@ -223,7 +230,7 @@ export function buildCoreStorage(
 ): StoragePayload {
   if (name === "missing") return { local: {}, session: {} };
 
-  const data = structuredClone(seedDB(options.locale ?? "en", options.theme ?? "light"));
+  const data = structuredClone(fullDemoSeed(options.locale ?? "en", options.theme ?? "light"));
   assertSeedContract(data);
   if (options.workspaceName) data.workspaces[0].name = options.workspaceName;
   if (options.businessUnitName) data.businessUnits[0].name = options.businessUnitName;

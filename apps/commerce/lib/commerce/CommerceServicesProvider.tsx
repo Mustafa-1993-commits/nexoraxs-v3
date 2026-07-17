@@ -7,23 +7,11 @@ import {
 import {
   createCommerceServices,
   type CommerceRuntimeConfig,
-  type CommerceServiceOverrides,
   type CommerceServices,
 } from "@nexoraxs/sdk";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { LegacyCustomerHistoryService } from "@/features/customers/application/LegacyCustomerHistoryService";
-import { LegacyInventoryProjectionService } from "@/features/inventory/application/LegacyInventoryProjectionService";
-import { LegacyInvoiceViewService } from "@/features/invoices/application/LegacyInvoiceViewService";
-import { LegacyOrderViewService } from "@/features/orders/application/LegacyOrderViewService";
-import { LegacyCommerceReadCoordinator } from "@/features/repository-expansion/application/LegacyCommerceReadCoordinator";
-
-export interface CommerceApplicationServices extends CommerceServices {
-  readonly customerHistoryService: LegacyCustomerHistoryService;
-  readonly inventoryProjectionService: LegacyInventoryProjectionService;
-  readonly orderViewService: LegacyOrderViewService;
-  readonly invoiceViewService: LegacyInvoiceViewService;
-  readonly readCoordinator: LegacyCommerceReadCoordinator;
-}
+import type { CommerceApplicationServices } from "./CommerceApplicationServices";
+import { createCommerceApplicationServices } from "./createCommerceApplicationServices";
 
 interface CommerceServicesContextValue {
   readonly services: CommerceApplicationServices;
@@ -41,15 +29,15 @@ export function useCommerceServices(): CommerceServicesContextValue {
 export function CommerceServicesProvider({
   children,
   config,
-  overrides,
+  runtimeServices,
 }: {
   readonly children: ReactNode;
   readonly config: CommerceRuntimeConfig;
-  readonly overrides?: CommerceServiceOverrides;
+  readonly runtimeServices?: CommerceServices;
 }) {
   const [root] = useState(() => {
     try {
-      const sdkServices = createCommerceServices(config, overrides);
+      const sdkServices = runtimeServices ?? createCommerceServices(config);
       const queryClient = new QueryClient({
         defaultOptions: {
           queries: {
@@ -64,14 +52,7 @@ export function CommerceServicesProvider({
       });
       return {
         value: {
-          services: {
-            ...sdkServices,
-            customerHistoryService: new LegacyCustomerHistoryService(sdkServices.customersRepository, sdkServices.ordersRepository),
-            inventoryProjectionService: new LegacyInventoryProjectionService(sdkServices.productsRepository, sdkServices.inventoryRepository),
-            orderViewService: new LegacyOrderViewService(sdkServices.ordersRepository, sdkServices.customersRepository, sdkServices.invoicesRepository),
-            invoiceViewService: new LegacyInvoiceViewService(sdkServices.invoicesRepository, sdkServices.ordersRepository, sdkServices.customersRepository),
-            readCoordinator: new LegacyCommerceReadCoordinator(queryClient),
-          },
+          services: createCommerceApplicationServices(sdkServices, queryClient),
           queryClient,
         } satisfies CommerceServicesContextValue,
         error: null,

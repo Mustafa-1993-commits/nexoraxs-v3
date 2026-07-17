@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Store, Stethoscope, Users, GitBranch, Dumbbell, Wrench, Receipt, PackageX, CreditCard, Info, ChevronRight, Bell, ExternalLink, Settings } from "lucide-react";
 import { useApp, OPERATING_SYSTEMS } from "@/lib/store";
-import { commerceDashboardUrl, commerceSetupUrl } from "@/lib/commerce-url";
+import { buildCommerceDashboardUrl, buildCommerceSetupHandoffUrl } from "@/lib/commerce/CommerceHandoffAdapter";
 
 const OS_ICON_MAP: Record<string, React.ReactNode> = {
   store: <Store size={22} />,
@@ -22,15 +22,13 @@ export default function ProductHubPage() {
     currentBU,
     currentBranch,
     currentOSSubscription,
-    currentOSEnablement,
     BUSINESS_UNITS,
     BRANCHES,
     COMMERCE_PLAN,
     subscriptions,
     isCommerceSetupComplete,
     isOnboardingComplete,
-    orders,
-    products,
+    commerceProjection,
     money,
   } = useApp();
 
@@ -40,14 +38,26 @@ export default function ProductHubPage() {
   const commerceActive = isCommerceSetupComplete && !!commerceSub;
   const commerceSetupRequired = !!commerceSub && !commerceActive;
 
-  const setupHref = commerceSetupUrl({
-    user: currentUser,
-    workspace: currentWorkspace,
-    businessUnit: currentBU,
-    branch: currentBranch,
-    subscription: currentOSSubscription,
-    osEnablement: currentOSEnablement,
-  });
+  const setupHref = currentUser && currentWorkspace && currentOSSubscription
+    ? buildCommerceSetupHandoffUrl({
+        actor: { id: currentUser.id, displayName: currentUserDisplayName, email: currentUser.email },
+        workspace: currentWorkspace,
+        legacyBusinessUnit: currentBU ? {
+          id: currentBU.id,
+          name: currentBU.name,
+          preset: currentBU.presetId || currentBU.preset,
+          industryType: currentBU.industryType,
+        } : null,
+        branch: currentBranch ? {
+          id: currentBranch.id,
+          name: currentBranch.name,
+          city: currentBranch.branchCity || currentBranch.city,
+          address: currentBranch.branchAddressLine1 || currentBranch.address,
+        } : null,
+        subscription: currentOSSubscription,
+        action: "setup",
+      })
+    : "/dashboard/apps";
 
   const lim = COMMERCE_PLAN?.limits;
   const buUsed = BUSINESS_UNITS.length;
@@ -55,8 +65,8 @@ export default function ProductHubPage() {
   const usersUsed = 1;
 
   // Recent activity items
-  const latestOrder = orders[0] ?? null;
-  const outProduct = products.find((p) => p.stock === 0) ?? null;
+  const latestOrder = commerceProjection.orders[0] ?? null;
+  const outProduct = commerceProjection.products.find((p) => p.stock === 0) ?? null;
 
   const activity = [
     latestOrder && {
@@ -211,7 +221,7 @@ export default function ProductHubPage() {
               </div>
               <div className="nx-row" style={{ gap: 10, marginTop: 20 }}>
                 {commerceActive ? (
-                  <Link href={commerceDashboardUrl()} className="nx-btn nx-btn-primary nx-btn-md" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <Link href={buildCommerceDashboardUrl()} className="nx-btn nx-btn-primary nx-btn-md" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <ExternalLink size={15} />Open Commerce
                   </Link>
                 ) : (

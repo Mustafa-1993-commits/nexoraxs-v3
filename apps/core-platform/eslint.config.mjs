@@ -17,6 +17,17 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "*.min.js",
   ]),
+  {
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["**/__tests__/**", "**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [
+          { group: ["apps/commerce/**", "../commerce/**", "../../commerce/**", "@nexoraxs/sdk/testing"], message: "Core must use governed projection/handoff contracts and production SDK entry points." },
+        ],
+      }],
+    },
+  },
 ]);
 
 export default eslintConfig;

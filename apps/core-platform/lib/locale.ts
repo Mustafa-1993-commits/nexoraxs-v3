@@ -1,18 +1,19 @@
 // @deprecated — use lib/store/ instead
+import { readCoreSessionText, writeCoreSessionText } from "./infrastructure/browser/core-session-storage";
+
 export type Locale = "en" | "ar";
 
 const LOCALE_KEY = "core_locale";
 const LOCALE_EVENT = "nexoraxs:locale-change";
 
 export function getLocale(): Locale {
-  if (typeof window === "undefined") return "en";
-  const stored = sessionStorage.getItem(LOCALE_KEY);
+  const stored = readCoreSessionText(LOCALE_KEY);
   return stored === "ar" ? "ar" : "en";
 }
 
 export function setLocale(locale: Locale): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(LOCALE_KEY, locale);
+  writeCoreSessionText(LOCALE_KEY, locale);
   window.dispatchEvent(new Event(LOCALE_EVENT));
 }
 

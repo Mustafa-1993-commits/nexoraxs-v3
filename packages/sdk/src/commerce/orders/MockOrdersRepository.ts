@@ -33,9 +33,13 @@ export class MockOrdersRepository implements LegacyOrdersRepository {
     return this.behavior.execute({ operation: "orders.getById", scope: scopeInput, resourceId: orderId, action: async () => {
       const scope = normalizeLegacyBusinessUnitScope(scopeInput, "orders.getById");
       if (!orderId) throw new LegacyCommerceRepositoryError({ code: "validation", operation: "orders.getById" });
-      const record = (await this.store.readOrders()).map((value) => parseLegacyOrderRecord(value, "orders.getById"))
-        .find((candidate) => candidate.id === orderId && candidate.workspaceId === scope.workspaceId && candidate.businessUnitId === scope.legacyBusinessUnitId);
-      if (!record) throw new LegacyCommerceRepositoryError({ code: "not_found", operation: "orders.getById" });
+      const records = (await this.store.readOrders()).map((value) => parseLegacyOrderRecord(value, "orders.getById"));
+      const identified = records.find((candidate) => candidate.id === orderId);
+      if (!identified) throw new LegacyCommerceRepositoryError({ code: "not_found", operation: "orders.getById" });
+      if (identified.workspaceId !== scope.workspaceId || identified.businessUnitId !== scope.legacyBusinessUnitId) {
+        throw new LegacyCommerceRepositoryError({ code: "scope_mismatch", operation: "orders.getById" });
+      }
+      const record = identified;
       return structuredClone(record);
     } });
   }

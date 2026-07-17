@@ -24,9 +24,13 @@ export class MockInvoicesRepository implements LegacyInvoicesRepository {
     return this.behavior.execute({ operation: "invoices.getById", scope: scopeInput, resourceId: invoiceId, action: async () => {
       const scope = normalizeLegacyBusinessUnitScope(scopeInput, "invoices.getById");
       if (!invoiceId) throw new LegacyCommerceRepositoryError({ code: "validation", operation: "invoices.getById" });
-      const record = (await this.store.readInvoices()).map((value) => parseLegacyInvoiceRecord(value, "invoices.getById"))
-        .find((candidate) => candidate.id === invoiceId && candidate.workspaceId === scope.workspaceId && candidate.businessUnitId === scope.legacyBusinessUnitId);
-      if (!record) throw new LegacyCommerceRepositoryError({ code: "not_found", operation: "invoices.getById" });
+      const records = (await this.store.readInvoices()).map((value) => parseLegacyInvoiceRecord(value, "invoices.getById"));
+      const identified = records.find((candidate) => candidate.id === invoiceId);
+      if (!identified) throw new LegacyCommerceRepositoryError({ code: "not_found", operation: "invoices.getById" });
+      if (identified.workspaceId !== scope.workspaceId || identified.businessUnitId !== scope.legacyBusinessUnitId) {
+        throw new LegacyCommerceRepositoryError({ code: "scope_mismatch", operation: "invoices.getById" });
+      }
+      const record = identified;
       return structuredClone(record);
     } });
   }

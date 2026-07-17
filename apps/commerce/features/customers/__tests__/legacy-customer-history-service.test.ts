@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MemoryCommerceStore, MockCustomersRepository, MockOrdersRepository } from "@nexoraxs/sdk";
+import { MemoryCommerceStore, MockCustomersRepository, MockOrdersRepository } from "@nexoraxs/sdk/testing";
 import { LegacyCustomerHistoryService } from "../application/LegacyCustomerHistoryService";
 import { CUSTOMER_A } from "../../../../../packages/sdk/src/commerce/customers/__tests__/legacy-customers-repository.contract";
 import { ORDER_A } from "../../../../../packages/sdk/src/commerce/orders/__tests__/legacy-orders-repository.contract";

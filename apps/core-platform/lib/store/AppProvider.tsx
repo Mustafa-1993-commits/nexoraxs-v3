@@ -1,24 +1,46 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
-import { STORAGE_KEYS, PLAN_CATALOG, DEFAULT_SETUP, planIdFor } from "@nexoraxs/shared";
+import { STORAGE_KEYS, PLAN_CATALOG, planIdFor } from "@nexoraxs/shared";
 import {
   uid, nowISO, normalizeEmail, getUserDisplayName,
-  readCollection, writeCollection, readSession, writeSession,
+  readCollection, writeCollection,
   seedDB, storageUsagePercent, formatBytes,
-  getCurrentOSEnablement, ensureCommerceBusinessEnablement, isBranchNameAvailableForBusiness,
+  getCurrentOSEnablement,
 } from "@nexoraxs/shared";
 import { t as tFn, type Lang } from "@nexoraxs/shared";
 import { money as moneyFn } from "@nexoraxs/shared";
 import type {
   User, Workspace, Branch, OSSubscription, BusinessUnit, WorkspaceMember,
-  CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem,
   OSEnablement, WorkspaceStorageUsage,
 } from "@nexoraxs/types";
+import { ensureCommerceBusinessEnablement, isBranchNameAvailableForBusiness } from "@/lib/domain/core-organization-compatibility";
+import { coreCommerceIntegration } from "@/lib/commerce/createCoreCommerceIntegration";
+import {
+  emptyCoreCommerceProjection,
+  readCoreCommerceProjection,
+  type CoreCommerceProjection,
+} from "@/lib/commerce/CommerceProjectionPort";
+import {
+  consumeCoreDemoFlag,
+  readCoreSessionValue as readSession,
+  removeCoreSessionValue,
+  writeCoreSessionValue as writeSession,
+} from "@/lib/infrastructure/browser/core-session-storage";
+import {
+  applyCoreTheme,
+  readCoreTheme,
+  writeCoreTheme,
+} from "@/lib/infrastructure/browser/core-theme-storage";
+import {
+  applyCoreLocale,
+  readCoreLocale,
+  writeCoreLocale,
+} from "@/lib/infrastructure/browser/core-locale-storage";
 import type { ShellContextSnapshot } from "@/lib/shell/contracts";
 
 // ---- types ----
-export type { User, Workspace, Branch, OSSubscription, OSEnablement, BusinessUnit, WorkspaceMember, CommerceSetup, CommerceProduct, CommerceOrder, CommerceInvoice, CommerceCustomer, OrderItem };
+export type { User, Workspace, Branch, OSSubscription, OSEnablement, BusinessUnit, WorkspaceMember };
 // backward-compat aliases
 export type TeamMember = WorkspaceMember;
 
@@ -85,32 +107,8 @@ interface AppContextType {
   selectPlan: (planKey: "starter" | "pro" | "business") => void;
   createBusinessUnit: (data: { name: string; preset: string; osId: string; industryType?: string }) => BusinessUnit;
   completeOnboarding: () => void;
-  // commerce setup
-  saveCommerceSetup: (data: Partial<CommerceSetup>) => void;
-  getCommerceSetup: () => CommerceSetup;
-  // commerce data (scoped to currentBU)
-  products: CommerceProduct[];
-  orders: CommerceOrder[];
-  invoices: CommerceInvoice[];
-  customers: CommerceCustomer[];
+  commerceProjection: CoreCommerceProjection;
   subscriptions: OSSubscription[];
-  // commerce actions
-  addProduct: (data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt">) => CommerceProduct;
-  updateProduct: (id: string, data: Partial<CommerceProduct>) => void;
-  deleteProduct: (id: string) => void;
-  createOrder: (data: {
-    items: OrderItem[];
-    customerId: string | null;
-    payment: "cash" | "card" | "wallet";
-    discount: number;
-    vat: number;
-    subtotal: number;
-    total: number;
-    net: number;
-  }) => CommerceOrder;
-  createInvoice: (orderId: string) => CommerceInvoice;
-  createCustomer: (data: { name: string; phone: string; email: string; notes: string }) => CommerceCustomer;
-  updateCustomer: (id: string, data: Partial<CommerceCustomer>) => void;
   // platform
   setCurrent: (data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => void;
 }
@@ -142,11 +140,6 @@ function emptyRuntimeState() {
     businessUnits: [] as BusinessUnit[],
     osEnablements: [] as OSEnablement[],
     teamMembers: [] as WorkspaceMember[],
-    commerceSetups: [] as CommerceSetup[],
-    products: [] as CommerceProduct[],
-    orders: [] as CommerceOrder[],
-    customers: [] as CommerceCustomer[],
-    invoices: [] as CommerceInvoice[],
     workspaceStorageUsage: [] as WorkspaceStorageUsage[],
   };
 }
@@ -154,15 +147,13 @@ function emptyRuntimeState() {
 function loadState(): ReturnType<typeof emptyRuntimeState> {
   if (typeof window === "undefined") return emptyRuntimeState();
 
-  const demoFlag = readSession<string | null>(STORAGE_KEYS.demo, null);
-  if (demoFlag === "1" || demoFlag === "true") {
+  if (consumeCoreDemoFlag()) {
     const seeded = seedDB();
-    persistAll(seeded);
-    sessionStorage.removeItem(STORAGE_KEYS.demo);
+    persistCoreState(seeded);
   }
 
-  const theme = (localStorage.getItem(STORAGE_KEYS.theme) as "light" | "dark" | null) || "light";
-  const lang = (readSession<string | null>(STORAGE_KEYS.locale, null) || "en") as Lang;
+  const theme = readCoreTheme();
+  const lang = readCoreLocale();
 
   return {
     currentUserId: readSession<string | null>(STORAGE_KEYS.currentUserId, null),
@@ -181,16 +172,11 @@ function loadState(): ReturnType<typeof emptyRuntimeState> {
     businessUnits: readCollection<BusinessUnit>(STORAGE_KEYS.businessUnits),
     osEnablements: readCollection<OSEnablement>(STORAGE_KEYS.osEnablements),
     teamMembers: readCollection<WorkspaceMember>(STORAGE_KEYS.teamMembers),
-    commerceSetups: readCollection<CommerceSetup>(STORAGE_KEYS.commerceSetups),
-    products: readCollection<CommerceProduct>(STORAGE_KEYS.products),
-    orders: readCollection<CommerceOrder>(STORAGE_KEYS.orders),
-    customers: readCollection<CommerceCustomer>(STORAGE_KEYS.customers),
-    invoices: readCollection<CommerceInvoice>(STORAGE_KEYS.invoices),
     workspaceStorageUsage: readCollection<WorkspaceStorageUsage>(STORAGE_KEYS.workspaceStorageUsage),
   };
 }
 
-function persistAll(data: ReturnType<typeof seedDB>): void {
+function persistCoreState(data: ReturnType<typeof seedDB>): void {
   writeCollection(STORAGE_KEYS.users, data.users);
   writeCollection(STORAGE_KEYS.workspaces, data.workspaces);
   writeCollection(STORAGE_KEYS.branches, data.branches);
@@ -198,11 +184,6 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   writeCollection(STORAGE_KEYS.osEnablements, data.osEnablements);
   writeCollection(STORAGE_KEYS.businessUnits, data.businessUnits);
   writeCollection(STORAGE_KEYS.teamMembers, data.teamMembers);
-  writeCollection(STORAGE_KEYS.commerceSetups, data.commerceSetups);
-  writeCollection(STORAGE_KEYS.products, data.commerceProducts);
-  writeCollection(STORAGE_KEYS.orders, data.commerceOrders);
-  writeCollection(STORAGE_KEYS.customers, data.commerceCustomers);
-  writeCollection(STORAGE_KEYS.invoices, data.commerceInvoices);
   writeCollection(STORAGE_KEYS.workspaceStorageUsage, data.workspaceStorageUsage);
   if (data.currentUserId) writeSession(STORAGE_KEYS.currentUserId, data.currentUserId);
   if (data.currentWorkspaceId) writeSession(STORAGE_KEYS.currentWorkspaceId, data.currentWorkspaceId);
@@ -212,7 +193,7 @@ function persistAll(data: ReturnType<typeof seedDB>): void {
   if (data.currentBranchId) writeSession(STORAGE_KEYS.currentBranchId, data.currentBranchId);
   writeSession(STORAGE_KEYS.onboardingState, data.onboardingState);
   writeSession(STORAGE_KEYS.locale, data.locale);
-  localStorage.setItem(STORAGE_KEYS.theme, data.theme);
+  writeCoreTheme(data.theme === "dark" ? "dark" : "light");
 }
 
 // ---- AppProvider ----
@@ -220,6 +201,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState(emptyRuntimeState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const commerceProjectionPort = coreCommerceIntegration.projection;
+  const [commerceProjection, setCommerceProjection] = useState(emptyCoreCommerceProjection);
 
   useEffect(() => {
     // Hydrate browser-only mock storage after SSR and the first client render match.
@@ -231,15 +214,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // RTL: set dir on mount + whenever lang changes
   useEffect(() => {
     if (!isHydrated) return;
-    document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = state.lang;
+    applyCoreLocale(state.lang);
+    writeCoreLocale(state.lang);
   }, [isHydrated, state.lang]);
 
   // theme: set data-theme on mount + whenever theme changes
   useEffect(() => {
     if (!isHydrated) return;
-    document.documentElement.setAttribute("data-theme", state.theme);
-    localStorage.setItem(STORAGE_KEYS.theme, state.theme);
+    applyCoreTheme(state.theme);
+    writeCoreTheme(state.theme);
   }, [isHydrated, state.theme]);
 
   // persist session keys on every change
@@ -247,22 +230,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!isHydrated) return;
     if (typeof window === "undefined") return;
     if (state.currentUserId) writeSession(STORAGE_KEYS.currentUserId, state.currentUserId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentUserId);
+    else removeCoreSessionValue(STORAGE_KEYS.currentUserId);
     if (state.currentWorkspaceId) writeSession(STORAGE_KEYS.currentWorkspaceId, state.currentWorkspaceId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentWorkspaceId);
+    else removeCoreSessionValue(STORAGE_KEYS.currentWorkspaceId);
     if (state.currentOSId) writeSession(STORAGE_KEYS.currentOSId, state.currentOSId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentOSId);
+    else removeCoreSessionValue(STORAGE_KEYS.currentOSId);
     if (state.currentOSSubscriptionId) writeSession(STORAGE_KEYS.currentOSSubscriptionId, state.currentOSSubscriptionId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentOSSubscriptionId);
+    else removeCoreSessionValue(STORAGE_KEYS.currentOSSubscriptionId);
     if (state.currentBusinessUnitId) writeSession(STORAGE_KEYS.currentBusinessUnitId, state.currentBusinessUnitId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentBusinessUnitId);
+    else removeCoreSessionValue(STORAGE_KEYS.currentBusinessUnitId);
     if (state.currentBranchId) writeSession(STORAGE_KEYS.currentBranchId, state.currentBranchId);
-    else sessionStorage.removeItem(STORAGE_KEYS.currentBranchId);
+    else removeCoreSessionValue(STORAGE_KEYS.currentBranchId);
     writeSession(STORAGE_KEYS.onboardingState, state.onboardingState);
     writeSession(STORAGE_KEYS.locale, state.lang);
   }, [state.currentUserId, state.currentWorkspaceId, state.currentOSId,
     state.currentOSSubscriptionId, state.currentBusinessUnitId, state.currentBranchId,
     state.onboardingState, state.lang, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const workspaceId = state.currentWorkspaceId;
+    const legacyBusinessUnitId = state.currentBusinessUnitId;
+    const branchId = state.currentBranchId;
+    if (!workspaceId || !legacyBusinessUnitId) return;
+    let active = true;
+    void readCoreCommerceProjection(commerceProjectionPort, {
+      workspaceId,
+      legacyBusinessUnitId,
+      branchId,
+    }).then((projection) => {
+      if (active) setCommerceProjection(projection);
+    }).catch(() => {
+      if (active) setCommerceProjection(emptyCoreCommerceProjection({ workspaceId, legacyBusinessUnitId, branchId }));
+    });
+    return () => { active = false; };
+  }, [commerceProjectionPort, isHydrated, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
+
+  const scopedCommerceProjection = useMemo(() => {
+    if (
+      commerceProjection.scope.workspaceId !== (state.currentWorkspaceId ?? "")
+      || commerceProjection.scope.legacyBusinessUnitId !== (state.currentBusinessUnitId ?? "")
+      || commerceProjection.branchId !== (state.currentBranchId ?? null)
+    ) {
+      return emptyCoreCommerceProjection({
+        workspaceId: state.currentWorkspaceId,
+        legacyBusinessUnitId: state.currentBusinessUnitId,
+        branchId: state.currentBranchId,
+      });
+    }
+    return commerceProjection;
+  }, [commerceProjection, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
 
   // ---- derived entities ----
   const currentUser = useMemo(() => state.users.find((u) => u.id === state.currentUserId) ?? null, [state.users, state.currentUserId]);
@@ -284,7 +301,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!state.currentUserId && !!currentUser;
   const isOnboardingComplete = state.onboardingState.completedOS.includes("commerce") && !!currentWorkspace;
   const isCommerceOSActive = !!currentOSSubscription && currentOSSubscription.osId === "commerce";
-  const isCommerceSetupComplete = !!state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId);
+  const isCommerceSetupComplete = scopedCommerceProjection.isSetupComplete;
 
   const currentUserDisplayName = getUserDisplayName(currentUser);
 
@@ -321,12 +338,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       limits: planMeta.limits,
     };
   }, [currentOSSubscription]);
-
-  // scoped commerce data (to current BU)
-  const products = useMemo(() => state.products.filter((p) => p.businessUnitId === state.currentBusinessUnitId), [state.products, state.currentBusinessUnitId]);
-  const orders = useMemo(() => state.orders.filter((o) => o.businessUnitId === state.currentBusinessUnitId), [state.orders, state.currentBusinessUnitId]);
-  const invoices = useMemo(() => state.invoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId), [state.invoices, state.currentBusinessUnitId]);
-  const customers = useMemo(() => state.customers.filter((c) => c.businessUnitId === state.currentBusinessUnitId), [state.customers, state.currentBusinessUnitId]);
 
   const workspaceStorageUsage = useMemo(
     () => state.workspaceStorageUsage.find((u) => u.workspaceId === state.currentWorkspaceId) ?? null,
@@ -372,9 +383,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.users]);
 
   const logoutUser = useCallback(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem(STORAGE_KEYS.currentUserId);
-    }
+    removeCoreSessionValue(STORAGE_KEYS.currentUserId);
     setState((prev) => ({ ...prev, currentUserId: null }));
   }, []);
 
@@ -496,7 +505,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writeCollection(STORAGE_KEYS.businessUnits, newBUs);
     writeCollection(STORAGE_KEYS.osEnablements, newEnablements);
     writeSession(STORAGE_KEYS.currentBusinessUnitId, bu.id);
-    // Read fresh from localStorage so a preceding synchronous createBranch call's
+    // Read fresh from browser persistence so a preceding synchronous createBranch call's
     // persisted branch isn't lost (state.branches is still the stale closure value).
     const freshBranches = readCollection<Branch>(STORAGE_KEYS.branches);
     const updatedBranches = freshBranches.map((b) => b.id === branchId ? { ...b, businessUnitId: bu.id } : b);
@@ -522,120 +531,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writeSession(STORAGE_KEYS.onboardingState, newState);
     setState((prev) => ({ ...prev, onboardingState: newState }));
   }, [state.onboardingState, state.currentOSId]);
-
-  // ---- commerce setup ----
-  const getCommerceSetup = useCallback((): CommerceSetup => {
-    const existing = state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId);
-    if (existing) return existing;
-    const buPreset = currentBU?.presetId || "retail";
-    return {
-      id: "", workspaceId: state.currentWorkspaceId || "", businessUnitId: state.currentBusinessUnitId || "",
-      osSubscriptionId: state.currentOSSubscriptionId || "", createdAt: "", updatedAt: "",
-      ...DEFAULT_SETUP, presetId: buPreset, businessType: buPreset, preset: buPreset,
-      categories: [],
-    };
-  }, [state.commerceSetups, state.currentBusinessUnitId, state.currentWorkspaceId, state.currentOSSubscriptionId, currentBU]);
-
-  const saveCommerceSetup = useCallback((data: Partial<CommerceSetup>) => {
-    const existing = state.commerceSetups.find((cs) => cs.businessUnitId === state.currentBusinessUnitId);
-    let newSetups: CommerceSetup[];
-    if (existing) {
-      newSetups = state.commerceSetups.map((cs) => cs.id === existing.id ? { ...cs, ...data, updatedAt: nowISO() } : cs);
-    } else {
-      const newSetup: CommerceSetup = {
-        id: uid("cs"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
-        osSubscriptionId: state.currentOSSubscriptionId!, createdAt: nowISO(), updatedAt: nowISO(),
-        ...DEFAULT_SETUP, categories: [], ...data,
-      };
-      newSetups = [...state.commerceSetups, newSetup];
-    }
-    writeCollection(STORAGE_KEYS.commerceSetups, newSetups);
-    setState((prev) => ({ ...prev, commerceSetups: newSetups }));
-  }, [state.commerceSetups, state.currentBusinessUnitId, state.currentWorkspaceId, state.currentOSSubscriptionId]);
-
-  // ---- products ----
-  const addProduct = useCallback((data: Omit<CommerceProduct, "id" | "businessUnitId" | "workspaceId" | "branchId" | "osSubscriptionId" | "createdAt" | "updatedAt">): CommerceProduct => {
-    const product: CommerceProduct = {
-      id: uid("p"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
-      branchId: state.currentBranchId!, osSubscriptionId: state.currentOSSubscriptionId!,
-      createdAt: nowISO(), updatedAt: nowISO(), ...data,
-    };
-    const newProducts = [...state.products, product];
-    writeCollection(STORAGE_KEYS.products, newProducts);
-    setState((prev) => ({ ...prev, products: newProducts }));
-    return product;
-  }, [state.products, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.currentOSSubscriptionId]);
-
-  const updateProduct = useCallback((id: string, data: Partial<CommerceProduct>) => {
-    const newProducts = state.products.map((p) => p.id === id ? { ...p, ...data, updatedAt: nowISO() } : p);
-    writeCollection(STORAGE_KEYS.products, newProducts);
-    setState((prev) => ({ ...prev, products: newProducts }));
-  }, [state.products]);
-
-  const deleteProduct = useCallback((id: string) => {
-    const newProducts = state.products.filter((p) => p.id !== id);
-    writeCollection(STORAGE_KEYS.products, newProducts);
-    setState((prev) => ({ ...prev, products: newProducts }));
-  }, [state.products]);
-
-  // ---- orders ----
-  const createOrder = useCallback((data: {
-    items: OrderItem[]; customerId: string | null; payment: "cash" | "card" | "wallet";
-    discount: number; vat: number; subtotal: number; total: number; net: number;
-  }): CommerceOrder => {
-    const existingOrders = readCollection<CommerceOrder>(STORAGE_KEYS.orders);
-    const buOrders = existingOrders.filter((o) => o.businessUnitId === state.currentBusinessUnitId);
-    const orderNum = `ORD-${String(buOrders.length + 1).padStart(4, "0")}`;
-    const order: CommerceOrder = {
-      id: uid("ord"), orderNumber: orderNum, workspaceId: state.currentWorkspaceId!,
-      businessUnitId: state.currentBusinessUnitId!, branchId: state.currentBranchId!,
-      cashierId: currentUser?.id ?? "", cashierName: getUserDisplayName(currentUser) || "Cashier",
-      createdAt: nowISO(), ...data,
-    };
-    const newOrders = [...existingOrders, order];
-    writeCollection(STORAGE_KEYS.orders, newOrders);
-    setState((prev) => ({ ...prev, orders: newOrders }));
-    return order;
-  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, currentUser]);
-
-  // ---- invoices ----
-  const createInvoice = useCallback((orderId: string): CommerceInvoice => {
-    const order = state.orders.find((o) => o.id === orderId) || readCollection<CommerceOrder>(STORAGE_KEYS.orders).find((o) => o.id === orderId);
-    if (!order) throw new Error("Order not found: " + orderId);
-    const setup = getCommerceSetup();
-    const existingInvoices = readCollection<CommerceInvoice>(STORAGE_KEYS.invoices);
-    const buInvoices = existingInvoices.filter((i) => i.businessUnitId === state.currentBusinessUnitId);
-    const invNum = `${setup.invoicePrefix}-${(setup.invoiceStart || 1001) + buInvoices.length}`;
-    const invoice: CommerceInvoice = {
-      id: uid("inv"), invoiceNumber: invNum, orderId, workspaceId: order.workspaceId,
-      businessUnitId: order.businessUnitId, branchId: order.branchId, customerId: order.customerId,
-      items: order.items, subtotal: order.subtotal, discount: order.discount,
-      vat: order.vat, total: order.total, net: order.net,
-      cashierId: order.cashierId, cashierName: order.cashierName, createdAt: nowISO(),
-    };
-    const newInvoices = [...existingInvoices, invoice];
-    writeCollection(STORAGE_KEYS.invoices, newInvoices);
-    setState((prev) => ({ ...prev, invoices: newInvoices }));
-    return invoice;
-  }, [state.orders, state.currentBusinessUnitId, getCommerceSetup]);
-
-  // ---- customers ----
-  const createCustomer = useCallback((data: { name: string; phone: string; email: string; notes: string }): CommerceCustomer => {
-    const customer: CommerceCustomer = {
-      id: uid("cust"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
-      branchId: state.currentBranchId!, createdAt: nowISO(), updatedAt: nowISO(), ...data,
-    };
-    const newCustomers = [...state.customers, customer];
-    writeCollection(STORAGE_KEYS.customers, newCustomers);
-    setState((prev) => ({ ...prev, customers: newCustomers }));
-    return customer;
-  }, [state.customers, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId]);
-
-  const updateCustomer = useCallback((id: string, data: Partial<CommerceCustomer>) => {
-    const newCustomers = state.customers.map((c) => c.id === id ? { ...c, ...data, updatedAt: nowISO() } : c);
-    writeCollection(STORAGE_KEYS.customers, newCustomers);
-    setState((prev) => ({ ...prev, customers: newCustomers }));
-  }, [state.customers]);
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
@@ -674,9 +569,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     money: memoMoney, t: memoT,
     createUser, loginUser, logoutUser,
     createWorkspace, setLocale, createBranch, selectOS, selectPlan, createBusinessUnit, completeOnboarding,
-    saveCommerceSetup, getCommerceSetup,
-    products, orders, invoices, customers, subscriptions: state.subscriptions,
-    addProduct, updateProduct, deleteProduct, createOrder, createInvoice, createCustomer, updateCustomer,
+    commerceProjection: scopedCommerceProjection, subscriptions: state.subscriptions,
     setCurrent,
   };
 

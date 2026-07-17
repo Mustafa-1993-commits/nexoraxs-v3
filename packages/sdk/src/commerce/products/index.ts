@@ -16,5 +16,5 @@ export type {
   CommerceRuntimeConfig,
   CommerceServiceOverrides,
   CommerceServices,
-} from "./createCommerceServices";
-export { createCommerceServices } from "./createCommerceServices";
+} from "../runtime/createCommerceServices";
+export { createCommerceServices } from "../runtime/createCommerceServices";
