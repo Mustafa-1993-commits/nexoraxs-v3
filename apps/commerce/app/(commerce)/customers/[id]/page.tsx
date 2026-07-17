@@ -4,23 +4,41 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Phone, Mail, FileText, Edit2, Check, X } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { useLegacyCustomer, useLegacyCustomerHistory } from "@/features/customers/hooks/useLegacyCustomers";
+import { useLegacyCustomerMutations } from "@/features/customers/hooks/useLegacyCustomerMutations";
+import { customerMessages } from "@/features/customers/i18n/customer-messages";
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { customers, orders, money, updateCustomer, showToast } = useApp();
-
-  const customer = customers.find((c) => c.id === id);
-  const customerOrders = orders.filter((o) => o.customerId === id).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  const { currentWorkspace, currentBU, currentBranch, money, showToast, lang } = useApp();
+  const currentWorkspaceId = currentWorkspace?.id ?? null;
+  const currentBusinessUnitId = currentBU?.id ?? null;
+  const currentBranchId = currentBranch?.id ?? null;
+  const scope = currentWorkspaceId && currentBusinessUnitId ? { workspaceId: currentWorkspaceId, legacyBusinessUnitId: currentBusinessUnitId } : null;
+  const customerQuery = useLegacyCustomer(scope, id);
+  const historyQuery = useLegacyCustomerHistory(scope, currentBranchId, id);
+  const mutations = useLegacyCustomerMutations(scope ?? { workspaceId: "", legacyBusinessUnitId: "" });
+  const messages = customerMessages[lang];
+  const customer = customerQuery.data;
+  const customerOrders = historyQuery.data?.orders ?? [];
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    name: customer?.name ?? "",
-    phone: customer?.phone ?? "",
-    email: customer?.email ?? "",
-    notes: customer?.notes ?? "",
+    name: "", phone: "", email: "", notes: "",
   });
+
+  if (customerQuery.isLoading || historyQuery.isLoading) {
+    return <div className="nx-main-scroll"><div role="status" aria-live="polite" style={{ padding: "40px 28px" }}>{messages.loading}</div></div>;
+  }
+
+  if (customerQuery.isError || historyQuery.isError) {
+    const notFound = customerQuery.error instanceof Error && "code" in customerQuery.error && customerQuery.error.code === "not_found";
+    return <div className="nx-main-scroll"><div role="alert" style={{ padding: "40px 28px", textAlign: "center" }}>
+      <div>{notFound ? "Customer not found" : messages.error}</div>
+      {!notFound && <button className="nx-btn" onClick={() => { void customerQuery.refetch(); void historyQuery.refetch(); }}>{messages.retry}</button>}
+      <Link href="/customers" style={{ display: "block", color: "var(--accent)", marginTop: 8 }}>← Back to Customers</Link>
+    </div></div>;
+  }
 
   if (!customer) {
     return (
@@ -39,11 +57,14 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const firstOrder = customerOrders.length > 0 ? customerOrders[customerOrders.length - 1] : null;
   const lastOrder = customerOrders.length > 0 ? customerOrders[0] : null;
 
-  function handleSave() {
-    if (!form.name.trim()) { showToast("Name is required", "warn"); return; }
-    updateCustomer(id, form);
-    showToast("Customer updated", "success");
-    setEditing(false);
+  async function handleSave() {
+    if (!form.name.trim()) { showToast(messages.required, "warn"); return; }
+    if (!scope || mutations.update.isPending) return;
+    try {
+      await mutations.update.mutateAsync({ id, ...form });
+      showToast("Customer updated", "success");
+      setEditing(false);
+    } catch { showToast(messages.error, "error"); }
   }
 
   function handleCancel() {
@@ -85,7 +106,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           <button
             className={editing ? "nx-btn" : "nx-btn-primary"}
             style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, padding: "8px 14px" }}
-            onClick={() => setEditing((e) => !e)}
+            onClick={() => {
+              if (editing) handleCancel();
+              else {
+                setForm({ name: customer.name, phone: customer.phone, email: customer.email, notes: customer.notes });
+                setEditing(true);
+              }
+            }}
           >
             <Edit2 size={13} />{editing ? "Cancel" : "Edit"}
           </button>
@@ -129,8 +156,8 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <textarea className="nx-input" rows={3} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} style={{ resize: "vertical" }} />
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button className="nx-btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }} onClick={handleSave}>
-                    <Check size={13} />Save
+                  <button className="nx-btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }} onClick={() => void handleSave()} disabled={mutations.update.isPending} aria-busy={mutations.update.isPending}>
+                    <Check size={13} />{mutations.update.isPending ? messages.saving : "Save"}
                   </button>
                   <button className="nx-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }} onClick={handleCancel}>
                     <X size={13} />Cancel

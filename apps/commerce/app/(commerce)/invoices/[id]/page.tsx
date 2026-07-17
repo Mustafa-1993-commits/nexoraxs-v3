@@ -4,25 +4,31 @@ import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer, FileText } from "lucide-react";
 import { useApp, computeDoc } from "@/lib/store";
+import { useLegacyInvoice } from "@/features/invoices/hooks/useLegacyInvoices";
+import { invoiceMessages } from "@/features/invoices/i18n/invoice-messages";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { allInvoices, allOrders, allCommerceReturns, customers, currentBranch, BRANCHES, money, getCommerceSetup, showToast, t } = useApp();
+  const { allCommerceReturns, currentBranch, currentWorkspace, currentBU, BRANCHES, money, getCommerceSetup, showToast, t, lang } = useApp();
+  const scope = currentWorkspace && currentBU ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id } : null;
+  const invoiceQuery = useLegacyInvoice(scope, id, "detail");
+  const copy = invoiceMessages[lang];
 
-  const invoice = allInvoices.find((inv) => inv.id === id);
-  if (!invoice) {
+  if (invoiceQuery.isLoading) return <div className="nx-main-scroll"><div role="status" aria-live="polite" style={{ padding: "40px 28px" }}>{copy.loading}</div></div>;
+  if (invoiceQuery.isError) {
+    const notFound = invoiceQuery.error instanceof Error && "code" in invoiceQuery.error && invoiceQuery.error.code === "not_found";
     return (
       <div className="nx-main-scroll">
-        <div style={{ padding: "40px 28px", textAlign: "center", color: "var(--text-3)" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Invoice not found</div>
+        <div role="alert" style={{ padding: "40px 28px", textAlign: "center", color: "var(--text-3)" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{notFound ? copy.notFound : copy.error}</div>
+          {!notFound && <button className="nx-btn" onClick={() => void invoiceQuery.refetch()}>{copy.retry}</button>}
           <Link href="/invoices" style={{ color: "var(--accent)", fontSize: 13 }}>← Invoices</Link>
         </div>
       </div>
     );
   }
 
-  const order = allOrders.find((o) => o.id === invoice.orderId);
-  const customer = order?.customerId ? customers.find((c) => c.id === order.customerId) : null;
+  const { invoice, order, customer } = invoiceQuery.data!;
   const setup = getCommerceSetup();
   const d = computeDoc(order?.items ?? invoice.items, setup, invoice.discount);
   const isOtherBranch = invoice.branchId !== currentBranch?.id;

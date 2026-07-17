@@ -5,12 +5,20 @@ import Link from "next/link";
 import { Search, ShoppingBag } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { fmtDate } from "@/lib/store";
+import { useLegacyOrders } from "@/features/orders/hooks/useLegacyOrders";
+import { orderMessages } from "@/features/orders/i18n/order-messages";
 
 type Period = "all" | "today" | "week" | "month";
 type PaymentFilter = "all" | "cash" | "card" | "wallet";
 
 export default function OrdersPage() {
-  const { orders, invoices, money, t } = useApp();
+  const { money, t, currentWorkspace, currentBU, currentBranch, lang } = useApp();
+  const scope = currentWorkspace && currentBU && currentBranch ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id, branchId: currentBranch.id } : null;
+  const ordersQuery = useLegacyOrders(scope);
+  const copy = orderMessages[lang];
+  const views = ordersQuery.data ?? [];
+  const orders = views.map((view) => view.order);
+  const invoices = views.flatMap((view) => view.invoice ? [view.invoice] : []);
   const [q, setQ] = useState("");
   const [period, setPeriod] = useState<Period>("all");
   const [payFilter, setPayFilter] = useState<PaymentFilter>("all");
@@ -56,12 +64,15 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {ordersQuery.isLoading && <div role="status" aria-live="polite" className="nx-card nx-card-pad">{copy.loading}</div>}
+        {ordersQuery.isError && <div role="alert" className="nx-card nx-card-pad"><p>{copy.error}</p><button className="nx-btn" onClick={() => void ordersQuery.refetch()}>{copy.retry}</button></div>}
+
+        {!ordersQuery.isLoading && !ordersQuery.isError && filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 24px", color: "var(--text-3)" }}>
             <ShoppingBag size={40} style={{ opacity: 0.3, display: "block", margin: "0 auto 12px" }} />
-            <div style={{ fontWeight: 600 }}>{orders.length === 0 ? "No orders yet" : "No orders match your filter"}</div>
+            <div style={{ fontWeight: 600 }}>{orders.length === 0 ? copy.empty : copy.noMatch}</div>
           </div>
-        ) : (
+        ) : !ordersQuery.isLoading && !ordersQuery.isError ? (
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -106,7 +117,7 @@ export default function OrdersPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

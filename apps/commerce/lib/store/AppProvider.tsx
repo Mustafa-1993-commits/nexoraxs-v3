@@ -149,8 +149,6 @@ interface AppContextType {
     net: number;
   }) => CommerceOrder;
   createInvoice: (orderId: string) => CommerceInvoice;
-  createCustomer: (data: { name: string; phone: string; email: string; notes: string }) => CommerceCustomer;
-  updateCustomer: (id: string, data: Partial<CommerceCustomer>) => void;
   // platform
   setCurrent: (data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => void;
 }
@@ -475,6 +473,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ...previous, products: [...retained, ...records.map((product) => ({ ...product }))] };
     });
   }), [services.productsFacade]);
+
+  useEffect(() => services.customersFacade.subscribe(({ scope, customers }) => {
+    setState((previous) => {
+      const retained = previous.customers.filter((customer) => !(
+        customer.workspaceId === scope.workspaceId
+        && customer.businessUnitId === scope.legacyBusinessUnitId
+      ));
+      const compatible = customers.map((customer): CommerceCustomer => ({
+        id: customer.id, workspaceId: customer.workspaceId, businessUnitId: customer.businessUnitId,
+        branchId: customer.branchId, name: customer.name, phone: customer.phone, email: customer.email,
+        notes: customer.notes, createdAt: customer.createdAt, updatedAt: customer.updatedAt,
+      }));
+      return { ...previous, customers: [...retained, ...compatible] };
+    });
+  }), [services.customersFacade]);
 
   useEffect(() => {
     if (!isHydrated || !state.currentWorkspaceId || !state.currentBusinessUnitId) return;
@@ -904,8 +917,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     setState((prev) => ({ ...prev, branchInventory: newBranchInventory, stockMovements: newStockMovements }));
+    void services.readCoordinator.inventoryCommitted({
+      workspaceId: state.currentWorkspaceId,
+      legacyBusinessUnitId: state.currentBusinessUnitId,
+      branchId,
+    });
     return { ok: true };
-  }, [state.products, state.branchInventory, state.stockMovements, state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser]);
+  }, [state.products, state.branchInventory, state.stockMovements, state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser, services.readCoordinator]);
 
   // ---- stock transfers ----
   const transferStock = useCallback((data: {
@@ -1007,8 +1025,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stockMovements: newStockMovements,
       stockTransfers: newStockTransfers,
     }));
+    void Promise.all([
+      services.readCoordinator.inventoryCommitted({ workspaceId: state.currentWorkspaceId, legacyBusinessUnitId: state.currentBusinessUnitId, branchId: fromBranchId }),
+      services.readCoordinator.inventoryCommitted({ workspaceId: state.currentWorkspaceId, legacyBusinessUnitId: state.currentBusinessUnitId, branchId: data.toBranchId }),
+    ]);
     return { ok: true, transfer };
-  }, [state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, state.branches, state.products, state.branchInventory, state.stockMovements, state.stockTransfers, currentUser]);
+  }, [state.currentBranchId, state.currentWorkspaceId, state.currentBusinessUnitId, state.branches, state.products, state.branchInventory, state.stockMovements, state.stockTransfers, currentUser, services.readCoordinator]);
 
   // ---- returns ----
   const createReturn = useCallback((data: {
@@ -1124,8 +1146,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       branchInventory: data.restock ? nextBranchInventory : prev.branchInventory,
       stockMovements: data.restock ? [...prev.stockMovements, ...newMovements] : prev.stockMovements,
     }));
+    const committedScope = { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId: order.branchId };
+    void services.readCoordinator.orderCommitted(committedScope, order.id, order.customerId);
+    if (invoice) void services.readCoordinator.invoiceCommitted(committedScope, invoice.id, order.id);
+    if (data.restock) void services.readCoordinator.inventoryCommitted(committedScope);
     return { ok: true, return: newReturn };
-  }, [state.orders, state.invoices, state.commerceReturns, state.products, state.branchInventory, state.stockMovements, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser]);
+  }, [state.orders, state.invoices, state.commerceReturns, state.products, state.branchInventory, state.stockMovements, state.currentWorkspaceId, state.currentBusinessUnitId, currentUser, services.readCoordinator]);
 
   // ---- orders ----
   const createOrder = useCallback((data: {
@@ -1196,8 +1222,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     setState((prev) => ({ ...prev, orders: newOrders, branchInventory: nextBranchInventory, stockMovements: newStockMovements }));
+    const committedScope = { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId: order.branchId };
+    void services.readCoordinator.orderCommitted(committedScope, order.id, order.customerId);
+    void services.readCoordinator.inventoryCommitted(committedScope);
     return order;
-  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.products, state.branchInventory, state.stockMovements, currentUser]);
+  }, [state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId, state.products, state.branchInventory, state.stockMovements, currentUser, services.readCoordinator]);
 
   // ---- invoices ----
   const createInvoice = useCallback((orderId: string): CommerceInvoice => {
@@ -1217,26 +1246,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newInvoices = [...existingInvoices, invoice];
     writeCollection(STORAGE_KEYS.invoices, newInvoices);
     setState((prev) => ({ ...prev, invoices: newInvoices }));
+    void services.readCoordinator.invoiceCommitted({
+      workspaceId: invoice.workspaceId,
+      legacyBusinessUnitId: invoice.businessUnitId,
+      branchId: invoice.branchId,
+    }, invoice.id, order.id);
     return invoice;
-  }, [state.orders, state.currentBusinessUnitId, getCommerceSetup]);
-
-  // ---- customers ----
-  const createCustomer = useCallback((data: { name: string; phone: string; email: string; notes: string }): CommerceCustomer => {
-    const customer: CommerceCustomer = {
-      id: uid("cust"), workspaceId: state.currentWorkspaceId!, businessUnitId: state.currentBusinessUnitId!,
-      branchId: state.currentBranchId!, createdAt: nowISO(), updatedAt: nowISO(), ...data,
-    };
-    const newCustomers = [...state.customers, customer];
-    writeCollection(STORAGE_KEYS.customers, newCustomers);
-    setState((prev) => ({ ...prev, customers: newCustomers }));
-    return customer;
-  }, [state.customers, state.currentWorkspaceId, state.currentBusinessUnitId, state.currentBranchId]);
-
-  const updateCustomer = useCallback((id: string, data: Partial<CommerceCustomer>) => {
-    const newCustomers = state.customers.map((c) => c.id === id ? { ...c, ...data, updatedAt: nowISO() } : c);
-    writeCollection(STORAGE_KEYS.customers, newCustomers);
-    setState((prev) => ({ ...prev, customers: newCustomers }));
-  }, [state.customers]);
+  }, [state.orders, state.currentBusinessUnitId, getCommerceSetup, services.readCoordinator]);
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
@@ -1278,7 +1294,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     branchInventory: state.branchInventory, stockMovements: state.stockMovements,
     stockTransfers: state.stockTransfers, commerceReturns,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
-    adjustStock, transferStock, createReturn, createOrder, createInvoice, createCustomer, updateCustomer,
+    adjustStock, transferStock, createReturn, createOrder, createInvoice,
     attachMedia,
     setCurrent,
   };

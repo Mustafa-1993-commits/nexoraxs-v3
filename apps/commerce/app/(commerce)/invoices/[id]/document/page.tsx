@@ -5,18 +5,25 @@ import { Printer, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { computeDoc, fmtDate, getBranchOperationalAddress, getBusinessBillingAddress } from "@/lib/store";
+import { useLegacyInvoice } from "@/features/invoices/hooks/useLegacyInvoices";
+import { invoiceMessages } from "@/features/invoices/i18n/invoice-messages";
 
 export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { allInvoices, allOrders, customers, allCommerceReturns, BRANCHES, money, getCommerceSetup, currentBU, t } = useApp();
+  const { allCommerceReturns, BRANCHES, money, getCommerceSetup, currentWorkspace, currentBU, t, lang } = useApp();
+  const scope = currentWorkspace && currentBU ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id } : null;
+  const invoiceQuery = useLegacyInvoice(scope, id, "document");
+  const copy = invoiceMessages[lang];
 
-  const invoice = allInvoices.find((inv) => inv.id === id);
-  if (!invoice) {
+  if (invoiceQuery.isLoading) return <div role="status" aria-live="polite" style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>{copy.loading}</div>;
+  if (invoiceQuery.isError) {
+    const notFound = invoiceQuery.error instanceof Error && "code" in invoiceQuery.error && invoiceQuery.error.code === "not_found";
     return (
       <div style={{ minHeight: "100vh", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", color: "#999" }}>
+        <div role="alert" style={{ textAlign: "center", color: "#555" }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>📄</div>
-          <div style={{ fontWeight: 600 }}>Invoice not found.</div>
+          <div style={{ fontWeight: 600 }}>{notFound ? copy.notFound : copy.error}</div>
+          {!notFound && <button className="nx-btn" onClick={() => void invoiceQuery.refetch()}>{copy.retry}</button>}
           <Link href="/invoices" style={{ display: "inline-flex", marginTop: 16, color: "#4f46e5", fontSize: 13, textDecoration: "none", alignItems: "center", gap: 6 }}>
             <ArrowLeft size={14} /> Back to Invoices
           </Link>
@@ -25,13 +32,12 @@ export default function InvoiceDocumentPage({ params }: { params: Promise<{ id: 
     );
   }
 
+  const { invoice, order, customer } = invoiceQuery.data!;
   const setup = getCommerceSetup();
   const billingAddress = getBusinessBillingAddress(setup);
   const businessName = setup.displayName || setup.legalName || currentBU?.name || "Commerce Business";
-  const order = allOrders.find((o) => o.id === invoice.orderId);
   const branch = BRANCHES.find((b) => b.id === invoice.branchId);
   const branchAddress = getBranchOperationalAddress(branch);
-  const customer = invoice.customerId ? customers.find((c) => c.id === invoice.customerId) : null;
   const payment = order?.payment || "Cash";
   const isPaid = order ? (order as { paid?: boolean }).paid !== false : true;
 

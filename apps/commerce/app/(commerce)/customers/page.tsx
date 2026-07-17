@@ -3,9 +3,13 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Users, Plus, X, Phone, Mail, ChevronRight, ShoppingBag, UserRound } from "lucide-react";
-import { useApp, type CommerceCustomer, type CommerceOrder } from "@/lib/store";
+import { useApp } from "@/lib/store";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import type { LegacyCustomerCompatibilityRecord as CommerceCustomer, LegacyOrderCompatibilityRecord as CommerceOrder } from "@nexoraxs/contracts";
+import { useLegacyCustomerHistories, useLegacyCustomers } from "@/features/customers/hooks/useLegacyCustomers";
+import { useLegacyCustomerMutations } from "@/features/customers/hooks/useLegacyCustomerMutations";
+import { customerMessages } from "@/features/customers/i18n/customer-messages";
 
 type CustomerTagInfo = { label: "VIP" | "Regular" | "New"; tone: "warn" | "accent" | "neutral" };
 
@@ -17,10 +21,23 @@ function customerTag(count: number, spent: number): CustomerTagInfo {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { customers, orders, createCustomer, showToast, money } = useApp();
+  const { currentWorkspace, currentBU, currentBranch, showToast, money, lang } = useApp();
+  const currentWorkspaceId = currentWorkspace?.id ?? null;
+  const currentBusinessUnitId = currentBU?.id ?? null;
+  const currentBranchId = currentBranch?.id ?? null;
+  const scope = currentWorkspaceId && currentBusinessUnitId
+    ? { workspaceId: currentWorkspaceId, legacyBusinessUnitId: currentBusinessUnitId }
+    : null;
+  const customersQuery = useLegacyCustomers(scope);
+  const historiesQuery = useLegacyCustomerHistories(scope, currentBranchId);
+  const mutations = useLegacyCustomerMutations(scope ?? { workspaceId: "", legacyBusinessUnitId: "" });
+  const messages = customerMessages[lang];
+  const customers = useMemo(() => customersQuery.data?.items ?? [], [customersQuery.data]);
+  const orders = useMemo(() => historiesQuery.data?.flatMap((history) => history.orders) ?? [], [historiesQuery.data]);
   const [q, setQ] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", notes: "" });
+  const [formError, setFormError] = useState("");
   const [selected, setSelected] = useState<CommerceCustomer | null>(null);
 
   const customerMetrics = useMemo(() => {
@@ -48,12 +65,18 @@ export default function CustomersPage() {
 
   const filtered = customers.filter((c) => !q || c.name.toLowerCase().includes(q.toLowerCase()) || (c.phone || "").includes(q) || (c.email || "").toLowerCase().includes(q.toLowerCase())).slice().reverse();
 
-  function handleAdd() {
-    if (!form.name.trim()) { showToast("Name is required", "warn"); return; }
-    createCustomer(form);
-    showToast("Customer added", "success");
-    setForm({ name: "", phone: "", email: "", notes: "" });
-    setShowAdd(false);
+  async function handleAdd() {
+    if (!form.name.trim()) { setFormError(messages.required); showToast(messages.required, "warn"); return; }
+    if (!scope || !currentBranchId || mutations.create.isPending) return;
+    try {
+      await mutations.create.mutateAsync({ branchId: currentBranchId, ...form });
+      showToast("Customer added", "success");
+      setForm({ name: "", phone: "", email: "", notes: "" });
+      setFormError("");
+      setShowAdd(false);
+    } catch {
+      showToast(messages.error, "error");
+    }
   }
 
   function viewProfile(id: string) {
@@ -66,11 +89,11 @@ export default function CustomersPage() {
       <div className="nx-page">
         <div className="nx-page-head">
           <div>
-            <h1 className="nx-page-title">Customers</h1>
+            <h1 className="nx-page-title">{messages.title}</h1>
             <p className="nx-page-sub">Created automatically from POS sales</p>
           </div>
           <button className="nx-btn nx-btn-primary nx-btn-md" onClick={() => setShowAdd(true)}>
-            <Plus size={15} />Add Customer
+            <Plus size={15} />{messages.add}
           </button>
         </div>
 
@@ -97,11 +120,19 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {(customersQuery.isLoading || historiesQuery.isLoading) && <div role="status" aria-live="polite" className="nx-card nx-card-pad">{messages.loading}</div>}
+        {(customersQuery.isError || historiesQuery.isError) && (
+          <div role="alert" className="nx-card nx-card-pad">
+            <p>{messages.error}</p>
+            <button className="nx-btn" onClick={() => { void customersQuery.refetch(); void historiesQuery.refetch(); }}>{messages.retry}</button>
+          </div>
+        )}
+
+        {!customersQuery.isLoading && !customersQuery.isError && filtered.length === 0 ? (
           <div className="nx-card nx-card-pad">
             <div className="nx-empty">
               <div className="nx-empty-ic"><Users size={26} /></div>
-              <h3 className="nx-empty-title">{customers.length === 0 ? "No customers yet" : "No customers match your search"}</h3>
+              <h3 className="nx-empty-title">{customers.length === 0 ? messages.empty : messages.noMatch}</h3>
               <p className="nx-empty-desc">
                 {customers.length === 0
                   ? "Add a customer during POS checkout and they'll appear here with full order history. Walk-in sales stay anonymous."
@@ -114,7 +145,7 @@ export default function CustomersPage() {
               )}
             </div>
           </div>
-        ) : (
+        ) : !customersQuery.isLoading && !customersQuery.isError ? (
           <div className="nx-table-wrap">
             <table className="nx-table">
               <thead>
@@ -151,7 +182,7 @@ export default function CustomersPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
 
       {showAdd && (
@@ -159,11 +190,11 @@ export default function CustomersPage() {
           <div className="nx-modal" style={{ maxWidth: 400 }}>
             <div className="nx-modal-head">
               <h3 className="nx-modal-title">Add Customer</h3>
-              <button className="nx-icon-btn" onClick={() => setShowAdd(false)}><X size={18} /></button>
+              <button className="nx-icon-btn" aria-label="Close customer form" onClick={() => setShowAdd(false)}><X size={18} /></button>
             </div>
             <div className="nx-modal-body">
               <div className="nx-form-grid">
-                <Field label="Full name *"><input className="nx-input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ahmed Hassan" autoFocus /></Field>
+                <Field label="Full name *"><input className="nx-input" value={form.name} onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setFormError(""); }} placeholder="Ahmed Hassan" autoFocus aria-invalid={!!formError} aria-describedby={formError ? "customer-name-error" : undefined} />{formError && <span id="customer-name-error" role="alert" className="nx-field-error">{formError}</span>}</Field>
                 <Field label="Phone"><input className="nx-input" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="01000000000" /></Field>
                 <Field label="Email"><input className="nx-input" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="ahmed@email.com" /></Field>
                 <Field label="Notes"><textarea className="nx-input" rows={2} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Optional notes…" /></Field>
@@ -171,7 +202,9 @@ export default function CustomersPage() {
             </div>
             <div className="nx-modal-foot">
               <button className="nx-btn" onClick={() => setShowAdd(false)}>Cancel</button>
-              <button className="nx-btn-primary" onClick={handleAdd}>Add customer</button>
+              <button className="nx-btn-primary" onClick={() => void handleAdd()} disabled={mutations.create.isPending} aria-busy={mutations.create.isPending}>
+                {mutations.create.isPending ? messages.saving : "Add customer"}
+              </button>
             </div>
           </div>
         </div>

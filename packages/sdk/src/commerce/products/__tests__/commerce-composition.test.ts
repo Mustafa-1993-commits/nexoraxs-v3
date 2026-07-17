@@ -3,6 +3,10 @@ import { LegacyProductRepositoryError } from "@nexoraxs/contracts";
 import { createCommerceServices } from "../createCommerceServices";
 import { MemoryCommerceStore } from "../MemoryCommerceStore";
 import { MockProductsRepository } from "../MockProductsRepository";
+import { MockCustomersRepository } from "../../customers/MockCustomersRepository";
+import { MockInventoryRepository } from "../../inventory/MockInventoryRepository";
+import { MockInvoicesRepository } from "../../invoices/MockInvoicesRepository";
+import { MockOrdersRepository } from "../../orders/MockOrdersRepository";
 
 describe("Commerce Product composition root", () => {
   it("constructs mock services over an injected isolated store", () => {
@@ -11,6 +15,11 @@ describe("Commerce Product composition root", () => {
     const services = createCommerceServices({ dataSource: "mock" }, { store });
 
     expect(services.productsRepository).toBeInstanceOf(MockProductsRepository);
+    expect(services.customersRepository).toBeInstanceOf(MockCustomersRepository);
+    expect(services.inventoryRepository).toBeInstanceOf(MockInventoryRepository);
+    expect(services.ordersRepository).toBeInstanceOf(MockOrdersRepository);
+    expect(services.invoicesRepository).toBeInstanceOf(MockInvoicesRepository);
+    expect(services.customersFacade).toBeDefined();
   });
 
   it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(

@@ -62,4 +62,14 @@ describe("AppProvider Product compatibility facade", () => {
     await waitFor(() => expect(observedApp?.products.some((product) => product.sku === "FACADE-FED")).toBe(true));
     await expect(observedServices!.productsRepository.list(scope)).resolves.toMatchObject({ total: 3 });
   });
+
+  it("receives Customer snapshots from the repository-upstream compatibility facade", async () => {
+    localStorage.clear(); sessionStorage.clear(); sessionStorage.setItem("nexoraxs.session.demo", JSON.stringify("1"));
+    const onObserved = (app: ReturnType<typeof useApp>, services: CommerceServices) => { observedApp = app; observedServices = services; };
+    render(<CommerceProviders><Probe onObserved={onObserved} /></CommerceProviders>);
+    await waitFor(() => expect(observedApp?.isHydrated).toBe(true));
+    const scope = { workspaceId: observedApp!.currentWorkspace!.id, legacyBusinessUnitId: observedApp!.currentBU!.id };
+    await act(async () => { await observedServices!.customersFacade.create(scope, { branchId: observedApp!.currentBranch!.id, name: "Facade Customer", phone: "", email: "", notes: "" }); });
+    await waitFor(() => expect(observedApp?.customers.some((customer) => customer.name === "Facade Customer")).toBe(true));
+  });
 });

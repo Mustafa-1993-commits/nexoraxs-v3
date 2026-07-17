@@ -11,9 +11,22 @@ import {
   type CommerceServices,
 } from "@nexoraxs/sdk";
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { LegacyCustomerHistoryService } from "@/features/customers/application/LegacyCustomerHistoryService";
+import { LegacyInventoryProjectionService } from "@/features/inventory/application/LegacyInventoryProjectionService";
+import { LegacyInvoiceViewService } from "@/features/invoices/application/LegacyInvoiceViewService";
+import { LegacyOrderViewService } from "@/features/orders/application/LegacyOrderViewService";
+import { LegacyCommerceReadCoordinator } from "@/features/repository-expansion/application/LegacyCommerceReadCoordinator";
+
+export interface CommerceApplicationServices extends CommerceServices {
+  readonly customerHistoryService: LegacyCustomerHistoryService;
+  readonly inventoryProjectionService: LegacyInventoryProjectionService;
+  readonly orderViewService: LegacyOrderViewService;
+  readonly invoiceViewService: LegacyInvoiceViewService;
+  readonly readCoordinator: LegacyCommerceReadCoordinator;
+}
 
 interface CommerceServicesContextValue {
-  readonly services: CommerceServices;
+  readonly services: CommerceApplicationServices;
   readonly queryClient: QueryClient;
 }
 
@@ -36,15 +49,30 @@ export function CommerceServicesProvider({
 }) {
   const [root] = useState(() => {
     try {
+      const sdkServices = createCommerceServices(config, overrides);
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+            retryOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: 10_000,
+          },
+          mutations: { retry: false },
+        },
+      });
       return {
         value: {
-          services: createCommerceServices(config, overrides),
-          queryClient: new QueryClient({
-            defaultOptions: {
-              queries: { retry: false, staleTime: 10_000 },
-              mutations: { retry: false },
-            },
-          }),
+          services: {
+            ...sdkServices,
+            customerHistoryService: new LegacyCustomerHistoryService(sdkServices.customersRepository, sdkServices.ordersRepository),
+            inventoryProjectionService: new LegacyInventoryProjectionService(sdkServices.productsRepository, sdkServices.inventoryRepository),
+            orderViewService: new LegacyOrderViewService(sdkServices.ordersRepository, sdkServices.customersRepository, sdkServices.invoicesRepository),
+            invoiceViewService: new LegacyInvoiceViewService(sdkServices.invoicesRepository, sdkServices.ordersRepository, sdkServices.customersRepository),
+            readCoordinator: new LegacyCommerceReadCoordinator(queryClient),
+          },
+          queryClient,
         } satisfies CommerceServicesContextValue,
         error: null,
       };

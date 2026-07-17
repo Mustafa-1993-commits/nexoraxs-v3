@@ -344,6 +344,16 @@ that the relevant technology is approved for that implementation scope.
 Shared packages must not become ownerless business-logic modules. Runtime code must not import
 from archived prototypes or `docs/`.
 
+### Frontend-internal Commerce repository exception
+
+Features 052 and 053 define a bounded, temporary compatibility seam under
+`packages/contracts/src/commerce` and `packages/sdk/src/commerce` for the current browser mock.
+These legacy-named records/scopes are not canonical platform contracts or future HTTP DTOs.
+Customer list/get/create/update is the only Feature 053 repository write surface; Inventory is
+list-only and Orders/Invoices are list/get-only. `BrowserStorageCommerceStore` is the sole owner of
+their browser-storage access. Do not promote these shapes, add canonical `businessId`, move retained
+operational writes, or infer backend/API semantics without a separately approved decision.
+
 ## 17. Coding Standards
 
 ### TypeScript and React
@@ -404,5 +414,5 @@ and report the exact sources. Do not invent the answer.
 <!-- SPECKIT START -->
 ## Active Spec Kit Plan
 
-- `specs/052-frontend-repository-foundation/plan.md`
+- `specs/053-commerce-repository-expansion/plan.md`
 <!-- SPECKIT END -->

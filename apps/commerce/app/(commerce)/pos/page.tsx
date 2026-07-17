@@ -12,10 +12,21 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { BranchPill } from "@/components/dashboard/BranchPill";
+import { useLegacyCustomers } from "@/features/customers/hooks/useLegacyCustomers";
+import { useLegacyCustomerMutations } from "@/features/customers/hooks/useLegacyCustomerMutations";
+import { customerMessages } from "@/features/customers/i18n/customer-messages";
 
 export default function POSPage() {
   const router = useRouter();
-  const { products, customers, money, showToast, createOrder, createInvoice, createCustomer, getCommerceSetup, commerceIdentity, currentUserDisplayName, t } = useApp();
+  const { products, money, showToast, createOrder, createInvoice, getCommerceSetup, commerceIdentity, currentUserDisplayName, t, currentWorkspace, currentBU, currentBranch, lang } = useApp();
+  const currentWorkspaceId = currentWorkspace?.id ?? null;
+  const currentBusinessUnitId = currentBU?.id ?? null;
+  const currentBranchId = currentBranch?.id ?? null;
+  const customerScope = currentWorkspaceId && currentBusinessUnitId ? { workspaceId: currentWorkspaceId, legacyBusinessUnitId: currentBusinessUnitId } : null;
+  const customersQuery = useLegacyCustomers(customerScope);
+  const customerMutations = useLegacyCustomerMutations(customerScope ?? { workspaceId: "", legacyBusinessUnitId: "" });
+  const customerCopy = customerMessages[lang];
+  const customers = customersQuery.data?.items ?? [];
   const setup = getCommerceSetup();
 
   const [cart, setCart] = useState<{ id: string; name: string; price: number; qty: number; sku: string; taxable: boolean; stock: number; category: string }[]>([]);
@@ -96,13 +107,16 @@ export default function POSPage() {
     setShowCustPicker(true);
   }
 
-  function saveNewCustomer() {
-    if (!custForm.name.trim()) { setCustErr("Customer name is required"); return; }
-    const c = createCustomer({ name: custForm.name.trim(), phone: custForm.phone.trim(), email: custForm.email.trim().toLowerCase(), notes: "" });
-    setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone });
-    setShowCustPicker(false);
-    setCustMode("list"); setCustSearch(""); setCustForm({ name: "", phone: "", email: "" }); setCustErr("");
-    showToast("Customer added and selected", "success");
+  async function saveNewCustomer() {
+    if (!custForm.name.trim()) { setCustErr(customerCopy.required); return; }
+    if (!customerScope || !currentBranchId || customerMutations.create.isPending) return;
+    try {
+      const c = await customerMutations.create.mutateAsync({ branchId: currentBranchId, name: custForm.name, phone: custForm.phone, email: custForm.email.toLowerCase(), notes: "" });
+      setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone });
+      setShowCustPicker(false);
+      setCustMode("list"); setCustSearch(""); setCustForm({ name: "", phone: "", email: "" }); setCustErr("");
+      showToast("Customer added and selected", "success");
+    } catch { setCustErr(customerCopy.error); }
   }
 
   return (
@@ -374,9 +388,11 @@ export default function POSPage() {
                     <input className="nx-input" placeholder="Search name, phone or email..." value={custSearch} onChange={(e) => setCustSearch(e.target.value)} autoFocus />
                   </span>
                   <div style={{ maxHeight: 230, overflowY: "auto", marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {customersQuery.isLoading && <div role="status" aria-live="polite" className="nx-note">{customerCopy.loading}</div>}
+                    {customersQuery.isError && <div role="alert" className="nx-note">{customerCopy.error}<button type="button" className="nx-btn" onClick={() => void customersQuery.refetch()}>{customerCopy.retry}</button></div>}
                     {filteredCustomers.length === 0 && (
                       <div style={{ textAlign: "center", padding: "22px 0", color: "var(--text-3)", fontSize: 13 }}>
-                        {customers.length === 0 ? "No saved customers yet." : "No customers match your search."}
+                        {customers.length === 0 ? customerCopy.empty : customerCopy.noMatch}
                       </div>
                     )}
                     {filteredCustomers.map((c) => {
@@ -404,9 +420,9 @@ export default function POSPage() {
                     <span className="nx-field-label">Customer name</span>
                     <span className="nx-input-wrap">
                       <User size={16} className="nx-input-icon" />
-                      <input className="nx-input" placeholder="e.g. Aya Hassan" value={custForm.name} onChange={(e) => { setCustForm((f) => ({ ...f, name: e.target.value })); setCustErr(""); }} autoFocus />
+                      <input className="nx-input" placeholder="e.g. Aya Hassan" value={custForm.name} onChange={(e) => { setCustForm((f) => ({ ...f, name: e.target.value })); setCustErr(""); }} autoFocus aria-invalid={!!custErr} aria-describedby={custErr ? "pos-customer-name-error" : undefined} />
                     </span>
-                    {custErr && <span className="nx-field-error"><CircleAlert size={13} />{custErr}</span>}
+                    {custErr && <span id="pos-customer-name-error" role="alert" className="nx-field-error"><CircleAlert size={13} />{custErr}</span>}
                   </label>
                   <div className="nx-form-grid cols-2">
                     <label className="nx-field">
@@ -427,7 +443,7 @@ export default function POSPage() {
                   <div className="nx-row" style={{ gap: 10, marginTop: 4 }}>
                     <button type="button" className="nx-btn nx-btn-ghost nx-btn-md" onClick={() => setCustMode("list")}>Cancel</button>
                     <span className="nx-spacer" />
-                    <button type="button" className="nx-btn nx-btn-primary nx-btn-md" onClick={saveNewCustomer}><Check size={15} />Save customer</button>
+                    <button type="button" className="nx-btn nx-btn-primary nx-btn-md" onClick={() => void saveNewCustomer()} disabled={customerMutations.create.isPending} aria-busy={customerMutations.create.isPending}><Check size={15} />{customerMutations.create.isPending ? customerCopy.saving : "Save customer"}</button>
                   </div>
                   <p className="nx-note"><Info size={14} />The record is created when you save.</p>
                 </div>

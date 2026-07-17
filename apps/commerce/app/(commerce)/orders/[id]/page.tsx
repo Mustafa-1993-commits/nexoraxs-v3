@@ -5,34 +5,43 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText, RotateCcw, X } from "lucide-react";
 import { useApp, type RefundMethod } from "@/lib/store";
+import { useLegacyOrder } from "@/features/orders/hooks/useLegacyOrders";
+import { orderMessages } from "@/features/orders/i18n/order-messages";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const {
-    allOrders, allInvoices, allCommerceReturns, customers, currentBranch, BRANCHES,
-    money, t, createReturn, showToast,
+    allCommerceReturns, currentBranch, currentWorkspace, currentBU, BRANCHES,
+    money, t, createReturn, showToast, lang,
   } = useApp();
+  const scope = currentWorkspace && currentBU ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id } : null;
+  const orderQuery = useLegacyOrder(scope, id);
+  const copy = orderMessages[lang];
   const [showReturn, setShowReturn] = useState(false);
   const [returnQtys, setReturnQtys] = useState<Record<string, string>>({});
   const [reason, setReason] = useState("");
   const [refundMethod, setRefundMethod] = useState<RefundMethod>("original");
   const [restock, setRestock] = useState(true);
 
-  const order = allOrders.find((o) => o.id === id);
-  if (!order) {
+  if (orderQuery.isLoading) return <div className="nx-main-scroll"><div role="status" aria-live="polite" style={{ padding: "40px 28px" }}>{copy.loading}</div></div>;
+  if (orderQuery.isError) {
+    const notFound = orderQuery.error instanceof Error && "code" in orderQuery.error && orderQuery.error.code === "not_found";
     return (
       <div className="nx-main-scroll">
-        <div style={{ padding: "40px 28px", textAlign: "center", color: "var(--text-3)" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Order not found</div>
+        <div role="alert" style={{ padding: "40px 28px", textAlign: "center", color: "var(--text-3)" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{notFound ? copy.notFound : copy.error}</div>
+          {!notFound && <button className="nx-btn" onClick={() => void orderQuery.refetch()}>{copy.retry}</button>}
           <Link href="/orders" style={{ color: "var(--accent)", fontSize: 13 }}>← Orders</Link>
         </div>
       </div>
     );
   }
 
-  const customer = order.customerId ? customers.find((c) => c.id === order.customerId) : null;
-  const invoice = allInvoices.find((inv) => inv.orderId === id);
+  const orderView = orderQuery.data!;
+  const order = orderView.order;
+  const customer = orderView.customer;
+  const invoice = orderView.invoice;
   const isOtherBranch = order.branchId !== currentBranch?.id;
   const orderBranchName = BRANCHES.find((b) => b.id === order.branchId)?.name || order.branchId;
 
