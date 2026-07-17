@@ -5,9 +5,15 @@ import Link from "next/link";
 import { Search, Package, AlertTriangle, X, ArrowRightLeft } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { type CommerceProduct } from "@/lib/store";
+import { useLegacyInventory } from "@/features/inventory/hooks/useLegacyInventory";
+import { inventoryMessages } from "@/features/inventory/i18n/inventory-messages";
 
 export default function InventoryPage() {
-  const { products, adjustStock, money, showToast, t } = useApp();
+  const { adjustStock, money, showToast, t, currentWorkspace, currentBU, currentBranch, lang } = useApp();
+  const scope = currentWorkspace && currentBU && currentBranch ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id, branchId: currentBranch.id } : null;
+  const inventoryQuery = useLegacyInventory(scope);
+  const copy = inventoryMessages[lang];
+  const products: CommerceProduct[] = (inventoryQuery.data ?? []).map(({ product, stock, lowStockThreshold }) => ({ ...product, stock, lowStockThreshold }));
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "low" | "out">("all");
   const [editing, setEditing] = useState<CommerceProduct | null>(null);
@@ -76,13 +82,16 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {inventoryQuery.isLoading && <div role="status" aria-live="polite" className="nx-card nx-card-pad">{copy.loading}</div>}
+        {inventoryQuery.isError && <div role="alert" className="nx-card nx-card-pad"><p>{copy.error}</p><button className="nx-btn" onClick={() => void inventoryQuery.refetch()}>{copy.retry}</button></div>}
+
+        {!inventoryQuery.isLoading && !inventoryQuery.isError && filtered.length === 0 ? (
           <div className="nx-empty">
             <div className="nx-empty-ic"><Package size={24} /></div>
-            <div className="nx-empty-title">No products match your filter</div>
+            <div className="nx-empty-title">{copy.empty}</div>
             <div className="nx-empty-desc">Try switching to &quot;All&quot; or adjusting your search.</div>
           </div>
-        ) : (
+        ) : !inventoryQuery.isLoading && !inventoryQuery.isError ? (
           <div className="nx-table-wrap">
             <table className="nx-table">
               <thead>
@@ -141,7 +150,7 @@ export default function InventoryPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
 
       {editing && (

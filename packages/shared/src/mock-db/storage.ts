@@ -4,6 +4,26 @@ function isDbKey(key: string): boolean {
   return key.startsWith("nexoraxs.db.");
 }
 
+export type BrowserStorageArea = "local" | "session";
+
+function browserStore(area: BrowserStorageArea): Storage | null {
+  if (typeof window === "undefined") return null;
+  return area === "local" ? window.localStorage : window.sessionStorage;
+}
+
+/** Generic infrastructure helper for legacy raw-value compatibility. */
+export function readBrowserStorage(key: string, area: BrowserStorageArea): string | null {
+  return browserStore(area)?.getItem(key) ?? null;
+}
+
+export function writeBrowserStorage(key: string, value: string, area: BrowserStorageArea): void {
+  browserStore(area)?.setItem(key, value);
+}
+
+export function removeBrowserStorage(key: string, area: BrowserStorageArea): void {
+  browserStore(area)?.removeItem(key);
+}
+
 export function readCollection<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
@@ -59,16 +79,13 @@ export function clearAllStorage(): void {
 // ---- POS last-order helpers (isolates direct sessionStorage access from pages) ----
 
 export function readPosLastOrderId(): string | null {
-  if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(STORAGE_KEYS.posLastOrderId);
+  return readBrowserStorage(STORAGE_KEYS.posLastOrderId, "session");
 }
 
 export function writePosLastOrderId(orderId: string): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.setItem(STORAGE_KEYS.posLastOrderId, orderId);
+  writeBrowserStorage(STORAGE_KEYS.posLastOrderId, orderId, "session");
 }
 
 export function clearPosLastOrderId(): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.removeItem(STORAGE_KEYS.posLastOrderId);
+  removeBrowserStorage(STORAGE_KEYS.posLastOrderId, "session");
 }

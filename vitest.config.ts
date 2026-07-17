@@ -2,11 +2,24 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    alias: {
-      "@": new URL("./apps/commerce", import.meta.url).pathname,
-      "@nexoraxs/contracts": new URL("./packages/contracts/src/index.ts", import.meta.url).pathname,
-      "@nexoraxs/sdk": new URL("./packages/sdk/src/index.ts", import.meta.url).pathname,
-    },
+    alias: [
+      {
+        find: /^@nexoraxs\/sdk\/testing$/,
+        replacement: new URL("./packages/sdk/src/testing/index.ts", import.meta.url).pathname,
+      },
+      {
+        find: /^@nexoraxs\/sdk$/,
+        replacement: new URL("./packages/sdk/src/index.ts", import.meta.url).pathname,
+      },
+      {
+        find: /^@nexoraxs\/contracts$/,
+        replacement: new URL("./packages/contracts/src/index.ts", import.meta.url).pathname,
+      },
+      {
+        find: "@",
+        replacement: new URL("./apps/commerce", import.meta.url).pathname,
+      },
+    ],
   },
   test: {
     environment: "node",
@@ -15,7 +28,10 @@ export default defineConfig({
       "packages/**/*.test.tsx",
       "apps/**/*.test.ts",
       "apps/**/*.test.tsx",
+      "tests/architecture/**/*.test.ts",
+      "tests/architecture/**/*.test.tsx",
     ],
+    exclude: ["tests/architecture/fixtures/**", "**/node_modules/**", "**/.next/**", "**/dist/**"],
     restoreMocks: true,
     clearMocks: true,
   },

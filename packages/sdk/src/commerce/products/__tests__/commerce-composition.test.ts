@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { LegacyProductRepositoryError } from "@nexoraxs/contracts";
-import { createCommerceServices } from "../createCommerceServices";
+import { createCommerceServices } from "../../runtime/createCommerceServices";
 import { MemoryCommerceStore } from "../MemoryCommerceStore";
 import { MockProductsRepository } from "../MockProductsRepository";
+import { MockCustomersRepository } from "../../customers/MockCustomersRepository";
+import { MockInventoryRepository } from "../../inventory/MockInventoryRepository";
+import { MockInvoicesRepository } from "../../invoices/MockInvoicesRepository";
+import { MockOrdersRepository } from "../../orders/MockOrdersRepository";
 
 describe("Commerce Product composition root", () => {
   it("constructs mock services over an injected isolated store", () => {
@@ -11,6 +15,12 @@ describe("Commerce Product composition root", () => {
     const services = createCommerceServices({ dataSource: "mock" }, { store });
 
     expect(services.productsRepository).toBeInstanceOf(MockProductsRepository);
+    expect(services.customersRepository).toBeInstanceOf(MockCustomersRepository);
+    expect(services.inventoryRepository).toBeInstanceOf(MockInventoryRepository);
+    expect(services.ordersRepository).toBeInstanceOf(MockOrdersRepository);
+    expect(services.invoicesRepository).toBeInstanceOf(MockInvoicesRepository);
+    expect(services.customersFacade).toBeDefined();
+    expect(Object.values(services).every((value) => value !== undefined)).toBe(true);
   });
 
   it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(

@@ -8,6 +8,7 @@ import type {
 } from "@nexoraxs/contracts";
 import { useCommerceServices } from "@/lib/commerce/CommerceServicesProvider";
 import { useLegacyProductEditor } from "@/lib/commerce/CommerceProviders";
+import { browserFileToLegacyMediaSource } from "@/features/products/adapters/browser-file-to-legacy-media-source";
 import {
   invalidateLegacyProductScope,
   removeLegacyProductFromScopeCache,
@@ -19,16 +20,16 @@ export function useLegacyProductMutations(scope: LegacyProductScope) {
   const editor = useLegacyProductEditor();
 
   const create = useMutation({
-    mutationFn: ({ command, imageFile }: { command: CreateLegacyProductCommand; imageFile?: File | null }) => (
+    mutationFn: async ({ command, imageFile }: { command: CreateLegacyProductCommand; imageFile?: File | null }) => (
       imageFile
-        ? editor.create(scope, command, imageFile)
+        ? editor.create(scope, command, await browserFileToLegacyMediaSource(imageFile))
         : services.productsRepository.create(scope, command)
     ),
     onSuccess: async (product) => {
       replaceLegacyProductInScopeCache(queryClient, scope, product);
       await Promise.all([
         invalidateLegacyProductScope(queryClient, scope),
-        services.productsFacade.list(scope),
+        services.productsCompatibility.list(scope),
       ]);
     },
   });
@@ -44,14 +45,14 @@ export function useLegacyProductMutations(scope: LegacyProductScope) {
       imageFile?: File | null;
     }) => (
       imageFile
-        ? editor.update(scope, productId, command, imageFile)
+        ? browserFileToLegacyMediaSource(imageFile).then((source) => editor.update(scope, productId, command, source))
         : services.productsRepository.update(scope, productId, command)
     ),
     onSuccess: async (product) => {
       replaceLegacyProductInScopeCache(queryClient, scope, product);
       await Promise.all([
         invalidateLegacyProductScope(queryClient, scope),
-        services.productsFacade.list(scope),
+        services.productsCompatibility.list(scope),
       ]);
     },
   });
@@ -62,7 +63,7 @@ export function useLegacyProductMutations(scope: LegacyProductScope) {
       removeLegacyProductFromScopeCache(queryClient, scope, removedId);
       await Promise.all([
         invalidateLegacyProductScope(queryClient, scope),
-        services.productsFacade.list(scope),
+        services.productsCompatibility.list(scope),
       ]);
     },
   });

@@ -7,6 +7,20 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./commerce/products": "./src/commerce/products/index.ts"
+    "./commerce/products": "./src/commerce/products/index.ts",
+    "./commerce/common": "./src/commerce/common/index.ts",
+    "./commerce/customers": "./src/commerce/customers/index.ts",
+    "./commerce/inventory": "./src/commerce/inventory/index.ts",
+    "./commerce/orders": "./src/commerce/orders/index.ts",
+    "./commerce/invoices": "./src/commerce/invoices/index.ts",
+    "./commerce/operations": "./src/commerce/operations/index.ts",
+    "./core": "./src/core/index.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nexoraxs/types": "workspace:*"
   }
 }

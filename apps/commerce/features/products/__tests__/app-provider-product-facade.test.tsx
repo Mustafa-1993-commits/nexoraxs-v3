@@ -3,17 +3,17 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useEffect } from "react";
-import type { CommerceServices } from "@nexoraxs/sdk";
+import type { CommerceApplicationServices } from "@/lib/commerce/CommerceApplicationServices";
 import type { CreateLegacyProductCommand } from "@nexoraxs/contracts";
 import { CommerceProviders } from "@/lib/commerce/CommerceProviders";
 import { useCommerceServices } from "@/lib/commerce/CommerceServicesProvider";
 import { useApp } from "@/lib/store";
 
 let observedApp: ReturnType<typeof useApp> | null = null;
-let observedServices: CommerceServices | null = null;
+let observedServices: CommerceApplicationServices | null = null;
 
 function Probe({ onObserved }: {
-  onObserved: (app: ReturnType<typeof useApp>, services: CommerceServices) => void;
+  onObserved: (app: ReturnType<typeof useApp>, services: CommerceApplicationServices) => void;
 }) {
   const app = useApp();
   const services = useCommerceServices().services;
@@ -41,7 +41,7 @@ describe("AppProvider Product compatibility facade", () => {
     localStorage.clear();
     sessionStorage.clear();
     sessionStorage.setItem("nexoraxs.session.demo", JSON.stringify("1"));
-    const onObserved = (app: ReturnType<typeof useApp>, services: CommerceServices) => {
+    const onObserved = (app: ReturnType<typeof useApp>, services: CommerceApplicationServices) => {
       observedApp = app;
       observedServices = services;
     };
@@ -56,10 +56,20 @@ describe("AppProvider Product compatibility facade", () => {
     };
 
     await act(async () => {
-      await observedServices!.productsFacade.create(scope, command);
+      await observedServices!.productsCompatibility.create(scope, command);
     });
 
     await waitFor(() => expect(observedApp?.products.some((product) => product.sku === "FACADE-FED")).toBe(true));
     await expect(observedServices!.productsRepository.list(scope)).resolves.toMatchObject({ total: 3 });
+  });
+
+  it("receives Customer snapshots from the repository-upstream compatibility facade", async () => {
+    localStorage.clear(); sessionStorage.clear(); sessionStorage.setItem("nexoraxs.session.demo", JSON.stringify("1"));
+    const onObserved = (app: ReturnType<typeof useApp>, services: CommerceApplicationServices) => { observedApp = app; observedServices = services; };
+    render(<CommerceProviders><Probe onObserved={onObserved} /></CommerceProviders>);
+    await waitFor(() => expect(observedApp?.isHydrated).toBe(true));
+    const scope = { workspaceId: observedApp!.currentWorkspace!.id, legacyBusinessUnitId: observedApp!.currentBU!.id };
+    await act(async () => { await observedServices!.customersCompatibility.create(scope, { branchId: observedApp!.currentBranch!.id, name: "Facade Customer", phone: "", email: "", notes: "" }); });
+    await waitFor(() => expect(observedApp?.customers.some((customer) => customer.name === "Facade Customer")).toBe(true));
   });
 });

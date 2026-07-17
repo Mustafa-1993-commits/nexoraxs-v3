@@ -24,3 +24,17 @@ or DTO should be inferred from the mock record.
 
 Mock operations are local/demo behavior. Scope checks are defense in depth, not production
 authorization, and diagnostic events are not canonical Audit evidence.
+
+## Feature 053 Commerce implementations
+
+The same composition root now constructs scoped Customer, Inventory, Order, and Invoice mock
+repositories over additive browser/memory store ports. Customer mutations publish committed scoped
+snapshots through `LegacyCustomersCompatibilityFacade`. Inventory, Order, and Invoice exports are
+read-only; their existing operational writes stay in the Commerce application and notify exact
+React Query keys after the retained browser commit.
+
+All four legacy keys remain isolated in `BrowserStorageCommerceStore`. Repositories and hooks do not
+read browser globals, environment variables, or transport directly. Latency, clocks, IDs, and
+failure invocations are deterministic. HTTP selection remains deliberately unavailable and makes no
+request. These implementations do not establish future Laravel mappings, API pagination/errors,
+network idempotency, canonical lifecycles, or production Audit/authorization.

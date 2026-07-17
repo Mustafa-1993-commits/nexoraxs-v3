@@ -12,6 +12,7 @@ import { useApp, type CommerceSetup, computeDoc } from "@/lib/store";
 import { OS_BU_PRESETS, DEFAULT_SETUP } from "@/lib/store";
 import { getBusinessBillingAddress, getBranchOperationalAddress, suggestCommercePresetForIndustry } from "@/lib/store";
 import type { OrderItem } from "@/lib/store";
+import { browserFileToLegacyMediaSource } from "@/features/products/adapters/browser-file-to-legacy-media-source";
 
 const SETUP_STEPS = ["Identity", "Preset", "Mode", "Tax", "Numbering", "Templates", "Categories", "Review"] as const;
 
@@ -219,7 +220,11 @@ function LogoUpload({ value, onChange, businessName }: { value: string | null; o
   const { attachMedia } = useApp();
 
   async function handleFile(file: File) {
-    const result = await attachMedia({ file, ownerType: "business_logo", fileName: file.name });
+    const result = await attachMedia({
+      source: await browserFileToLegacyMediaSource(file),
+      ownerType: "business_logo",
+      fileName: file.name,
+    });
     if (result) onChange(result.reference.thumbnailUrl);
   }
 

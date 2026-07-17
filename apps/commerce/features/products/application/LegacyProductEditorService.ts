@@ -1,5 +1,6 @@
 import type {
   CreateLegacyProductCommand,
+  LegacyMediaSource,
   LegacyProductRecord,
   LegacyProductScope,
   LegacyProductsRepository,
@@ -17,14 +18,14 @@ export class LegacyProductEditorService {
   async create(
     scope: LegacyProductScope,
     command: CreateLegacyProductCommand,
-    imageFile?: File | null,
+    mediaSource?: LegacyMediaSource | null,
   ): Promise<LegacyProductRecord> {
     const created = await this.products.create(scope, command);
-    if (!imageFile) return created;
+    if (!mediaSource) return created;
 
     let image: string | null = null;
     try {
-      image = await this.media.saveProductImage({ productId: created.id, file: imageFile });
+      image = await this.media.saveProductImage({ productId: created.id, source: mediaSource });
       if (!image) throw new Error("products.errors.image_upload");
       return await this.products.update(scope, created.id, { image });
     } catch (error) {
@@ -37,10 +38,10 @@ export class LegacyProductEditorService {
     scope: LegacyProductScope,
     productId: string,
     command: UpdateLegacyProductCommand,
-    imageFile?: File | null,
+    mediaSource?: LegacyMediaSource | null,
   ): Promise<LegacyProductRecord> {
-    if (!imageFile) return this.products.update(scope, productId, command);
-    const image = await this.media.saveProductImage({ productId, file: imageFile });
+    if (!mediaSource) return this.products.update(scope, productId, command);
+    const image = await this.media.saveProductImage({ productId, source: mediaSource });
     if (!image) throw new Error("products.errors.image_upload");
     return this.products.update(scope, productId, { ...command, image });
   }

@@ -7,13 +7,14 @@ import {
 import {
   createCommerceServices,
   type CommerceRuntimeConfig,
-  type CommerceServiceOverrides,
   type CommerceServices,
 } from "@nexoraxs/sdk";
 import { createContext, useContext, useState, type ReactNode } from "react";
+import type { CommerceApplicationServices } from "./CommerceApplicationServices";
+import { createCommerceApplicationServices } from "./createCommerceApplicationServices";
 
 interface CommerceServicesContextValue {
-  readonly services: CommerceServices;
+  readonly services: CommerceApplicationServices;
   readonly queryClient: QueryClient;
 }
 
@@ -28,23 +29,31 @@ export function useCommerceServices(): CommerceServicesContextValue {
 export function CommerceServicesProvider({
   children,
   config,
-  overrides,
+  runtimeServices,
 }: {
   readonly children: ReactNode;
   readonly config: CommerceRuntimeConfig;
-  readonly overrides?: CommerceServiceOverrides;
+  readonly runtimeServices?: CommerceServices;
 }) {
   const [root] = useState(() => {
     try {
+      const sdkServices = runtimeServices ?? createCommerceServices(config);
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+            retryOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: 10_000,
+          },
+          mutations: { retry: false },
+        },
+      });
       return {
         value: {
-          services: createCommerceServices(config, overrides),
-          queryClient: new QueryClient({
-            defaultOptions: {
-              queries: { retry: false, staleTime: 10_000 },
-              mutations: { retry: false },
-            },
-          }),
+          services: createCommerceApplicationServices(sdkServices, queryClient),
+          queryClient,
         } satisfies CommerceServicesContextValue,
         error: null,
       };

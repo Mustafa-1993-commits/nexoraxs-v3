@@ -11,6 +11,12 @@ const snapshots: Array<{
   facade: unknown;
   queryClient: unknown;
   editor: unknown;
+  customers: unknown;
+  inventory: unknown;
+  orders: unknown;
+  invoices: unknown;
+  customerHistory: unknown;
+  stockAdjustments: unknown;
 }> = [];
 
 function IdentityProbe({ renderNumber }: { renderNumber: number }) {
@@ -19,9 +25,15 @@ function IdentityProbe({ renderNumber }: { renderNumber: number }) {
   useApp();
   snapshots.push({
     repository: services.productsRepository,
-    facade: services.productsFacade,
+    facade: services.productsCompatibility,
     queryClient,
     editor,
+    customers: services.customersRepository,
+    inventory: services.inventoryRepository,
+    orders: services.ordersRepository,
+    invoices: services.invoicesRepository,
+    customerHistory: services.customerHistoryService,
+    stockAdjustments: services.stockAdjustments,
   });
   return <output>{renderNumber}</output>;
 }
@@ -46,5 +58,11 @@ describe("CommerceProviders service identity", () => {
     expect(new Set(snapshots.map((snapshot) => snapshot.facade)).size).toBe(1);
     expect(new Set(snapshots.map((snapshot) => snapshot.queryClient)).size).toBe(1);
     expect(new Set(snapshots.map((snapshot) => snapshot.editor)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.customers)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.inventory)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.orders)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.invoices)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.customerHistory)).size).toBe(1);
+    expect(new Set(snapshots.map((snapshot) => snapshot.stockAdjustments)).size).toBe(1);
   });
 });

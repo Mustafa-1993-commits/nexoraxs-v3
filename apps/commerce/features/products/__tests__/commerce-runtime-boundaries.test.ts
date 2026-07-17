@@ -1,47 +1,19 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-
-const ROOT = process.cwd();
-const CONFIG_PATH = "apps/commerce/lib/commerce/commerce-runtime-config.ts";
-
-function sourceFiles(directory: string): string[] {
-  return readdirSync(join(ROOT, directory)).flatMap((entry) => {
-    const path = join(directory, entry);
-    if (statSync(join(ROOT, path)).isDirectory()) {
-      return entry === "__tests__" ? [] : sourceFiles(path);
-    }
-    return /\.(ts|tsx)$/.test(entry) ? [path] : [];
-  });
-}
+import { analyzeFrontendBoundaries } from "../../../../../scripts/architecture/frontend-boundaries.mjs";
+import { discoverFrontendProductionSources } from "../../../../../scripts/architecture/source-inventory.mjs";
 
 describe("Commerce Product runtime source boundaries", () => {
-  it("reads NEXT_PUBLIC Commerce variables only in the designated config module", () => {
-    const candidates = [
-      ...sourceFiles("apps/commerce/features/products"),
-      ...sourceFiles("apps/commerce/lib/commerce"),
-      ...sourceFiles("apps/commerce/app/(commerce)/products"),
-      ...sourceFiles("packages/contracts/src/commerce/products"),
-      ...sourceFiles("packages/sdk/src/commerce/products"),
-    ];
-    const readers = candidates.filter((path) => (
-      /NEXT_PUBLIC_COMMERCE_|process\.env/.test(readFileSync(join(ROOT, path), "utf8"))
+  it("keeps the complete frontend production inventory within the enforced boundaries", () => {
+    const root = resolve(process.cwd());
+    const files = discoverFrontendProductionSources(root).filter((file) => (
+      file.startsWith("apps/commerce/features/products/")
+      || file.startsWith("apps/commerce/app/(commerce)/products/")
+      || file.startsWith("apps/commerce/lib/commerce/")
+      || file.startsWith("packages/contracts/src/commerce/products/")
+      || file.startsWith("packages/sdk/src/commerce/products/")
     ));
 
-    expect(readers.map((path) => relative(ROOT, join(ROOT, path)))).toEqual([CONFIG_PATH]);
-  });
-
-  it("keeps storage and fetch out of Product hooks, pages, contracts, and repositories", () => {
-    const candidates = [
-      ...sourceFiles("apps/commerce/features/products/hooks"),
-      ...sourceFiles("apps/commerce/app/(commerce)/products"),
-      ...sourceFiles("packages/contracts/src/commerce/products"),
-      "packages/sdk/src/commerce/products/MockProductsRepository.ts",
-    ];
-    const offenders = candidates.filter((path) => (
-      /localStorage|\bfetch\s*\(/.test(readFileSync(join(ROOT, path), "utf8"))
-    ));
-
-    expect(offenders).toEqual([]);
+    expect(analyzeFrontendBoundaries({ root, files })).toEqual([]);
   });
 });

@@ -6,9 +6,17 @@ import { Search, FileText, X, ExternalLink } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { type CommerceInvoice } from "@/lib/store";
 import { fmtDate, computeDoc } from "@/lib/store";
+import { useLegacyInvoices } from "@/features/invoices/hooks/useLegacyInvoices";
+import { invoiceMessages } from "@/features/invoices/i18n/invoice-messages";
 
 export default function InvoicesPage() {
-  const { invoices, orders, money, currentWorkspace, getCommerceSetup, t } = useApp();
+  const { money, currentWorkspace, currentBU, currentBranch, getCommerceSetup, t, lang } = useApp();
+  const scope = currentWorkspace && currentBU && currentBranch ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id, branchId: currentBranch.id } : null;
+  const invoicesQuery = useLegacyInvoices(scope);
+  const copy = invoiceMessages[lang];
+  const views = invoicesQuery.data ?? [];
+  const invoices = views.map((view) => view.invoice);
+  const orders = views.flatMap((view) => view.order ? [view.order] : []);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<CommerceInvoice | null>(null);
   const setup = getCommerceSetup();
@@ -35,12 +43,14 @@ export default function InvoicesPage() {
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-3)" }} />
           <input className="nx-input" style={{ paddingLeft: 32, fontSize: 13, maxWidth: 360 }} placeholder="Search invoices…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        {filtered.length === 0 ? (
+        {invoicesQuery.isLoading && <div role="status" aria-live="polite" className="nx-card nx-card-pad">{copy.loading}</div>}
+        {invoicesQuery.isError && <div role="alert" className="nx-card nx-card-pad"><p>{copy.error}</p><button className="nx-btn" onClick={() => void invoicesQuery.refetch()}>{copy.retry}</button></div>}
+        {!invoicesQuery.isLoading && !invoicesQuery.isError && filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 24px", color: "var(--text-3)" }}>
             <FileText size={40} style={{ opacity: 0.3, display: "block", margin: "0 auto 12px" }} />
-            <div style={{ fontWeight: 600 }}>{invoices.length === 0 ? "No invoices yet — complete a sale to generate one" : "No invoices match your search"}</div>
+            <div style={{ fontWeight: 600 }}>{invoices.length === 0 ? copy.empty : copy.noMatch}</div>
           </div>
-        ) : (
+        ) : !invoicesQuery.isLoading && !invoicesQuery.isError ? (
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -75,7 +85,7 @@ export default function InvoicesPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Invoice detail modal */}
