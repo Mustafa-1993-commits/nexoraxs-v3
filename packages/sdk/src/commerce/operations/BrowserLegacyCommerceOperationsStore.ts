@@ -50,7 +50,6 @@ export class BrowserLegacyCommerceOperationsStore implements LegacyCommerceOpera
   readTransfers() { return this.read<StockTransfer>(LEGACY_COMMERCE_OPERATION_KEYS.transfers); }
   replaceTransfers(records: readonly StockTransfer[]) { this.replace(LEGACY_COMMERCE_OPERATION_KEYS.transfers, records); }
   readOrders() { return this.read<CommerceOrder>(LEGACY_COMMERCE_OPERATION_KEYS.orders); }
-  replaceOrders(records: readonly CommerceOrder[]) { this.replace(LEGACY_COMMERCE_OPERATION_KEYS.orders, records); }
   readInvoices() { return this.read<CommerceInvoice>(LEGACY_COMMERCE_OPERATION_KEYS.invoices); }
   replaceInvoices(records: readonly CommerceInvoice[]) { this.replace(LEGACY_COMMERCE_OPERATION_KEYS.invoices, records); }
   readReturns() { return this.read<CommerceReturn>(LEGACY_COMMERCE_OPERATION_KEYS.returns); }

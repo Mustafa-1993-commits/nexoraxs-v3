@@ -22,7 +22,7 @@ describe("ReactQueryCommerceChangeAdapter", () => {
     for (const key of [
       legacyProductKeys.scope(scope), legacyCustomerKeys.scope(scope), legacyCustomerKeys.item(scope, "c"),
       legacyCustomerKeys.history(scope, "br", "c"), legacyCustomerKeys.histories(scope, "br"),
-      legacyInventoryKeys.scope(scope), legacyOrderKeys.listScope(scope, "br"), legacyOrderKeys.item(scope, "o"),
+      legacyInventoryKeys.scope(scope), legacyOrderKeys.listScope(scope, "br"), legacyOrderKeys.item(scope, "o", "br"),
       legacyInvoiceKeys.listScope(scope, "br"), legacyInvoiceKeys.item(scope, "i", "detail"),
       legacyInvoiceKeys.item(scope, "i", "document"),
     ]) expect(keys).toContainEqual(key);

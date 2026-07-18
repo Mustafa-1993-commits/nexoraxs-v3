@@ -16,14 +16,17 @@ describe("Feature 054 operational byte compatibility", () => {
   });
 
   it("keeps one provider callback definition per retained operation", () => {
-    for (const name of ["saveCommerceSetup", "attachMedia", "adjustStock", "transferStock", "createReturn", "createOrder", "createInvoice"]) {
+    for (const name of ["saveCommerceSetup", "attachMedia", "adjustStock", "transferStock", "createReturn"]) {
       expect(source.match(new RegExp(`const ${name} = useCallback`, "g"))).toHaveLength(1);
     }
+    expect(source).not.toContain("const createOrder = useCallback");
+    expect(source).not.toContain("const createInvoice = useCallback");
+    expect(source).toContain("services.commandPublication.subscribe");
   });
 
   it("keeps cache notification after the final characterized source write", () => {
     const order = readFileSync(join(process.cwd(), "apps/commerce/features/orders/application/LegacyOrderCreationService.ts"), "utf8");
-    const write = order.indexOf("replaceMovements");
+    const write = order.indexOf("inventory.commitSaleDeduction");
     const notify = order.indexOf("changes.ordersChanged", write);
     expect(notify).toBeGreaterThan(write);
   });

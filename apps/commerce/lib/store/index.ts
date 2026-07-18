@@ -33,4 +33,3 @@ export type {
   BranchInventory, StockMovement, StockMovementReason, StockTransfer,
   CommerceReturn, CommerceReturnItem, RefundMethod,
 } from "@nexoraxs/types";
-export { writePosLastOrderId, readPosLastOrderId, clearPosLastOrderId } from "@nexoraxs/shared";

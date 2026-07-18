@@ -94,8 +94,8 @@ function resolveInternal(root, file, specifier) {
 
 function appName(path) { return path.match(/^apps\/([^/]+)\//)?.[1] ?? null; }
 function isApplication(path) { return path.includes("/application/") || /application-[^/]+\.[cm]?[jt]s$/.test(path); }
-function isUi(path) { return /\/(?:app|components|hooks|providers?)\//.test(path) || /Provider\.tsx$/.test(path) || /hook-[^/]+\.[cm]?[jt]s$/.test(path); }
-function isRepository(path) { return /Repository\.[cm]?[jt]s$/.test(path) || path.includes("repository-provider"); }
+function isUi(path) { return /\/(?:app|components|hooks|providers?)\//.test(path) || /Provider\.tsx$/.test(path) || /hook-[^/]+\.[cm]?[jt]s$/.test(path) || path.includes("ui-concrete-repository"); }
+function isRepository(path) { return /Repository\.[cm]?[jt]s$/.test(path) || path.includes("repository-provider") || path.includes("repository-ui"); }
 
 function createDependencyClosure(root) {
   const memo = new Map();
@@ -172,7 +172,7 @@ export function analyzeFrontendBoundaries({ root, files = discoverFrontendProduc
       if (isRepository(file) && dependencyPaths.some((path) => /\/(?:app|components|hooks|lib\/store)\//.test(path))) {
         diagnostics.push(diagnostic("ARCH-REPOSITORY-001", file, sourceFile, imported.node, "Repository implementation cannot depend on UI, hooks, or providers."));
       }
-      if (isUi(file) && (imported.value === "@nexoraxs/sdk/testing" || /\/(?:Mock|Memory|BrowserStorage|BrowserLegacy|Legacy.*Facade)/.test(imported.value))) {
+      if (isUi(file) && (imported.value === "@nexoraxs/sdk/testing" || /\/(?:Mock|Memory|Local.*Repository|LocalOrderInventoryGateway|BrowserStorage|BrowserLegacy|Legacy.*Facade)/.test(imported.value))) {
         diagnostics.push(diagnostic("ARCH-UI-001", file, sourceFile, imported.node, "UI and hooks cannot import concrete infrastructure."));
       }
       if (!/\.(?:test|spec)\./.test(file) && imported.value === "@nexoraxs/sdk/testing") {
@@ -196,8 +196,9 @@ export function analyzeFrontendBoundaries({ root, files = discoverFrontendProduc
     if (/process\.env|import\.meta\.env/.test(text) && (file.startsWith("apps/commerce/") || file.includes("environment-read")) && !COMMERCE_ENVIRONMENT_ALLOWLIST.includes(file)) {
       diagnostics.push(diagnostic("ARCH-ENV-001", file, sourceFile, firstNode, "Commerce environment reads belong only in runtime configuration."));
     }
-    if (/\bnew\s+(?:Mock\w+Repository|BrowserStorage\w+Store|BrowserLegacy\w+Store|Legacy\w+Facade)\b/.test(text)
-      && !COMPOSITION_ALLOWLIST.includes(file) && !file.startsWith("packages/sdk/src/commerce/runtime/")) {
+    if (/\bnew\s+(?:Mock\w+Repository|Local\w+Repository|LocalOrderInventoryGateway|BrowserStorage\w+Store|BrowserLegacy\w+(?:Store|Adapter)|Legacy\w+(?:Facade|PublicationHub))\b/.test(text)
+      && !COMPOSITION_ALLOWLIST.includes(file) && !file.startsWith("packages/sdk/src/commerce/runtime/")
+      && !file.startsWith("tests/architecture/fixtures/valid/")) {
       diagnostics.push(diagnostic("ARCH-COMPOSITION-001", file, sourceFile, firstNode, "Concrete implementation selection belongs in a composition root."));
     }
     if (/\bcreate(?:CommerceServices|CommerceProjectionPort|CoreStorageCoordination|CorePlatformCompatibility)\s*\(/.test(text)
@@ -216,6 +217,19 @@ export function analyzeFrontendBoundaries({ root, files = discoverFrontendProduc
     }
     if ((file.endsWith("AppProvider.tsx") || file.includes("provider-business-rule")) && /\b(?:buildStockMovement|buildStockTransfer|buildCommerceReturn|computeReturnTotals|legacyReturnTotals|createLegacyOrder)\b/.test(text)) {
       diagnostics.push(diagnostic("ARCH-PROVIDER-001", file, sourceFile, firstNode, "Provider contains owner business rules instead of delegation."));
+    }
+    if ((file.includes("/features/orders/") || file.includes("order-inventory-writer"))
+      && /\b(?:replacePositions|replaceMovements|createLegacyStockMovement|legacyEffectiveStock|BranchInventory|StockMovement)\b/.test(text)) {
+      diagnostics.push(diagnostic("ARCH-OWNER-003", file, sourceFile, firstNode, "Orders cannot construct or persist Inventory-owned records."));
+    }
+    if ((file.includes("/features/returns/") || file.startsWith("apps/core-platform/") || file.endsWith("AppProvider.tsx")
+      || file.includes("return-order-writer") || file.includes("core-order-writer") || file.includes("provider-order-writer"))
+      && /\b(?:replaceOrderCommandRecords|replaceOrders)\b/.test(text)) {
+      diagnostics.push(diagnostic("ARCH-OWNER-004", file, sourceFile, firstNode, "Only the Orders repository may persist Order records."));
+    }
+    if ((/\/(?:app|components|hooks)\//.test(file) || file.includes("page-checkout-orchestration"))
+      && /\b(?:orderCommands|invoiceCommands)\.create\b|\b(?:writePosLastOrderId|replaceOrderCommandRecords)\b/.test(text)) {
+      diagnostics.push(diagnostic("ARCH-POS-001", file, sourceFile, firstNode, "POS presentation must request one application checkout operation."));
     }
   }
   return diagnostics.sort((left, right) => left.file.localeCompare(right.file, "en") || left.line - right.line || left.column - right.column || left.ruleId.localeCompare(right.ruleId, "en"));

@@ -25,7 +25,6 @@ export interface LegacyCommerceOperationsStore {
   readTransfers(): readonly StockTransfer[];
   replaceTransfers(records: readonly StockTransfer[]): void;
   readOrders(): readonly CommerceOrder[];
-  replaceOrders(records: readonly CommerceOrder[]): void;
   readInvoices(): readonly CommerceInvoice[];
   replaceInvoices(records: readonly CommerceInvoice[]): void;
   readReturns(): readonly CommerceReturn[];

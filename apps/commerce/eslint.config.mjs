@@ -30,11 +30,23 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "features/**/hooks/**/*.{ts,tsx}", "lib/store/**/*.{ts,tsx}"],
+    ignores: ["**/__tests__/**", "**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [
+          { group: ["@nexoraxs/sdk", "@nexoraxs/sdk/**", "**/packages/sdk/src/**"], message: "UI, hooks, and providers depend on application-facing ports, never SDK infrastructure." },
+        ],
+      }],
+    },
+  },
+  {
     files: ["features/**/application/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": ["error", {
         patterns: [
           { group: ["react", "react/**", "@tanstack/react-query", "@tanstack/react-query/**", "@nexoraxs/sdk", "@nexoraxs/sdk/**", "**/hooks/**", "**/*query-keys*"], message: "Application modules must remain framework and infrastructure neutral." },
+          { group: ["**/lib/store/**", "**/providers/**", "**/components/**"], message: "Application modules cannot import presentation or provider state." },
         ],
       }],
     },

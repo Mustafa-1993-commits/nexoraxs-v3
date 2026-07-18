@@ -2,7 +2,6 @@ import type {
   LegacyCommerceSetupWritePort,
   LegacyInvoiceWritePort,
   LegacyInventoryWritePort,
-  LegacyOrderWritePort,
   LegacyReturnWritePort,
   LegacyTransferWritePort,
 } from "@nexoraxs/contracts";
@@ -30,7 +29,6 @@ export class MemoryLegacyCommerceWritePorts implements
   LegacyInventoryWritePort,
   LegacyTransferWritePort,
   LegacyReturnWritePort,
-  LegacyOrderWritePort,
   LegacyInvoiceWritePort,
   LegacyCommerceSetupWritePort {
   private positions: BranchInventory[] = [];
@@ -69,7 +67,6 @@ export class MemoryLegacyCommerceWritePorts implements
   readReturns() { return structuredClone(this.returns); }
   replaceReturns(records: readonly CommerceReturn[]) { this.returns = this.capture("returns", records); }
   readOrders() { return structuredClone(this.orders); }
-  replaceOrders(records: readonly CommerceOrder[]) { this.orders = this.capture("orders", records); }
   readInvoices() { return structuredClone(this.invoices); }
   replaceInvoices(records: readonly CommerceInvoice[]) { this.invoices = this.capture("invoices", records); }
   readSetups() { return structuredClone(this.setups); }
@@ -100,10 +97,6 @@ export class FailingLegacyCommerceWritePorts extends MemoryLegacyCommerceWritePo
     super.replaceMovements(records);
   }
 
-  override replaceOrders(records: readonly CommerceOrder[]) {
-    if (this.failCollection === "orders") throw new Error("commerce.test.storage.orders");
-    super.replaceOrders(records);
-  }
 
   override replaceInvoices(records: readonly CommerceInvoice[]) {
     if (this.failCollection === "invoices") throw new Error("commerce.test.storage.invoices");

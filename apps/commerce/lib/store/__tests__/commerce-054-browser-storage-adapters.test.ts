@@ -10,9 +10,9 @@ describe("Commerce browser storage adapters", () => {
     expect(readBrowserStorage("theme", "local")).toBe("dark"); expect(readBrowserStorage("session", "session")).toBe("value");
     removeBrowserStorage("session", "session"); expect(readBrowserStorage("session", "session")).toBeNull();
     const store = new BrowserLegacyCommerceOperationsStore(localStorage);
-    store.replaceOrders([]);
+    localStorage.setItem(LEGACY_COMMERCE_OPERATION_KEYS.orders, "[]");
     expect(localStorage.getItem(LEGACY_COMMERCE_OPERATION_KEYS.orders)).toBe("[]");
-    expect(new BrowserLegacyCommerceOperationsStore(localStorage).readOrders()).toEqual([]);
+    expect(store.readOrders()).toEqual([]);
   });
 
   it("surfaces corrupt operational values", () => {

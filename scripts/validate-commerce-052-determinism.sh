@@ -13,6 +13,15 @@ for run in $(seq 1 20); do
     apps/commerce/features/inventory/__tests__/legacy-stock-adjustment-service.test.ts \
     apps/commerce/features/transfers/__tests__/legacy-stock-transfer-service.test.ts \
     apps/commerce/features/orders/__tests__/legacy-order-creation-service.test.ts \
+    apps/commerce/features/orders/__tests__/legacy-order-number-service.test.ts \
+    apps/commerce/features/orders/__tests__/commerce-055-order-command-scope-isolation.test.ts \
+    packages/sdk/src/commerce/orders/__tests__/memory-order-command-repository.test.ts \
+    apps/commerce/features/inventory/__tests__/legacy-order-inventory-effect-service.test.ts \
+    apps/commerce/features/inventory/__tests__/legacy-order-inventory-effect-failures.test.ts \
+    apps/commerce/features/pos/__tests__/legacy-pos-draft-service.test.ts \
+    apps/commerce/features/pos/__tests__/legacy-pos-commercial-snapshot.test.ts \
+    apps/commerce/features/pos/__tests__/legacy-pos-checkout-service.test.ts \
+    apps/commerce/features/pos/__tests__/commerce-055-checkout-failures.test.ts \
     apps/commerce/features/invoices/__tests__/legacy-invoice-creation-service.test.ts \
     apps/commerce/features/returns/__tests__/legacy-return-creation-service.test.ts \
     tests/architecture/frontend-boundaries.test.ts \

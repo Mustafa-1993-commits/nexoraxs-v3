@@ -7,7 +7,8 @@ import {
   Search, ArrowLeft, ShoppingCart, Plus, Minus, Trash2, X, ScanBarcode, CreditCard, Banknote, Smartphone, Lock,
   Pill, UserPlus, Tag, Check, CircleAlert, User, Phone, Mail, Info,
 } from "lucide-react";
-import { useApp, computeDoc, writePosLastOrderId } from "@/lib/store";
+import { LegacyPosDraftCommandError } from "@nexoraxs/contracts";
+import { useApp } from "@/lib/store";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { BrandMark } from "@/components/ui/BrandMark";
@@ -15,10 +16,11 @@ import { BranchPill } from "@/components/dashboard/BranchPill";
 import { useLegacyCustomers } from "@/features/customers/hooks/useLegacyCustomers";
 import { useLegacyCustomerMutations } from "@/features/customers/hooks/useLegacyCustomerMutations";
 import { customerMessages } from "@/features/customers/i18n/customer-messages";
+import { useLegacyPosCheckout, useLegacyPosDraftCommands } from "@/features/pos";
 
 export default function POSPage() {
   const router = useRouter();
-  const { products, money, showToast, createOrder, createInvoice, getCommerceSetup, commerceIdentity, currentUserDisplayName, t, currentWorkspace, currentBU, currentBranch, lang } = useApp();
+  const { products, money, showToast, getCommerceSetup, commerceIdentity, currentUser, currentUserDisplayName, t, currentWorkspace, currentBU, currentBranch, lang } = useApp();
   const currentWorkspaceId = currentWorkspace?.id ?? null;
   const currentBusinessUnitId = currentBU?.id ?? null;
   const currentBranchId = currentBranch?.id ?? null;
@@ -28,11 +30,19 @@ export default function POSPage() {
   const customerCopy = customerMessages[lang];
   const customers = customersQuery.data?.items ?? [];
   const setup = getCommerceSetup();
+  const {
+    draft,
+    commercialSnapshot: doc,
+    execute: executeDraftCommand,
+    reset: resetDraft,
+  } = useLegacyPosDraftCommands(setup);
+  const { checkout, isPending: checkoutPending } = useLegacyPosCheckout();
+  const cart = draft.items;
+  const discount = draft.discount;
+  const payMethod = draft.payment;
 
-  const [cart, setCart] = useState<{ id: string; name: string; price: number; qty: number; sku: string; taxable: boolean; stock: number; category: string }[]>([]);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
-  const [discount, setDiscount] = useState(0);
   const [custSearch, setCustSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id?: string; name: string; phone?: string } | null>(null);
   const [showCustPicker, setShowCustPicker] = useState(false);
@@ -40,7 +50,6 @@ export default function POSPage() {
   const [custForm, setCustForm] = useState({ name: "", phone: "", email: "" });
   const [custErr, setCustErr] = useState("");
   const [showPayment, setShowPayment] = useState(false);
-  const [payMethod, setPayMethod] = useState<"cash" | "card" | "wallet">("cash");
   const [tendered, setTendered] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -51,45 +60,73 @@ export default function POSPage() {
   );
 
   const addToCart = (p: typeof products[0]) => {
-    if ((p.stock ?? 99) === 0) { showToast(`${p.name} is out of stock`, "warn"); return; }
-    setCart((c) => {
-      const ex = c.find((i) => i.id === p.id);
-      if (ex) return c.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
-      return [...c, { id: p.id, name: p.name, price: p.price, qty: 1, sku: p.sku || "", taxable: p.taxable ?? true, stock: p.stock ?? 99, category: p.category || "General" }];
-    });
+    try {
+      executeDraftCommand({
+        type: "add-product",
+        product: {
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          sku: p.sku || "",
+          taxable: p.taxable ?? true,
+          stock: p.stock ?? 99,
+          category: p.category || "General",
+        },
+      });
+    } catch (error) {
+      if (error instanceof LegacyPosDraftCommandError && error.code === "out_of_stock") {
+        showToast(`${p.name} is out of stock`, "warn");
+      }
+    }
   };
-  const setQty = (id: string, d: number) => setCart((c) => c.map((i) => i.id === id ? { ...i, qty: Math.max(1, i.qty + d) } : i));
-  const removeItem = (id: string) => setCart((c) => c.filter((i) => i.id !== id));
-
-  const doc = computeDoc(cart.map((i) => ({ productId: i.id, name: i.name, qty: i.qty, price: i.price, taxable: i.taxable })), setup as Parameters<typeof computeDoc>[1], discount);
+  const setQty = (id: string, delta: number) => executeDraftCommand({ type: "change-quantity", productId: id, delta });
+  const removeItem = (id: string) => executeDraftCommand({ type: "remove-item", productId: id });
+  const selectCustomer = (customer: { id?: string; name: string; phone?: string } | null) => {
+    setSelectedCustomer(customer);
+    executeDraftCommand({ type: "select-customer", customerId: customer?.id ?? null });
+  };
+  const selectPayment = (payment: "cash" | "card" | "wallet") => {
+    executeDraftCommand({ type: "select-payment", payment });
+  };
   const itemCount = cart.reduce((s, i) => s + i.qty, 0);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === "/" && document.activeElement !== searchRef.current) { e.preventDefault(); searchRef.current?.focus(); }
-      if (e.key === "F2" && cart.length && !showPayment) { e.preventDefault(); setPayMethod("cash"); setTendered(""); setShowPayment(true); }
+      if (e.key === "F2" && cart.length && !showPayment) {
+        e.preventDefault();
+        executeDraftCommand({ type: "select-payment", payment: "cash" });
+        setTendered("");
+        setShowPayment(true);
+      }
+      if (e.key === "Escape") {
+        if (showCustPicker) setShowCustPicker(false);
+        else if (showPayment) setShowPayment(false);
+      }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [cart, showPayment]);
+  }, [cart, executeDraftCommand, showCustPicker, showPayment]);
 
-  function completeSale(method: "cash" | "card" | "wallet") {
+  function completeSale() {
     try {
-      const order = createOrder({
-        items: cart.map((i) => ({ productId: i.id, id: i.id, name: i.name, qty: i.qty, price: i.price, sku: i.sku, taxable: i.taxable })),
-        customerId: selectedCustomer?.id || null,
-        payment: method,
-        discount,
-        vat: doc.vat,
-        subtotal: doc.net,
-        total: doc.total,
-        net: doc.net,
+      const result = checkout({
+        context: {
+          workspaceId: currentWorkspaceId ?? "",
+          legacyBusinessUnitId: currentBusinessUnitId ?? "",
+          branchId: currentBranchId,
+          actorId: currentUser?.id ?? "",
+          actorDisplayName: currentUserDisplayName || "Cashier",
+          osId: "commerce",
+          action: "order.create",
+        },
+        draft,
+        commercialSnapshot: doc,
+        tenderedAmount: +tendered || 0,
       });
-      createInvoice(order.id);
-      writePosLastOrderId(order.id);
-      setCart([]); setDiscount(0); setSelectedCustomer(null); setShowPayment(false);
-      setPayMethod("cash"); setTendered("");
-      router.push("/pos/success");
+      resetDraft(); setSelectedCustomer(null); setShowPayment(false);
+      setTendered("");
+      router.push(result.successRoute);
     } catch (error) {
       const message = error instanceof Error && error.message === "insufficient_stock"
         ? t("insufficient_stock")
@@ -112,7 +149,7 @@ export default function POSPage() {
     if (!customerScope || !currentBranchId || customerMutations.create.isPending) return;
     try {
       const c = await customerMutations.create.mutateAsync({ branchId: currentBranchId, name: custForm.name, phone: custForm.phone, email: custForm.email.toLowerCase(), notes: "" });
-      setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone });
+      selectCustomer({ id: c.id, name: c.name, phone: c.phone });
       setShowCustPicker(false);
       setCustMode("list"); setCustSearch(""); setCustForm({ name: "", phone: "", email: "" }); setCustErr("");
       showToast("Customer added and selected", "success");
@@ -200,7 +237,7 @@ export default function POSPage() {
             <b style={{ fontSize: 15 }}>Cart</b>
             {itemCount > 0 && <Badge tone="accent">{itemCount}</Badge>}
           </div>
-          {cart.length > 0 && <button className="nx-link" style={{ color: "var(--danger)" }} onClick={() => setCart([])}>Clear</button>}
+          {cart.length > 0 && <button className="nx-link" style={{ color: "var(--danger)" }} onClick={() => executeDraftCommand({ type: "clear" })}>Clear</button>}
         </div>
 
         {/* Customer */}
@@ -212,7 +249,7 @@ export default function POSPage() {
               <span className="nx-sb-switch-sub">{selectedCustomer ? (selectedCustomer.phone || "Saved customer") : "Customer · optional"}</span>
             </span>
             {selectedCustomer ? (
-              <span className="nx-icon-btn" style={{ width: 26, height: 26 }} onClick={(e) => { e.stopPropagation(); setSelectedCustomer(null); }}><X size={15} /></span>
+              <span className="nx-icon-btn" style={{ width: 26, height: 26 }} onClick={(e) => { e.stopPropagation(); selectCustomer(null); }}><X size={15} /></span>
             ) : (
               <UserPlus size={16} style={{ color: "var(--accent)" }} />
             )}
@@ -256,7 +293,7 @@ export default function POSPage() {
               <Tag size={15} style={{ color: "var(--text-3)" }} />
               <span style={{ fontSize: 13, color: "var(--text-2)", flex: 1 }}>Discount</span>
               <div style={{ width: 110 }}>
-                <input className="nx-input" type="number" min={0} value={discount || ""} onChange={(e) => setDiscount(Math.max(0, +e.target.value || 0))} placeholder="0.00" style={{ textAlign: "right" }} />
+                <input className="nx-input" type="number" min={0} value={discount || ""} onChange={(e) => executeDraftCommand({ type: "set-discount-input", value: e.target.value })} placeholder="0.00" style={{ textAlign: "right" }} />
               </div>
             </div>
           )}
@@ -268,7 +305,7 @@ export default function POSPage() {
             className="nx-btn nx-btn-primary nx-btn-md nx-btn-full"
             disabled={cart.length === 0}
             style={{ marginTop: 14, padding: "12px", fontSize: 15 }}
-            onClick={() => { setPayMethod("cash"); setTendered(""); setShowPayment(true); }}
+            onClick={() => { selectPayment("cash"); setTendered(""); setShowPayment(true); }}
             data-testid="checkout-button"
           >
             <CreditCard size={16} />
@@ -312,7 +349,7 @@ export default function POSPage() {
                   { method: "card" as const, label: "Card", icon: <CreditCard size={19} /> },
                   { method: "wallet" as const, label: "Wallet", icon: <Smartphone size={19} /> },
                 ]).map(({ method, label, icon }) => (
-                  <button key={method} className={"nx-choice" + (payMethod === method ? " on" : "")} onClick={() => setPayMethod(method)}>
+                  <button key={method} className={"nx-choice" + (payMethod === method ? " on" : "")} onClick={() => selectPayment(method)}>
                     <span className="nx-choice-ic">{icon}</span>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{label}</span>
                   </button>
@@ -344,7 +381,7 @@ export default function POSPage() {
               <p className="nx-note" style={{ marginTop: 14, justifyContent: "center" }}><Lock size={13} />One payment method per sale in this MVP.</p>
             </div>
             <div className="nx-modal-foot">
-              <button className="nx-btn nx-btn-primary nx-btn-lg nx-btn-full" onClick={() => completeSale(payMethod)} data-testid="complete-sale-button">
+              <button className="nx-btn nx-btn-primary nx-btn-lg nx-btn-full" onClick={completeSale} disabled={checkoutPending} aria-busy={checkoutPending} data-testid="complete-sale-button">
                 Complete Sale · {money(doc.total)}
               </button>
             </div>
@@ -368,7 +405,7 @@ export default function POSPage() {
             <div className="nx-modal-body" style={{ maxHeight: "64vh", overflowY: "auto" }}>
               {custMode === "list" ? (
                 <div>
-                  <button className={"nx-cust-row" + (!selectedCustomer ? " on" : "")} onClick={() => { setSelectedCustomer(null); setShowCustPicker(false); }}>
+                  <button className={"nx-cust-row" + (!selectedCustomer ? " on" : "")} onClick={() => { selectCustomer(null); setShowCustPicker(false); }}>
                     <span className="nx-choice-ic" style={{ width: 38, height: 38 }}><User size={18} /></span>
                     <span style={{ flex: 1, textAlign: "left" }}>
                       <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>Walk-in customer</span>
@@ -398,7 +435,7 @@ export default function POSPage() {
                     {filteredCustomers.map((c) => {
                       const sel = selectedCustomer?.id === c.id;
                       return (
-                        <button key={c.id} className={"nx-cust-row" + (sel ? " on" : "")} onClick={() => { setSelectedCustomer({ id: c.id, name: c.name, phone: c.phone }); setShowCustPicker(false); }}>
+                        <button key={c.id} className={"nx-cust-row" + (sel ? " on" : "")} onClick={() => { selectCustomer({ id: c.id, name: c.name, phone: c.phone }); setShowCustPicker(false); }}>
                           <Avatar name={c.name} size={36} />
                           <span style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
                             <span style={{ display: "block", fontWeight: 700, fontSize: 13.5 }}>{c.name}</span>
