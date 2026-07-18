@@ -2,79 +2,57 @@ import type {
   CommerceChangeNotificationPort,
   LegacyCommerceCommandContext,
   LegacyCommerceDeterministicDependencies,
-  LegacyCommerceOperationsStore,
   LegacyCreateOrderCommand,
   LegacyCreateOrderResult,
+  LegacyOrderCommandRepository,
   LegacyOrderCreationPort,
+  LegacyOrderInventoryEffectPort,
+  LegacyOrderNumberPort,
 } from "@nexoraxs/contracts";
-import type { BranchInventory, CommerceProduct, OrderItem, StockMovement } from "@nexoraxs/types";
-import { createLegacyStockMovement, legacyEffectiveStock } from "../../inventory/application/legacy-inventory-policy";
 import { createLegacyOrder } from "./legacy-order-compatibility-policy";
 
+/** Orders-owned create orchestration. Inventory behavior is requested only through its owner port. */
 export class LegacyOrderCreationService implements LegacyOrderCreationPort {
   constructor(
-    private readonly store: LegacyCommerceOperationsStore,
+    private readonly orders: LegacyOrderCommandRepository,
+    private readonly numbers: LegacyOrderNumberPort,
+    private readonly inventory: LegacyOrderInventoryEffectPort,
     private readonly deterministic: LegacyCommerceDeterministicDependencies,
     private readonly changes: CommerceChangeNotificationPort,
   ) {}
 
   create(context: LegacyCommerceCommandContext, command: LegacyCreateOrderCommand): LegacyCreateOrderResult {
-    const branchId = context.branchId ?? "";
-    const products = this.store.readProducts();
-    const positions = [...this.store.readPositions()];
-    const tracked: { item: OrderItem; product: CommerceProduct }[] = [];
-    const requested: Record<string, number> = {};
-    for (const item of command.items) {
-      if (!item.productId) continue;
-      const product = products.find((candidate) => candidate.id === item.productId);
-      if (!product) continue;
-      const existing = positions.find((candidate) => candidate.productId === product.id && candidate.branchId === branchId);
-      if (product.stock === null && !existing) continue;
-      const requestedQty = (requested[product.id] ?? 0) + item.qty;
-      requested[product.id] = requestedQty;
-      if (requestedQty > legacyEffectiveStock(product, branchId, positions).qty) throw new Error("insufficient_stock");
-      tracked.push({ item: { ...item }, product });
-    }
-    const existingOrders = [...this.store.readOrders()];
-    const scopedCount = existingOrders.filter((item) => item.businessUnitId === context.legacyBusinessUnitId).length;
+    const scope = {
+      workspaceId: context.workspaceId,
+      legacyBusinessUnitId: context.legacyBusinessUnitId,
+      branchId: context.branchId ?? "",
+    };
+    const prepared = this.inventory.prepareSaleDeduction({ scope, items: command.items });
     const order = createLegacyOrder(
-      context, command, `ORD-${String(scopedCount + 1).padStart(4, "0")}`, this.deterministic,
+      context,
+      command,
+      this.numbers.next(scope),
+      this.deterministic,
     );
-    const nextOrders = [...existingOrders, order];
-    this.store.replaceOrders(nextOrders);
-    let nextPositions: BranchInventory[] = positions;
-    const createdMovements: StockMovement[] = [];
-    for (const { item, product } of tracked) {
-      const effective = legacyEffectiveStock(product, branchId, nextPositions);
-      const existing = nextPositions.find((candidate) => candidate.productId === product.id && candidate.branchId === branchId);
-      const qty = effective.qty - item.qty;
-      nextPositions = existing
-        ? nextPositions.map((candidate) => candidate.id === existing.id ? { ...candidate, qty, updatedAt: this.deterministic.now() } : candidate)
-        : [...nextPositions, {
-            id: this.deterministic.createId("bi"), workspaceId: order.workspaceId,
-            businessUnitId: order.businessUnitId, branchId, productId: product.id,
-            qty, lowStockThreshold: effective.lowStockThreshold, updatedAt: this.deterministic.now(),
-          }];
-      createdMovements.push(createLegacyStockMovement({
-        workspaceId: order.workspaceId, businessUnitId: order.businessUnitId, branchId,
-        productId: product.id, qtyChange: -item.qty, reason: "sale",
-        reference: { type: "order", id: order.id }, performedBy: order.cashierId,
-        performedByName: order.cashierName,
-      }, this.deterministic));
-    }
-    let nextMovements = [...this.store.readMovements()];
-    if (createdMovements.length > 0) {
-      nextMovements = [...nextMovements, ...createdMovements];
-      this.store.replacePositions(nextPositions);
-      this.store.replaceMovements(nextMovements);
-    }
+    const orders = this.orders.create(scope, order);
+    const inventory = this.inventory.commitSaleDeduction({
+      scope,
+      prepared,
+      order,
+      actorId: order.cashierId,
+      actorDisplayName: order.cashierName,
+    });
     void this.changes.ordersChanged({
-      scope: { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId },
-      orderId: order.id, customerId: order.customerId,
+      scope,
+      orderId: order.id,
+      customerId: order.customerId,
     }).catch(() => undefined);
-    void this.changes.inventoryChanged({
-      scope: { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId },
-    }).catch(() => undefined);
-    return { order, orders: nextOrders, branchInventory: nextPositions, stockMovements: nextMovements };
+    void this.changes.inventoryChanged({ scope }).catch(() => undefined);
+    return {
+      order,
+      orders,
+      branchInventory: inventory.branchInventory,
+      stockMovements: inventory.stockMovements,
+    };
   }
 }

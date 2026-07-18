@@ -15,7 +15,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     allCommerceReturns, currentBranch, currentWorkspace, currentBU, BRANCHES,
     money, t, createReturn, showToast, lang,
   } = useApp();
-  const scope = currentWorkspace && currentBU ? { workspaceId: currentWorkspace.id, legacyBusinessUnitId: currentBU.id } : null;
+  const scope = currentWorkspace && currentBU && currentBranch ? {
+    workspaceId: currentWorkspace.id,
+    legacyBusinessUnitId: currentBU.id,
+    branchId: currentBranch.id,
+  } : null;
   const orderQuery = useLegacyOrder(scope, id);
   const copy = orderMessages[lang];
   const [showReturn, setShowReturn] = useState(false);

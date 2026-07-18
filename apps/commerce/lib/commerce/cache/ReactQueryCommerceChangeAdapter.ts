@@ -39,7 +39,7 @@ export class ReactQueryCommerceChangeAdapter implements CommerceChangeNotificati
   async ordersChanged(input: LegacyOrderChangedInput): Promise<void> {
     await Promise.all([
       this.queryClient.invalidateQueries({ queryKey: legacyOrderKeys.listScope(input.scope, input.scope.branchId) }),
-      this.queryClient.invalidateQueries({ queryKey: legacyOrderKeys.item(input.scope, input.orderId) }),
+      this.queryClient.invalidateQueries({ queryKey: legacyOrderKeys.item(input.scope, input.orderId, input.scope.branchId), exact: true }),
       ...(input.customerId ? [this.queryClient.invalidateQueries({
         queryKey: legacyCustomerKeys.history(input.scope, input.scope.branchId, input.customerId),
       })] : []),
@@ -51,7 +51,7 @@ export class ReactQueryCommerceChangeAdapter implements CommerceChangeNotificati
       this.queryClient.invalidateQueries({ queryKey: legacyInvoiceKeys.listScope(input.scope, input.scope.branchId) }),
       this.queryClient.invalidateQueries({ queryKey: legacyInvoiceKeys.item(input.scope, input.invoiceId, "detail") }),
       this.queryClient.invalidateQueries({ queryKey: legacyInvoiceKeys.item(input.scope, input.invoiceId, "document") }),
-      this.queryClient.invalidateQueries({ queryKey: legacyOrderKeys.item(input.scope, input.orderId) }),
+      this.queryClient.invalidateQueries({ queryKey: legacyOrderKeys.item(input.scope, input.orderId, input.scope.branchId), exact: true }),
     ]);
   }
 }

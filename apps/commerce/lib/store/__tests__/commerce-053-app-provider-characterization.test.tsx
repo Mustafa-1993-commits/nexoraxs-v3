@@ -11,12 +11,13 @@ describe("Feature 053 AppProvider compatibility characterization", () => {
     expect(source).toContain("services.customersCompatibility.subscribe");
   });
 
-  it("keeps Inventory, Order, Invoice, and Return writes on explicit retained paths", () => {
-    for (const callback of ["adjustStock", "transferStock", "createReturn", "createOrder", "createInvoice"]) {
+  it("keeps retained Inventory and Return writes explicit while Order/Invoice publish through the command boundary", () => {
+    for (const callback of ["adjustStock", "transferStock", "createReturn"]) {
       expect(source).toContain(`const ${callback} = useCallback`);
     }
     expect(source).toContain("services.stockAdjustments.adjust");
-    expect(source).toContain("services.orderCommands.create");
-    expect(source).toContain("services.invoiceCommands.create");
+    expect(source).toContain("services.commandPublication.subscribe");
+    expect(source).not.toContain("const createOrder = useCallback");
+    expect(source).not.toContain("const createInvoice = useCallback");
   });
 });

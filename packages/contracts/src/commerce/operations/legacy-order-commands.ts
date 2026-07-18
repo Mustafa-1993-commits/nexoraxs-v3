@@ -19,11 +19,6 @@ export interface LegacyCreateOrderResult {
   readonly stockMovements: readonly StockMovement[];
 }
 
-export interface LegacyOrderWritePort {
-  readOrders(): readonly CommerceOrder[];
-  replaceOrders(records: readonly CommerceOrder[]): void;
-}
-
 export interface LegacyOrderCreationPort {
   create(
     context: LegacyCommerceCommandContext,

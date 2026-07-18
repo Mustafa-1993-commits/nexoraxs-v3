@@ -1,4 +1,8 @@
-import { LegacyProductRepositoryError } from "@nexoraxs/contracts";
+import {
+  LegacyOrderCommandRepositoryError,
+  LegacyProductRepositoryError,
+  type LegacyOrderCommandStore,
+} from "@nexoraxs/contracts";
 import { LegacyCommerceRepositoryError, type LegacyCommerceOperation } from "@nexoraxs/contracts";
 import type { MockCustomersStore } from "../customers/MockCustomersStore";
 import type { MockInventoryStore } from "../inventory/MockInventoryStore";
@@ -26,7 +30,7 @@ function storageError(cause: unknown): LegacyProductRepositoryError {
 }
 
 /** The only Feature 052 module allowed to access browser localStorage. */
-export class BrowserStorageCommerceStore implements MockCommerceStore, MockCustomersStore, MockInventoryStore, MockOrdersStore, MockInvoicesStore {
+export class BrowserStorageCommerceStore implements MockCommerceStore, MockCustomersStore, MockInventoryStore, MockOrdersStore, MockInvoicesStore, LegacyOrderCommandStore {
   private readonly storage: LegacyProductStorageLike | null;
 
   constructor(storage?: LegacyProductStorageLike) {
@@ -72,6 +76,32 @@ export class BrowserStorageCommerceStore implements MockCommerceStore, MockCusto
 
   readOrders(): Promise<readonly unknown[]> {
     return this.readCollection(LEGACY_ORDERS_STORAGE_KEY, "orders.list");
+  }
+
+  readOrderCommandRecords(): readonly unknown[] {
+    if (!this.storage) {
+      throw new LegacyOrderCommandRepositoryError({ code: "storage_unavailable", operation: "list-for-numbering" });
+    }
+    try {
+      const raw = this.storage.getItem(LEGACY_ORDERS_STORAGE_KEY);
+      if (raw === null) return [];
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) throw new Error("Legacy Order storage must contain an array");
+      return structuredClone(parsed);
+    } catch (cause) {
+      throw new LegacyOrderCommandRepositoryError({ code: "storage_unavailable", operation: "list-for-numbering", cause });
+    }
+  }
+
+  replaceOrderCommandRecords(records: readonly unknown[]): void {
+    if (!this.storage) {
+      throw new LegacyOrderCommandRepositoryError({ code: "storage_unavailable", operation: "create" });
+    }
+    try {
+      this.storage.setItem(LEGACY_ORDERS_STORAGE_KEY, JSON.stringify(records));
+    } catch (cause) {
+      throw new LegacyOrderCommandRepositoryError({ code: "storage_unavailable", operation: "create", cause });
+    }
   }
 
   readInvoices(): Promise<readonly unknown[]> {

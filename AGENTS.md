@@ -414,5 +414,5 @@ and report the exact sources. Do not invent the answer.
 <!-- SPECKIT START -->
 ## Active Spec Kit Plan
 
-- `specs/054-architecture-hardening/plan.md`
+- `specs/055-commerce-order-command-boundary/plan.md`
 <!-- SPECKIT END -->

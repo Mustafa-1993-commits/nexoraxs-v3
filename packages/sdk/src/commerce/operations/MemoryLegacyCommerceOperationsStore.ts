@@ -51,7 +51,6 @@ export class MemoryLegacyCommerceOperationsStore implements LegacyCommerceOperat
   readTransfers() { return structuredClone(this.data.transfers); }
   replaceTransfers(v: readonly StockTransfer[]) { this.set("transfers", v); }
   readOrders() { return structuredClone(this.data.orders); }
-  replaceOrders(v: readonly CommerceOrder[]) { this.set("orders", v); }
   readInvoices() { return structuredClone(this.data.invoices); }
   replaceInvoices(v: readonly CommerceInvoice[]) { this.set("invoices", v); }
   readReturns() { return structuredClone(this.data.returns); }

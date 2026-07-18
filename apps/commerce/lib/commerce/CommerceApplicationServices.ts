@@ -8,8 +8,16 @@ import type {
   LegacyInvoiceCreationPort,
   LegacyInvoicesRepository,
   LegacyInventoryRepository,
+  LegacyOrderCommandRepository,
   LegacyOrderCreationPort,
+  LegacyOrderInventoryEffectPort,
+  LegacyOrderNumberPort,
+  LegacyOrderReturnHandoffPort,
   LegacyOrdersRepository,
+  LegacyPosCheckoutPort,
+  LegacyPosDraftServicePort,
+  LegacyPosLastOrderPort,
+  LegacyCommerceCommandPublicationPort,
   LegacyProductsCompatibilityPort,
   LegacyProductsRepository,
   LegacyReturnCreationPort,
@@ -23,8 +31,28 @@ import type { LegacyOrderViewService } from "@/features/orders/application/Legac
 import type { LegacyProductMediaService } from "@/features/media/application/LegacyProductMediaService";
 import type { LegacyCommerceDemoBootstrapService } from "@/features/setup/application/LegacyCommerceDemoBootstrapService";
 
+/** Feature 055 contract surface. It becomes part of the stable runtime when composition migrates. */
+export interface CommerceCommandApplicationPorts {
+  readonly posDraftCommands: LegacyPosDraftServicePort;
+  readonly posCheckout: LegacyPosCheckoutPort;
+  readonly posLastOrder: LegacyPosLastOrderPort;
+  readonly commandPublication: LegacyCommerceCommandPublicationPort;
+  readonly orderCommandRepository: LegacyOrderCommandRepository;
+  readonly orderNumber: LegacyOrderNumberPort;
+  readonly orderInventoryEffects: LegacyOrderInventoryEffectPort;
+  readonly orderReturnHandoff: LegacyOrderReturnHandoffPort;
+}
+
 /** Stable application-facing runtime. Concrete SDK implementations never appear here. */
 export interface CommerceApplicationServices {
+  readonly posDraftCommands: LegacyPosDraftServicePort;
+  readonly posCheckout: LegacyPosCheckoutPort;
+  readonly posLastOrder: LegacyPosLastOrderPort;
+  readonly commandPublication: LegacyCommerceCommandPublicationPort;
+  readonly orderInventoryEffects: LegacyOrderInventoryEffectPort;
+  readonly orderCommandRepository: LegacyOrderCommandRepository;
+  readonly orderNumber: LegacyOrderNumberPort;
+  readonly orderReturnHandoff: LegacyOrderReturnHandoffPort;
   readonly commerceHandoff: CommerceHandoffPort;
   readonly productsRepository: LegacyProductsRepository;
   readonly productsCompatibility: LegacyProductsCompatibilityPort;

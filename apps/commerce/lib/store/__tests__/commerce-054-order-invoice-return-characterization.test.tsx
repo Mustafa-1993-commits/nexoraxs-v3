@@ -5,6 +5,7 @@ import { computeReturnTotals } from "@/features/documents/application/legacy-com
 import type { CommerceOrder } from "@nexoraxs/types";
 
 const orderSource = readFileSync(join(process.cwd(), "apps/commerce/features/orders/application/LegacyOrderCreationService.ts"), "utf8");
+const orderNumberSource = readFileSync(join(process.cwd(), "apps/commerce/features/orders/application/LegacyOrderNumberService.ts"), "utf8");
 const invoiceSource = readFileSync(join(process.cwd(), "apps/commerce/features/invoices/application/LegacyInvoiceCreationService.ts"), "utf8");
 const returnSource = readFileSync(join(process.cwd(), "apps/commerce/features/returns/application/LegacyReturnCreationService.ts"), "utf8");
 
@@ -24,17 +25,17 @@ describe("Feature 054 Order, Invoice, and Return characterization", () => {
   });
 
   it("preserves fresh-storage Order/Invoice numbering and same-tick Invoice lookup", () => {
-    expect(orderSource).toContain("ORD-${String(scopedCount + 1).padStart(4, \"0\")}");
+    expect(orderNumberSource).toContain("ORD-${String(count + 1).padStart(4, \"0\")}");
     expect(invoiceSource).toContain("this.store.readOrders().find");
     expect(invoiceSource).toContain("(setup.invoiceStart || 1001) + scopedCount");
   });
 
   it("preserves Order-before-Inventory and Return owner-effect commit ordering", () => {
-    const orderWrite = orderSource.indexOf("replaceOrders");
-    const orderInventoryWrite = orderSource.indexOf("replacePositions", orderWrite);
+    const orderWrite = orderSource.indexOf("this.orders.create");
+    const orderInventoryWrite = orderSource.indexOf("this.inventory.commitSaleDeduction", orderWrite);
     expect(orderInventoryWrite).toBeGreaterThan(orderWrite);
 
-    const returnOrderWrite = returnSource.indexOf("replaceOrders");
+    const returnOrderWrite = returnSource.indexOf("this.orders.applyPatch");
     const invoiceWrite = returnSource.indexOf("replaceInvoices", returnOrderWrite);
     const returnWrite = returnSource.indexOf("replaceReturns", returnOrderWrite);
     expect(invoiceWrite).toBeGreaterThan(returnOrderWrite);

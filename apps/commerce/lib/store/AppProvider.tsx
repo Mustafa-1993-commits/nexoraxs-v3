@@ -143,17 +143,6 @@ interface AppContextType {
     refundMethod: RefundMethod;
     restock: boolean;
   }) => { ok: true; return: CommerceReturn } | { ok: false; error: string };
-  createOrder: (data: {
-    items: OrderItem[];
-    customerId: string | null;
-    payment: "cash" | "card" | "wallet";
-    discount: number;
-    vat: number;
-    subtotal: number;
-    total: number;
-    net: number;
-  }) => CommerceOrder;
-  createInvoice: (orderId: string) => CommerceInvoice;
   // platform
   setCurrent: (data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => void;
 }
@@ -407,6 +396,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  useEffect(() => services.commandPublication.subscribe((publication) => {
+    if (publication.type === "order") {
+      const { order } = publication.result;
+      setState((previous) => ({
+        ...previous,
+        orders: structuredClone([
+          ...previous.orders.filter((candidate) => !(
+            candidate.workspaceId === order.workspaceId
+            && candidate.businessUnitId === order.businessUnitId
+            && candidate.branchId === order.branchId
+          )),
+          ...publication.result.orders,
+        ]),
+        branchInventory: structuredClone([
+          ...previous.branchInventory.filter((candidate) => !(
+            candidate.workspaceId === order.workspaceId
+            && candidate.businessUnitId === order.businessUnitId
+            && candidate.branchId === order.branchId
+          )),
+          ...publication.result.branchInventory,
+        ]),
+        stockMovements: structuredClone([
+          ...previous.stockMovements.filter((candidate) => !(
+            candidate.workspaceId === order.workspaceId
+            && candidate.businessUnitId === order.businessUnitId
+            && candidate.branchId === order.branchId
+          )),
+          ...publication.result.stockMovements,
+        ]),
+      }));
+      return;
+    }
+    const { invoice } = publication.result;
+    setState((previous) => ({
+      ...previous,
+      invoices: structuredClone([
+        ...previous.invoices.filter((candidate) => !(
+          candidate.workspaceId === invoice.workspaceId
+          && candidate.businessUnitId === invoice.businessUnitId
+          && candidate.branchId === invoice.branchId
+        )),
+        ...publication.result.invoices,
+      ]),
+    }));
+  }), [services.commandPublication]);
+
   useEffect(() => {
     let active = true;
     const hydrate = async () => {
@@ -425,6 +460,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           storageUsage: seeded.workspaceStorageUsage,
         });
         services.demoBootstrap.bootstrap({
+          orderScope: {
+            workspaceId: seeded.currentWorkspaceId ?? "",
+            legacyBusinessUnitId: seeded.currentBusinessUnitId ?? "",
+          },
           setups: commerceSeed.commerceSetups, orders: commerceSeed.commerceOrders,
           invoices: commerceSeed.commerceInvoices, mediaAssets: commerceSeed.mediaAssets,
         });
@@ -817,10 +856,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     orderId: string; items: { productId: string; qty: number }[]; reason: string;
     refundMethod: RefundMethod; restock: boolean;
   }): { ok: true; return: CommerceReturn } | { ok: false; error: string } => {
+    const targetOrder = state.orders.find((candidate) => (
+      candidate.id === data.orderId
+      && candidate.workspaceId === state.currentWorkspaceId
+      && candidate.businessUnitId === state.currentBusinessUnitId
+    ));
     const result = services.returns.create({
       workspaceId: state.currentWorkspaceId || "",
       legacyBusinessUnitId: state.currentBusinessUnitId || "",
-      branchId: state.currentBranchId,
+      branchId: targetOrder?.branchId ?? state.currentBranchId,
       actorId: currentUser?.id ?? "",
       actorDisplayName: getUserDisplayName(currentUser) || "Cashier",
       osId: "commerce", action: "return.create", resourceId: data.orderId,
@@ -828,50 +872,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!result.ok) return result;
     setState((prev) => ({
       ...prev,
-      orders: [...result.orders],
+      orders: [
+        ...prev.orders.filter((candidate) => !(
+          candidate.workspaceId === result.returnRecord.workspaceId
+          && candidate.businessUnitId === result.returnRecord.businessUnitId
+          && candidate.branchId === result.returnRecord.branchId
+        )),
+        ...result.orders,
+      ],
       invoices: [...result.invoices],
       commerceReturns: [...result.returns],
       branchInventory: [...result.branchInventory],
       stockMovements: [...result.stockMovements],
     }));
     return { ok: true, return: result.returnRecord };
-  }, [currentUser, services.returns, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
-
-  // ---- orders ----
-  const createOrder = useCallback((data: {
-    items: OrderItem[]; customerId: string | null; payment: "cash" | "card" | "wallet";
-    discount: number; vat: number; subtotal: number; total: number; net: number;
-  }): CommerceOrder => {
-    const result = services.orderCommands.create({
-      workspaceId: state.currentWorkspaceId || "",
-      legacyBusinessUnitId: state.currentBusinessUnitId || "",
-      branchId: state.currentBranchId,
-      actorId: currentUser?.id ?? "",
-      actorDisplayName: getUserDisplayName(currentUser) || "Cashier",
-      osId: "commerce", action: "order.create",
-    }, data);
-    setState((prev) => ({
-      ...prev,
-      orders: [...result.orders],
-      branchInventory: [...result.branchInventory],
-      stockMovements: [...result.stockMovements],
-    }));
-    return result.order;
-  }, [currentUser, services.orderCommands, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
-
-  // ---- invoices ----
-  const createInvoice = useCallback((orderId: string): CommerceInvoice => {
-    const result = services.invoiceCommands.create({
-      workspaceId: state.currentWorkspaceId || "",
-      legacyBusinessUnitId: state.currentBusinessUnitId || "",
-      branchId: state.currentBranchId,
-      actorId: currentUser?.id ?? "",
-      actorDisplayName: getUserDisplayName(currentUser) || "Cashier",
-      osId: "commerce", action: "invoice.create", resourceId: orderId,
-    }, { orderId });
-    setState((prev) => ({ ...prev, invoices: [...result.invoices] }));
-    return result.invoice;
-  }, [currentUser, services.invoiceCommands, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId]);
+  }, [currentUser, services.returns, state.currentBranchId, state.currentBusinessUnitId, state.currentWorkspaceId, state.orders]);
 
   // ---- platform ----
   const setCurrent = useCallback((data: Partial<{ currentWorkspaceId: string; currentBusinessUnitId: string; currentBranchId: string }>) => {
@@ -913,7 +928,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     branchInventory: state.branchInventory, stockMovements: state.stockMovements,
     stockTransfers: state.stockTransfers, commerceReturns,
     mediaAssets: state.mediaAssets, workspaceStorageUsage, storageUsagePercent: storageUsagePct, storageUsageLabel,
-    adjustStock, transferStock, createReturn, createOrder, createInvoice,
+    adjustStock, transferStock, createReturn,
     attachMedia,
     setCurrent,
   };

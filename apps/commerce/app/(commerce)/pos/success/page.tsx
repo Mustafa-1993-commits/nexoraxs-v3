@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ShoppingCart, FileText, Printer } from "lucide-react";
-import { useApp, computeDoc, fmtDate, readPosLastOrderId, clearPosLastOrderId, getBusinessBillingAddress, getBranchOperationalAddress } from "@/lib/store";
+import { useApp, computeDoc, fmtDate, getBusinessBillingAddress, getBranchOperationalAddress } from "@/lib/store";
 import type { CommerceOrder, CommerceInvoice } from "@/lib/store";
+import { useLegacyPosLastOrder } from "@/features/pos";
 
 export default function POSSuccessPage() {
   const { orders, invoices, customers, money, getCommerceSetup, currentBranch, t } = useApp();
@@ -14,9 +15,10 @@ export default function POSSuccessPage() {
   const businessName = setup.displayName || setup.legalName || "Commerce Business";
   const [order, setOrder] = useState<CommerceOrder | null>(null);
   const [invoice, setInvoice] = useState<CommerceInvoice | null>(null);
+  const { read: readLastOrder, clear: clearLastOrder } = useLegacyPosLastOrder();
 
   useEffect(() => {
-    const orderId = readPosLastOrderId();
+    const orderId = readLastOrder();
     if (orderId) {
       const o = orders.find((x) => x.id === orderId) ?? null;
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -26,7 +28,7 @@ export default function POSSuccessPage() {
         setInvoice(inv);
       }
     }
-  }, [orders, invoices]);
+  }, [orders, invoices, readLastOrder]);
 
   const doc = order ? computeDoc(order.items, setup, order.discount || 0) : null;
 
@@ -89,7 +91,7 @@ export default function POSSuccessPage() {
             href="/pos"
             className="nx-btn-primary"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none", padding: "12px 20px", fontSize: 14 }}
-            onClick={() => clearPosLastOrderId()}
+            onClick={clearLastOrder}
           >
             <ShoppingCart size={16} />New Sale
           </Link>

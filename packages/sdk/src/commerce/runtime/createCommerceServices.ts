@@ -11,6 +11,10 @@ import type {
   LegacyCorePlatformStore,
   LegacyInvoicesRepository,
   LegacyOrdersRepository,
+  LegacyOrderCommandRepository,
+  LegacyOrderCommandStore,
+  LegacySaleInventoryPersistencePort,
+  LegacySaleProductSnapshotPort,
   LegacyProductsCompatibilityPort,
   LegacyProductsRepository,
 } from "@nexoraxs/contracts";
@@ -38,6 +42,8 @@ import { LegacyCoreStorageCoordinationAdapter } from "../integration/LegacyCoreS
 import { BrowserLegacyCommerceOperationsStore } from "../operations/BrowserLegacyCommerceOperationsStore";
 import { BrowserLegacyCorePlatformStore } from "../../core/BrowserLegacyCorePlatformStore";
 import { LegacyCorePlatformCompatibilityAdapter } from "../../core/LegacyCorePlatformCompatibilityAdapter";
+import { LocalOrderInventoryGateway } from "../inventory/LocalOrderInventoryGateway";
+import { LocalOrderCommandRepository } from "../orders/LocalOrderCommandRepository";
 
 export interface CommerceRuntimeConfig {
   readonly dataSource: "mock" | "http";
@@ -47,6 +53,9 @@ export interface CommerceRuntimeConfig {
 
 /** Contract-only SDK runtime surface. Concrete implementations stay inside this module. */
 export interface CommerceServices {
+  readonly orderCommandRepository: LegacyOrderCommandRepository;
+  readonly saleProductSnapshots: LegacySaleProductSnapshotPort;
+  readonly saleInventoryPersistence: LegacySaleInventoryPersistencePort;
   readonly productsRepository: LegacyProductsRepository;
   readonly productsFacade: LegacyProductsCompatibilityPort;
   readonly customersRepository: LegacyCustomersRepository;
@@ -60,7 +69,7 @@ export interface CommerceServices {
 }
 
 export interface CommerceServiceOverrides extends MockProductBehaviorOptions {
-  readonly store?: MockCommerceStore & Partial<MockCustomersStore & MockInventoryStore & MockOrdersStore & MockInvoicesStore>;
+  readonly store?: MockCommerceStore & Partial<MockCustomersStore & MockInventoryStore & MockOrdersStore & MockInvoicesStore & LegacyOrderCommandStore>;
   readonly operationsStore?: LegacyCommerceOperationsStore;
   readonly legacyBehavior?: LegacyCommerceMockBehaviorOptions;
 }
@@ -122,7 +131,16 @@ export function createCommerceServices(
   const customersRepository = new MockCustomersRepository(customersStore, compatibilityBehavior);
   const integrationStore = new BrowserLegacyCommerceIntegrationStore();
   const operationsStore = operationsStoreOverride ?? new BrowserLegacyCommerceOperationsStore();
+  const orderInventoryGateway = new LocalOrderInventoryGateway(operationsStore);
+  const orderCommandStore: LegacyOrderCommandStore = (
+    typeof (commerceStore as Partial<LegacyOrderCommandStore>).readOrderCommandRecords === "function"
+    && typeof (commerceStore as Partial<LegacyOrderCommandStore>).replaceOrderCommandRecords === "function"
+  ) ? commerceStore as MockCommerceStore & LegacyOrderCommandStore : fallbackStore;
+  const orderCommandRepository = new LocalOrderCommandRepository(orderCommandStore);
   return {
+    orderCommandRepository,
+    saleProductSnapshots: orderInventoryGateway,
+    saleInventoryPersistence: orderInventoryGateway,
     productsRepository,
     productsFacade: new LegacyProductsCompatibilityFacade(productsRepository, commerceStore),
     customersRepository,

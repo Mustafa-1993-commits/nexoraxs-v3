@@ -27,6 +27,16 @@ const invalid = [
   ["infrastructure-boundaries/environment-read.ts", "ARCH-ENV-001"],
   ["infrastructure-boundaries/unresolved-internal.ts", "ARCH-RESOLUTION-001"],
   ["infrastructure-boundaries/sdk-private-subpath.ts", "ARCH-SDK-001"],
+  ["order-command-boundaries/application-framework.ts", "ARCH-APP-001"],
+  ["order-command-boundaries/ui-concrete-repository.ts", "ARCH-UI-001"],
+  ["order-command-boundaries/page-checkout-orchestration.ts", "ARCH-POS-001"],
+  ["order-command-boundaries/order-inventory-writer.ts", "ARCH-OWNER-003"],
+  ["order-command-boundaries/return-order-writer.ts", "ARCH-OWNER-004"],
+  ["order-command-boundaries/core-order-writer.ts", "ARCH-OWNER-004"],
+  ["order-command-boundaries/provider-order-writer.ts", "ARCH-OWNER-004"],
+  ["order-command-boundaries/repository-ui.ts", "ARCH-REPOSITORY-001"],
+  ["order-command-boundaries/browser-storage.ts", "ARCH-STORAGE-001"],
+  ["order-command-boundaries/non-root-construction.ts", "ARCH-COMPOSITION-001"],
 ] as const;
 
 describe("frontend architecture rules", () => {
@@ -37,7 +47,7 @@ describe("frontend architecture rules", () => {
   });
 
   it("accepts every valid fixture and the complete production inventory deterministically", () => {
-    const fixtures = ["inward-layers.ts", "composition-root.ts", "outer-adapters.ts", "core-projection.ts", "sdk-testing.test.ts"]
+    const fixtures = ["inward-layers.ts", "composition-root.ts", "outer-adapters.ts", "core-projection.ts", "sdk-testing.test.ts", "order-command-boundary.ts"]
       .map((name) => `tests/architecture/fixtures/valid/${name}`);
     expect(analyzeFrontendBoundaries({ root, files: fixtures })).toEqual([]);
     const files = discoverFrontendProductionSources(root);

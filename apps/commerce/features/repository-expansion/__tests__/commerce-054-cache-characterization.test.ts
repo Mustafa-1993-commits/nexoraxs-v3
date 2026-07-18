@@ -21,7 +21,7 @@ describe("Feature 054 cache characterization", () => {
     const keys = invalidate.mock.calls.map(([input]) => input?.queryKey);
     expect(keys).toContainEqual(legacyInventoryKeys.scope(scope));
     expect(keys).toContainEqual(legacyOrderKeys.listScope(scope, "br"));
-    expect(keys).toContainEqual(legacyOrderKeys.item(scope, "ord"));
+    expect(keys).toContainEqual(legacyOrderKeys.item(scope, "ord", "br"));
     expect(keys).toContainEqual(legacyCustomerKeys.history(scope, "br", "cust"));
     expect(keys).toContainEqual(legacyInvoiceKeys.listScope(scope, "br"));
     expect(keys).toContainEqual(legacyInvoiceKeys.item(scope, "inv", "detail"));

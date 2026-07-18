@@ -6,6 +6,7 @@ import type {
   LegacyCreateReturnCommand,
   LegacyCreateReturnResult,
   LegacyReturnCreationPort,
+  LegacyOrderReturnHandoffPort,
 } from "@nexoraxs/contracts";
 import type { CommerceReturnItem, StockMovement } from "@nexoraxs/types";
 import { createLegacyStockMovement, legacyEffectiveStock } from "../../inventory/application/legacy-inventory-policy";
@@ -16,12 +17,17 @@ export class LegacyReturnCreationService implements LegacyReturnCreationPort {
     private readonly store: LegacyCommerceOperationsStore,
     private readonly deterministic: LegacyCommerceDeterministicDependencies,
     private readonly changes: CommerceChangeNotificationPort,
+    private readonly orders: LegacyOrderReturnHandoffPort,
   ) {}
 
   create(context: LegacyCommerceCommandContext, command: LegacyCreateReturnCommand): LegacyCreateReturnResult {
-    const orders = [...this.store.readOrders()];
-    const order = orders.find((item) => item.id === command.orderId);
-    if (!order || order.workspaceId !== context.workspaceId || order.businessUnitId !== context.legacyBusinessUnitId || command.items.length === 0) {
+    const scope = {
+      workspaceId: context.workspaceId,
+      legacyBusinessUnitId: context.legacyBusinessUnitId,
+      branchId: context.branchId ?? "",
+    };
+    const order = this.orders.getOrder(scope, command.orderId);
+    if (!order || command.items.length === 0) {
       return { ok: false, error: "return_rejected" };
     }
     const returns = [...this.store.readReturns()];
@@ -76,12 +82,11 @@ export class LegacyReturnCreationService implements LegacyReturnCreationPort {
       const key = item.productId || item.id || "";
       return (returned[key] || 0) + (command.items.find((candidate) => candidate.productId === key)?.qty || 0) >= item.qty;
     });
-    const nextOrders = orders.map((item) => item.id === order.id ? {
-      ...item, returnStatus: fullyReturned ? "returned" as const : "partial" as const,
-      returnedTotal: (item.returnedTotal || 0) + totals.total,
-      returnIds: [...(item.returnIds || []), record.id],
-    } : item);
-    this.store.replaceOrders(nextOrders);
+    const nextOrders = this.orders.applyPatch(scope, order.id, {
+      returnStatus: fullyReturned ? "returned" : "partial",
+      returnedTotalIncrement: totals.total,
+      returnId: record.id,
+    });
     const nextInvoices = invoice
       ? invoices.map((item) => item.id === invoice.id ? { ...item, returnIds: [...(item.returnIds || []), record.id] } : item)
       : invoices;
@@ -94,7 +99,6 @@ export class LegacyReturnCreationService implements LegacyReturnCreationPort {
       this.store.replacePositions(positions);
       this.store.replaceMovements(movements);
     }
-    const scope = { workspaceId: order.workspaceId, legacyBusinessUnitId: order.businessUnitId, branchId: order.branchId };
     void this.changes.ordersChanged({ scope, orderId: order.id, customerId: order.customerId }).catch(() => undefined);
     if (invoice) void this.changes.invoicesChanged({ scope, invoiceId: invoice.id, orderId: order.id }).catch(() => undefined);
     if (command.restock) void this.changes.inventoryChanged({ scope }).catch(() => undefined);

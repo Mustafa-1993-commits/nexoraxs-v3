@@ -3,6 +3,11 @@ import type { MockCustomersStore } from "../customers/MockCustomersStore";
 import type { MockInventoryStore } from "../inventory/MockInventoryStore";
 import type { MockInvoicesStore } from "../invoices/MockInvoicesStore";
 import type { MockOrdersStore } from "../orders/MockOrdersStore";
+import type { LegacyOrderCommandStore } from "@nexoraxs/contracts";
+import {
+  LegacyOrderCommandBehavior,
+  type LegacyOrderCommandFailureRule,
+} from "../orders/legacy-order-command-behavior";
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -16,19 +21,29 @@ export interface MemoryCommerceCollections {
   readonly invoices?: readonly unknown[];
 }
 
-export class MemoryCommerceStore implements MockCommerceStore, MockCustomersStore, MockInventoryStore, MockOrdersStore, MockInvoicesStore {
+export interface MemoryCommerceStoreOptions {
+  readonly orderCommandFailures?: readonly LegacyOrderCommandFailureRule[];
+}
+
+export class MemoryCommerceStore implements MockCommerceStore, MockCustomersStore, MockInventoryStore, MockOrdersStore, MockInvoicesStore, LegacyOrderCommandStore {
   private products: readonly unknown[];
   private customers: readonly unknown[];
   private inventory: readonly unknown[];
   private orders: readonly unknown[];
   private invoices: readonly unknown[];
+  private readonly orderCommandBehavior: LegacyOrderCommandBehavior;
 
-  constructor(products: readonly unknown[] = [], collections: MemoryCommerceCollections = {}) {
+  constructor(
+    products: readonly unknown[] = [],
+    collections: MemoryCommerceCollections = {},
+    options: MemoryCommerceStoreOptions = {},
+  ) {
     this.products = clone(products);
     this.customers = clone(collections.customers ?? []);
     this.inventory = clone(collections.inventory ?? []);
     this.orders = clone(collections.orders ?? []);
     this.invoices = clone(collections.invoices ?? []);
+    this.orderCommandBehavior = new LegacyOrderCommandBehavior(options.orderCommandFailures);
   }
 
   async readProducts(): Promise<readonly unknown[]> {
@@ -44,4 +59,14 @@ export class MemoryCommerceStore implements MockCommerceStore, MockCustomersStor
   async readInventory(): Promise<readonly unknown[]> { return clone(this.inventory); }
   async readOrders(): Promise<readonly unknown[]> { return clone(this.orders); }
   async readInvoices(): Promise<readonly unknown[]> { return clone(this.invoices); }
+
+  readOrderCommandRecords(): readonly unknown[] {
+    this.orderCommandBehavior.before("read");
+    return clone(this.orders);
+  }
+
+  replaceOrderCommandRecords(records: readonly unknown[]): void {
+    this.orderCommandBehavior.before("replace");
+    this.orders = clone(records);
+  }
 }

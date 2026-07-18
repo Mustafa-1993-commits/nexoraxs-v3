@@ -6,7 +6,7 @@ describe("SDK public surface", () => {
     const manifest = JSON.parse(readFileSync("packages/sdk/package.json", "utf8")) as { exports: Record<string, string> };
     expect(Object.keys(manifest.exports).sort()).toEqual([".", "./testing"]);
     const root = readFileSync("packages/sdk/src/index.ts", "utf8");
-    for (const concrete of ["MockProductsRepository", "MemoryCommerceStore", "BrowserStorageCommerceStore", "LegacyProductsCompatibilityFacade", "serialization", "Behavior"]) {
+    for (const concrete of ["MockProductsRepository", "MemoryCommerceStore", "BrowserStorageCommerceStore", "LocalOrderCommandRepository", "LocalOrderInventoryGateway", "LegacyProductsCompatibilityFacade", "LegacyOrderCommandBehavior", "serialization", "Behavior"]) {
       expect(root).not.toContain(concrete);
     }
     const testing = readFileSync("packages/sdk/src/testing/index.ts", "utf8");
