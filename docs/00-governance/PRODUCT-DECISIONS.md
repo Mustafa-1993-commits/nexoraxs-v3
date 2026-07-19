@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Product Decision Register
 
 **Status:** Current product decision register
@@ -464,4 +464,4 @@ Any proposed change must state:
 6. the approved replacement decision.
 
 Implementation convenience alone is not sufficient reason to change an approved product decision.
->>>>>>> origin/main
+
