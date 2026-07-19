@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository preserves the approved and proposed architectural decisions that govern Nexoraxs.
+This repository preserves the approved and proposed architectural decisions that govern NexoraXS.
 
 An Architecture Decision Record (ADR) captures one durable decision, the context that required it,
 the selected direction, its consequences, rejected alternatives, and authoritative source documents.
@@ -14,7 +14,7 @@ and approved Core Platform Wave 1 expand Genesis within their stated boundaries.
 approved decisions; they do not amend, reinterpret, or supersede their sources without the required
 approval process.
 
-## ADR Lifecycle
+## ADR lifecycle
 
 ```text
 Proposed
@@ -41,7 +41,7 @@ The ADRs extracted in the original foundation are **Accepted** because their dec
 approved by Genesis v1.1, the approved Core Platform Architecture Proposal v0.2, or Core Platform
 Wave 1. Later ADRs retain the status recorded in their own files.
 
-## ADR Numbering Rules
+## ADR numbering rules
 
 - ADR numbers use three digits: `ADR-001`, `ADR-002`, and so on.
 - Numbers are assigned sequentially across the repository.
@@ -55,7 +55,7 @@ Wave 1. Later ADRs retain the status recorded in their own files.
 - One ADR records one principal architectural decision. Closely related consequences remain in that
   ADR; an independently changeable decision receives its own number.
 
-## ADR Status Values
+## ADR status values
 
 The permitted status values are:
 
@@ -67,7 +67,7 @@ The permitted status values are:
 
 No additional status synonym may be introduced without an approved governance change.
 
-## Review Workflow
+## Review workflow
 
 1. Confirm the question is architectural and cannot be handled as an implementation detail.
 2. Read Genesis and every approved document that owns the affected boundary.
@@ -87,7 +87,7 @@ If a proposed decision conflicts with Genesis, work stops until Genesis is chang
 approved process. If it conflicts with an accepted ADR, the new ADR must explicitly supersede that
 ADR after approval.
 
-## How Future ADRs Are Added
+## How future ADRs are added
 
 1. Determine the next unused number from this folder.
 2. Copy the required structure:
@@ -116,7 +116,7 @@ ADR after approval.
 6. Add it in numeric order and never renumber existing records.
 7. When superseding a decision, mark the old ADR **Superseded** and add reciprocal links in both ADRs.
 
-## Repository Rules
+## Repository rules
 
 - ADRs do not replace Genesis or milestone architecture documentation.
 - ADRs may not resolve an approved open question without a new review and acceptance decision.
@@ -125,13 +125,14 @@ ADR after approval.
   implementations materially.
 - Rejected and superseded ADRs remain available as historical evidence.
 
-## Current Decision Set
+## Current decision set
 
-The repository contains ADR-001 through ADR-042. ADR-042 records the proposed Pre-Registration
-Business Discovery and Candidate Business Understanding lifecycle. Each ADR file is authoritative
-for its own current status.
+The repository contains ADR-001 through ADR-042. ADR-042 is **Accepted** and records the
+Pre-Registration Business Discovery, Candidate Business Understanding, knowledge-to-advice pipeline,
+product-ethics guardrail, Business DNA v1 conversion, and decision-lineage foundation. Each ADR file
+is authoritative for its own current status.
 
-## Authoritative Sources
+## Authoritative sources
 
 - [Genesis v1.1](../../01-genesis/)
 - [Approved Core Platform Architecture Proposal v0.2](../02-CORE-PLATFORM-ARCHITECTURE-PROPOSAL.md)
