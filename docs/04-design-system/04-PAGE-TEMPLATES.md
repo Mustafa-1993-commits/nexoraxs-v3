@@ -100,8 +100,9 @@ Every page template:
 | Dependencies | Owner workflow state and shared form/progress components. |
 | Ownership | The owner of the setup/workflow. Commerce setup remains Commerce-owned. |
 
-This template is not the default Business Architect template. Business Architect is adaptive and
-conversational, with one useful question at a time and a governed review checkpoint.
+This template is not the default Discovery or Business Architect template. Business Discovery is
+method-independent. Guided Business Conversation may present one useful question at a time, but it
+is only one approved experience pattern.
 
 ### 6.4 Dashboard Page
 
@@ -223,48 +224,64 @@ conversational, with one useful question at a time and a governed review checkpo
 | Dependencies | Commerce context, owner projections/actions, shared primitives, Commerce-specific components. |
 | Ownership | Commerce. |
 
-### 6.12 Business Architect Page
+### 6.12 Discovery Experience
 
 | Concern | Template contract |
 |---|---|
-| Purpose | Conduct a guided, conversational, adaptive, and resumable interview for one selected Business. |
-| Structure | Selected context/outcome reminder; progress; one focused prompt; answer composer; explanation/supporting information; previous context when useful; save/exit; recovery. |
+| Purpose | Present method-independent value-before-registration Discovery or its authenticated continuation without creating an anonymous Workspace/Business. |
+| Structure | Value/context; temporary-status and privacy explanation; approved method surface; candidate reflection; confidence/provenance; correction; Value Preview; authentication choice. |
+| Navigation | Public entry or authenticated continuation; optional and resumable only where retention authority permits; safe exit always visible. |
+| Actions | Continue with the current method, choose another approved method, correct, pause/discard, Register, or Login. |
+| Required states | Loading, no evidence, low confidence, contradiction, unavailable, error/recovery, temporary result; exact Discovery lifecycle deferred. |
+| Responsive behavior | Method and reflection remain usable without hiding temporary status, provenance, or customer choices. |
+| Accessibility | Method alternatives, semantic review structure, non-color confidence, keyboard/focus continuity, and clear status messages. |
+| Localization | Full English/LTR and Arabic/RTL parity; mixed-direction evidence preserved. |
+| Dependencies | Discovery goal/strategy, approved acquisition method, Candidate/provenance projection, privacy/retention policy. |
+| Ownership | Core composition; owning evidence sources retain their facts. |
+
+### 6.13 Business Architect Page
+
+| Concern | Template contract |
+|---|---|
+| Purpose | Present the governed authenticated selected-Business pipeline, using Guided Business Conversation only when that is the approved acquisition method. |
+| Structure | Selected context/outcome reminder; owner-reported Session condition; approved method surface; candidate/evidence review; correction; explicit publication approval when applicable; recovery. |
 | Navigation | Focused onboarding surface; entry/resume resolves the next safe stage; exit preserves work or explicitly confirms discard. |
 | Actions | Answer and continue; clarify, skip when allowed, add supporting information, back, save/exit, or ask why. |
-| Required states | Context resolving, prompt loading, draft, validating, saving, saved, paused, blocked, error/retry, complete-to-review. |
+| Required states | Context resolving; owner-reported progress, pause, block, expiry, or supersession; presentation loading/validation/error/recovery; exact new UI states deferred. |
 | Responsive behavior | Conversation order and progress remain clear; supporting panels become sequential without losing prompt context. |
 | Accessibility | Semantic prompt/response regions, announced updates without focus theft, keyboard controls, progress meaning, and error recovery. |
 | Localization | Prompts/help/errors translated; answers preserve user language and mixed-script direction. |
 | Dependencies | Core Business Architect session, selected Business, approved supporting context, shared form/state components. |
 | Ownership | Core Platform. |
 
-The Business Architect template is not a long static form, a fixed exhaustive wizard, or an
-unstructured chatbot.
+The Business Architect template is not public Discovery, registration, Guided Activation,
+Product Hub, or OS-Specific Setup. Its inherited Session lifecycle is not reused as a Discovery or
+Guided Activation state machine.
 
-### 6.13 Business Blueprint Page
+### 6.14 Business Blueprint Page
 
 | Concern | Template contract |
 |---|---|
-| Purpose | Present the customer-facing result of Business Architect as a clear, trustworthy long-form view. |
+| Purpose | Present a governed authenticated customer-facing non-writing projection derived from Business DNA and governed owner outputs. |
 | Structure | Business/source header; summary; Business DNA; needs; challenges; opportunities; readiness; recommended capabilities; implementation roadmap; section navigation; Recommendations continuation. |
-| Navigation | Enter after analysis or from Core Business/Dashboard; corrections return through governed review; Recommendations follows. |
-| Actions | Continue to Recommendations, navigate sections, return to correction, and use portability only if separately approved. |
+| Navigation | Enter after governed owner output is available or from Core Business/Dashboard; corrections return through owner review; Recommendations is optional. |
+| Actions | Navigate sections, enter an owner correction path, continue to Product Hub, optionally inspect Recommendations, and use portability only if separately approved. |
 | Required states | Loading by section, ready, partial source, optional section unavailable, stale, restricted, error/retry. |
 | Responsive behavior | Long-form hierarchy, section navigation, tables/visuals, and print/zoom reading remain coherent in both directions. |
 | Accessibility | Landmarks/headings, summary before detail, accessible readiness/visuals, keyboard section navigation, and source status. |
 | Localization | Full bilingual composition; Business content remains as entered; long-form RTL is native. |
-| Dependencies | Core Blueprint presentation over Business DNA and reviewed analysis projections. |
+| Dependencies | Core Blueprint presentation over Business DNA and governed owner projections. |
 | Ownership | Core presentation; source facts retain their canonical owners. |
 
-### 6.14 Recommendations Page
+### 6.15 Recommendations Page
 
 | Concern | Template contract |
 |---|---|
-| Purpose | Present explainable optional advice after the Blueprint and support human disposition. |
-| Structure | Selected Business/context; recommendation groups; reason/evidence/assumptions/alternatives/risk/confidence/benefit; optional implementation options; disposition; plan/access continuation. |
-| Navigation | Blueprint precedes this page; return to Blueprint is explicit; continuation does not require recommendation acceptance unless approved. |
-| Actions | Explain, compare, accept, defer, reject, return, or continue as permitted. |
-| Required states | Loading, none yet, partial/stale, explanation loading, disposition pending/failure/success, unavailable. |
+| Purpose | Present explainable optional capability-first advice and preserve customer agency. |
+| Structure | Selected Business/context; Business Need/Desired Outcome; capability; reason/evidence/assumptions/alternatives/risk/confidence/benefit; optional implementation/NexoraXS options; customer choices. |
+| Navigation | May be entered from Blueprint or another approved Core destination; Product Hub continuation does not require Recommendation acceptance. |
+| Actions | Explain, compare, explore, defer, decline, retain current tools, return, or continue as owner policy permits. |
+| Required states | Loading, no recommendation, partial/stale, explanation unavailable, owner-action pending/failure/success presentation; exact lifecycle deferred. |
 | Responsive behavior | Comparison becomes sequential while keeping option relationships and actions understandable. |
 | Accessibility | Semantic card/detail hierarchy, non-color confidence/risk, keyboard comparison/disclosure, and announced disposition. |
 | Localization | Rationale and risk translated without changing evidence meaning; optionality remains clear. |
@@ -277,7 +294,8 @@ unstructured chatbot.
 |---|---|
 | Establish identity | Authentication Page |
 | Complete ordered low-frequency setup | Guided Wizard Page |
-| Conduct adaptive Business discovery | Business Architect Page |
+| Acquire knowledge before registration | Discovery Experience |
+| Continue the governed authenticated selected-Business pipeline | Business Architect Page |
 | Understand current owner status and next action | Dashboard Page |
 | Browse and inspect records | Master/Detail or Table/List Page |
 | Compare and diagnose metrics | Analytics Page |

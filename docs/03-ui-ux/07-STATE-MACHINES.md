@@ -1,427 +1,205 @@
-# User-Visible State Machines
+# Presentation State Authority
 
-- **Status:** Target UX state specification reconciled with current frontend evidence
-- **Snapshot date:** 2026-07-19
-- **Owner:** Product Experience with the applicable Core Platform or Commerce owner
-- **Authority:** Presentation states only
+| Field | Value |
+|---|---|
+| Version | 1.1 reconciliation candidate |
+| Status | Canonical UI state-classification authority candidate; implementation not authorized |
+| Owner | Product Experience; owning domains retain lifecycle authority |
+| Architecture | Core Platform Architecture v1.1 Freeze |
 
 ## 1. Purpose
 
-This document defines user-visible states and safe presentation transitions for the major
-frontend flows. It does **not** define canonical domain state machines, database enums, backend
-workflow states, API contracts, ownership, or persistence models. Each UI transition must
-eventually be driven by an owner-approved fact, permission, or frontend fixture.
+This document prevents presentation behavior from becoming an accidental domain state machine. It
+classifies the kinds of state a UI may present and identifies which exact lifecycles are inherited,
+deferred, or evidence-only.
 
-## 2. Scope
+## 2. State Categories
 
-The models cover Authentication, Workspace Creation, Business Interview, Business Analysis,
-Business Blueprint, Recommendations, Product Activation, and Commerce Setup.
-
-## 3. Shared Rules
-
-1. Loading, empty/not-started, unavailable, unauthorized, stale, error, retrying, and ready are
-   presentation outcomes, not domain facts.
-2. The UI never infers authorization from authentication, a client-provided ID, plan, or product
-   availability.
-3. A retry repeats only safe reads or explicitly idempotent actions. Consequential commands require
-   known outcome handling.
-4. A partial projection identifies unavailable sections; it never fabricates owner data.
-5. State changes preserve current locale, direction, focus, safe form draft, and authorized context.
-6. Core state machines cannot own Commerce setup/operations. Commerce cannot write Core identity,
-   Workspace, Business, or subscription state.
-
-## 4. Authentication Presentation State Machine
-
-**Owner boundary:** Core Platform identity/session presentation.
-
-```mermaid
-stateDiagram-v2
-    [*] --> ResolvingSession
-    ResolvingSession --> Authenticated: valid session and context can continue
-    ResolvingSession --> SignedOut: no valid session
-    ResolvingSession --> Unavailable: session read failed
-    SignedOut --> CollectingIdentifier: choose Login/Register
-    CollectingIdentifier --> InvalidInput: client validation fails
-    InvalidInput --> CollectingIdentifier: edit
-    CollectingIdentifier --> CollectingSecret: valid identifier
-    CollectingSecret --> Authenticating: submit
-    Authenticating --> InvalidCredentials: rejected
-    InvalidCredentials --> CollectingSecret: retry/edit
-    Authenticating --> Authenticated: accepted mock result
-    Authenticating --> Unavailable: unknown failure
-    SignedOut --> RecoveringAccount: forgot password
-    RecoveringAccount --> SignedOut: reset completed or canceled
-    SignedOut --> Registering: create account
-    Registering --> VerificationRequired: mock account created
-    VerificationRequired --> Registering: account context missing
-    VerificationRequired --> Authenticated: verification presentation complete
-    Unavailable --> ResolvingSession: retry safe read
-    Authenticated --> [*]: route to exact safe destination
-```
-
-| State | User-visible behavior | Valid next states | Guard/evidence |
+| Category | Meaning | Authority | Examples allowed here |
 |---|---|---|---|
-| Resolving Session | Non-flashing progress state | Signed Out, Authenticated, Unavailable | Current browser session read |
-| Signed Out | Login/Register choices | Collecting Identifier, Registering, Recovering Account | No accepted session |
-| Collecting Identifier | Email/identifier entry | Invalid Input, Collecting Secret | Client validation only |
-| Collecting Secret | Password entry | Authenticating, Collecting Identifier | Identifier preserved safely |
-| Authenticating | Disabled submit and progress | Authenticated, Invalid Credentials, Unavailable | Current `loginUser` result; future owner fact |
-| Registering | Account details and validation | Verification Required, Invalid Input, Unavailable | Current `createUser` result |
-| Verification Required | OTP input/resend | Authenticated, Registering, Unavailable | Current mock accepts complete code; not production verification evidence |
-| Recovering Account | Request/code/reset presentation | Signed Out, Invalid Input, Unavailable | Current local flow only |
-| Authenticated | Resume resolution, not a final permission | Destination flow | Session exists; authorization still required |
-| Unavailable | Safe explanation and retry | Resolving Session or Signed Out | Read/operation failure |
+| Domain lifecycle | Canonical owner-governed fact and transitions | Freeze, Accepted ADR, owning-domain authority | Business DNA publication/revision boundary; Core Workspace Ready distinct from OS Ready |
+| Session lifecycle | Governed continuity record | Owning pipeline authority | Inherited Business Architect Session may progress, pause, block, expire, or be superseded |
+| Presentation state | What a surface currently shows | UI/UX authority and later feature spec | Review offered, correction visible, confirmation requested |
+| Loading state | Awaiting required presentation input | Design System and feature spec | Initial load, refresh, incremental content |
+| Validation state | User input or prerequisite needs attention | Owner rules plus UI presentation | Missing required material, stale review, invalid local input |
+| Permission state | Actor cannot view or act | Authorization owner | Unauthenticated, unauthorized, access changed |
+| Empty state | Authorized scope contains no displayable item | Owner read projection plus UI | No Recommendation is valid; no installed OS |
+| Error state | Requested presentation cannot complete | Owning boundary and UI | Unavailable, timeout, stale/conflict, dependency failure |
+| Recovery state | Safe next action after interruption/failure | Owner contract plus UI | Retry, re-authenticate, change context, return, correct |
+| Offline/degraded state | Connectivity or dependency cannot support normal work | Future feature specification | Read-only cached view only if later authorized; never implied here |
 
-**Current implementation:** Login/Register/verification/recovery expose most form states. Session
-resolution often returns `null` or redirects silently, and the post-login decision is only
-completed-browser-onboarding versus `/onboarding`.
+## 3. Normative Rules
 
-## 5. Workspace Creation Presentation State Machine
+1. A presentation label does not create a canonical state, enum, transition, Event, or permission.
+2. Exact domain lifecycles not frozen by authority are **deferred**.
+3. Current code labels are **evidence-only** unless a controlling source adopts them.
+4. Loading, empty, error, permission, and recovery outcomes must be distinguishable and localized.
+5. Client state never proves authorization, canonical publication, subscription, setup, or readiness.
+6. “Continue”, “Next”, account creation, and form completion never imply Business DNA approval.
+7. Retrying must not silently repeat a consequential action.
 
-**Owner boundary:** Core Platform Workspace context. Workspace is the customer/tenant boundary and
-must not be presented as canonical Business or Business Unit.
+## 4. Inherited Domain and Session Authority
 
-```mermaid
-stateDiagram-v2
-    [*] --> ResolvingEligibility
-    ResolvingEligibility --> NotStarted: authorized to create
-    ResolvingEligibility --> Unauthorized: not permitted
-    ResolvingEligibility --> Unavailable: context read failed
-    NotStarted --> Drafting: first input
-    Drafting --> Invalid: validation fails
-    Invalid --> Drafting: edit
-    Drafting --> Creating: submit valid draft
-    Creating --> Created: owner accepts
-    Creating --> Failed: write failed
-    Failed --> Drafting: retain draft
-    Failed --> Creating: safe retry
-    Created --> BusinessArchitectEntry: target sequence
-    Unauthorized --> [*]
-    Unavailable --> ResolvingEligibility: retry
-```
+### 4.1 Business Architect Session
 
-| State | User-visible behavior | Guard/evidence |
+The authenticated selected-Business pipeline retains the frozen Session lifecycle. Its record may
+**progress, pause, block, expire, or be superseded** under the inherited authority in Core Platform
+Architecture v1.1 section 5.6 and ADR-016/ADR-043.
+
+These exact inherited terms:
+
+- are not Discovery Session states;
+- are not Candidate Business Understanding lifecycle states;
+- are not Guided Activation presentation states;
+- are not Business DNA publication states; and
+- must not be combined into a new UI or domain state machine.
+
+The UI may present the owner-reported condition and a safe action. It must not calculate or write
+the condition.
+
+### 4.2 Business DNA publication
+
+The approved ordering is review/correction → explicit authenticated approval → first Business DNA
+v1 publication → Guided Activation. This is an architectural invariant, not a complete state list.
+Exact revision, rollback, invalidation, and approval mechanics remain deferred.
+
+### 4.3 Readiness
+
+Core Workspace Ready and Operating System Ready are separate owner facts. UI composition may show
+both but must never derive one from the other.
+
+## 5. Experience-State Matrices
+
+The labels below are presentation categories, not domain states.
+
+### 5.1 Public Discovery
+
+| Presentation concern | Required behavior | Classification |
 |---|---|---|
-| Resolving Eligibility | Load session and creation eligibility | Authenticated Core context |
-| Not Started | Introduction and empty form | No creation attempt |
-| Drafting | Name and locale-aware defaults editable | Local draft only |
-| Invalid | Field-specific accessible errors | Client validation; future server validation remains authoritative |
-| Creating | Submit disabled; progress announced | Current mock `createWorkspace`; future owning operation |
-| Created | Confirmation and next action | Workspace projection available in current context |
-| Failed | Retained draft and retry/cancel | Known failure; no success assumed |
-| Unauthorized | No create control; safe Core destination | Owner authorization result |
-| Unavailable | Safe context error | Read dependency unavailable |
+| Entry | Explain value, temporary status, method choice, privacy, and customer control | Presentation-only |
+| Loading | Identify acquisition or analysis activity without false certainty | Presentation-only |
+| No evidence | Explain the gap and offer another appropriate method | Presentation-only |
+| Low confidence | Show uncertainty and invite review/correction | Presentation-only |
+| Contradiction | Present conflicting material without silently choosing truth | Presentation-only |
+| Interrupted | Resume only if retention authority permits; otherwise explain restart | Deferred owner input |
+| Error | Retry, alternate method, or safe exit | Presentation-only |
+| Completion | Value Preview or authentication choice, never canonical publication | Architectural invariant |
 
-**Current implementation:** `/welcome` introduces creation and `/onboarding` step 1 calls
-`createWorkspace`. Hydration can render blank, write failure is not surfaced, and success proceeds
-to OS selection rather than Business Architect.
+No exact Discovery Session state names are authorized.
 
-## 6. Business Interview Presentation State Machine
+### 5.2 Candidate Review and First Publication
 
-**Owner boundary:** Core Platform Business Architect and Business DNA intake/review. Answers and
-draft candidates are not automatically published Business DNA.
-
-```mermaid
-stateDiagram-v2
-    [*] --> ResolvingBusinessContext
-    ResolvingBusinessContext --> NotStarted: authorized Business and no session
-    ResolvingBusinessContext --> Resumable: safe draft exists
-    ResolvingBusinessContext --> Unauthorized: context denied
-    ResolvingBusinessContext --> Unavailable: context/session read failed
-    NotStarted --> PromptLoading: start
-    Resumable --> PromptLoading: resume
-    PromptLoading --> Answering: prompt ready
-    PromptLoading --> Failed: prompt unavailable
-    Answering --> InvalidAnswer: validation/clarification needed
-    InvalidAnswer --> Answering: revise
-    Answering --> SupportingInformation: optional evidence path
-    SupportingInformation --> Answering: return to prompt
-    Answering --> SavingCheckpoint: continue or pause
-    SavingCheckpoint --> PromptLoading: more prompts
-    SavingCheckpoint --> Paused: user exits
-    SavingCheckpoint --> ReviewReady: interview complete
-    SavingCheckpoint --> Failed: save failed
-    Failed --> PromptLoading: retry read
-    Failed --> Answering: retained draft
-    Paused --> Resumable: later authorized return
-    ReviewReady --> [*]
-```
-
-| State | User-visible behavior | Guard/evidence |
+| Presentation concern | Required behavior | Classification |
 |---|---|---|
-| Resolving Business Context | Confirm Business and any safe session | Canonical Business context required; current implementation lacks it |
-| Not Started | Introduction and start action | No draft session |
-| Resumable | Explain saved point and resume | Authorized, non-superseded draft |
-| Prompt Loading | Skeleton/progress for next prompt | Planned replaceable fixture/client read |
-| Answering | One guided/conversational prompt | Prompt ready |
-| Invalid Answer | Inline explanation without losing input | Presentation validation |
-| Supporting Information | Optional supporting context | Approved evidence policy only |
-| Saving Checkpoint | Announced progress; controls protected | Safe draft checkpoint operation |
-| Paused | Confirmation and Core safe exit | Checkpoint known saved |
-| Review Ready | Interview completion and Review action | All required prompts complete |
-| Failed | Error type, retained input, safe retry | Known mock/client failure |
-| Unauthorized | No Business details exposed | Owner access decision |
+| Loading | Load candidate, evidence, confidence, and context | Presentation-only |
+| Empty | Explain insufficient material and return to knowledge acquisition | Presentation-only |
+| Review | Distinguish Observed Fact, Inference, Assessment, and owner output | Architectural terminology |
+| Correction | Permit challenge/correction without implying publication | Architectural invariant |
+| Approval required | Dedicated explicit action with consequence disclosure | Architectural invariant |
+| Validation failure | Preserve candidate and return to actionable review | Presentation-only |
+| Permission denied | Withhold action/content and offer safe return/context change | Authorization outcome |
+| Publication success | Confirm versioned Business-scoped publication | Owner fact presentation |
 
-**Current implementation:** No Business Architect route, component, fixture seam, session, or state
-model was found.
+Exact Candidate Business Understanding lifecycle states are deferred.
 
-## 7. Business Analysis Presentation State Machine
+### 5.3 Guided Activation
 
-**Owner boundary:** Business Brain owns deterministic Decisions/advisory outputs; Business DNA,
-Knowledge, Rules, and OS facts retain their owners. This UI does not define analysis rules.
-
-```mermaid
-stateDiagram-v2
-    [*] --> ReviewRequired
-    ReviewRequired --> ReadyToAnalyze: user confirms versioned input
-    ReviewRequired --> NeedsCorrection: incomplete/conflicting review
-    NeedsCorrection --> ReviewRequired: answers corrected
-    ReadyToAnalyze --> Queued: start accepted
-    Queued --> Analyzing: deterministic run begins
-    Queued --> Failed: start unavailable
-    Analyzing --> NeedsCorrection: owner requests valid input
-    Analyzing --> Failed: retryable failure
-    Analyzing --> Completed: Decision/output available
-    Failed --> Queued: safe retry same input/version
-    Failed --> ReviewRequired: edit input
-    Completed --> BlueprintAvailable: projection composed
-    BlueprintAvailable --> [*]
-```
-
-| State | User-visible behavior | Guard/evidence |
+| Presentation concern | Required behavior | Classification |
 |---|---|---|
-| Review Required | Show material answers, provenance, gaps | Completed interview draft |
-| Needs Correction | Link to exact correction point | Owner/fixture validation result |
-| Ready to Analyze | Confirm exact input version | Review explicitly confirmed |
-| Queued | Acknowledge request without invented progress | Planned deterministic fixture/result |
-| Analyzing | Meaningful progress/status supplied by source | No AI-only or fabricated stage |
-| Failed | Explain retry/edit paths | Known failure and outcome |
-| Completed | Analysis completion; no recommendation shown yet | Completed deterministic result |
-| Blueprint Available | Navigate to Blueprint | Blueprint projection ready |
+| Entry | Only after published Business DNA | Architectural invariant |
+| Remaining gaps | Present incompleteness/confidence without false finality | Presentation-only |
+| Correction/revision | Return to governed review and explicit publication | Architectural invariant |
+| Pause/resume | Present owner-supported continuity | Deferred owner input |
+| Completion | Indicate owner-reported Core readiness; do not infer OS readiness | Owner fact presentation |
 
-**Current implementation:** No deterministic Business Brain frontend runtime, fixture, analysis
-route, or progress state exists. The first frontend slice must not simulate ungoverned AI analysis.
+No exact Guided Activation state names are authorized.
 
-## 8. Business Blueprint Presentation State Machine
+### 5.4 Business Blueprint
 
-**Owner boundary:** Core presentation composed from owner-approved projections. Business Blueprint
-is not a new aggregate and does not own Business DNA or Recommendation lifecycle.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Loading
-    Loading --> Ready: all required sections available
-    Loading --> Partial: required presentation can render with named omissions
-    Loading --> Empty: no completed analysis/Blueprint
-    Loading --> Stale: source versions changed
-    Loading --> Unauthorized: access denied
-    Loading --> Failed: read failed
-    Partial --> Loading: retry missing sections
-    Stale --> Loading: refresh approved projection
-    Failed --> Loading: retry
-    Ready --> InspectingSection: navigate within Blueprint
-    InspectingSection --> Ready: return to overview
-    Ready --> RecommendationsAvailable: continue
-    Partial --> RecommendationsAvailable: only if owner projection permits
-    Ready --> CorrectionRequested: request review path
-    CorrectionRequested --> [*]: return to owner-approved correction flow
-    RecommendationsAvailable --> [*]
-```
-
-| State | User-visible behavior | Guard/evidence |
+| Presentation concern | Required behavior | Classification |
 |---|---|---|
-| Loading | Section skeletons with context | Blueprint read in progress |
-| Empty | Explain analysis prerequisite | No completed Blueprint projection |
-| Partial | Render available sections and name unavailable ones | Partial owner projections; no fabricated values |
-| Stale | Explain source version change and refresh path | Source version mismatch |
-| Ready | Business DNA, summary, needs, challenges, opportunities, readiness, capabilities, roadmap | Approved composed projection |
-| Inspecting Section | In-page navigation and provenance | Same read-only projection |
-| Correction Requested | Link back to review; no direct canonical write | Approved correction workflow required |
-| Recommendations Available | Separate next-stage action | Recommendation projection availability, not Blueprint mutation |
-| Failed/Unauthorized | Retry or safe return; minimized details | Read/authorization result |
+| Loading | Preserve context; identify projection loading | Presentation-only |
+| Partial/stale | Disclose incompleteness/version context | Presentation-only |
+| Ready | Present governed authenticated non-writing projection | Owner projection |
+| Correction requested | Navigate to owner workflow; never edit projection directly | Architectural invariant |
+| Unavailable/denied | Safe retry/return without leaking Business data | Presentation-only / authorization |
 
-**Current implementation:** No Business Blueprint screen exists. Platform Dashboard and Product Hub
-must not be mislabeled as this customer-facing Blueprint.
+No canonical “Blueprint lifecycle” is created.
 
-## 9. Recommendations Presentation State Machine
+### 5.5 Insight and Recommendation
 
-**Owner boundary:** Recommendation Engine and applicable owner projections. Recommendations are
-optional, explainable, downstream of Business context, Capabilities, Knowledge, deterministic
-Rules, and completed Business Brain Decisions.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Loading
-    Loading --> NoneAvailable: no recommendation candidates/results
-    Loading --> Ready: recommendations available
-    Loading --> Partial: one source unavailable
-    Loading --> Stale: source version changed
-    Loading --> Failed: read failed
-    Loading --> Unauthorized: access denied
-    Ready --> Inspecting: open rationale/evidence
-    Inspecting --> Ready: close detail
-    Ready --> Deferred: user chooses later
-    Ready --> Dismissed: permitted disposition
-    Ready --> Continuing: choose allowed next action
-    Partial --> Loading: retry
-    Stale --> Loading: refresh
-    Failed --> Loading: retry
-    Deferred --> [*]
-    Dismissed --> [*]
-    Continuing --> [*]: Plan/access or owner action flow
-```
-
-| State | User-visible behavior | Guard/evidence |
+| Presentation concern | Required behavior | Classification |
 |---|---|---|
-| Loading | Recommendation skeleton/progress | Recommendation read pending |
-| None Available | Neutral empty state; Dashboard continuation | Valid empty result |
-| Ready | Ranked/grouped explainable Recommendations | Owner projection ready |
-| Inspecting | Rationale, evidence, assumptions, alternatives, risk, confidence, benefit | Fields supplied by projection |
-| Partial/Stale | Name limitation and retry/refresh | Source state |
-| Deferred | Preserve optional future review | Accepted disposition if approved |
-| Dismissed | Confirmation without rewriting Blueprint | Accepted disposition if approved |
-| Continuing | Route to access/plan/owner action | Separate authorization and validation |
-| Failed/Unauthorized | Retry or safe return | Read/access outcome |
+| No insight/recommendation | Valid, neutral empty outcome | Product Ethics / presentation |
+| Low confidence | Explain uncertainty and withhold false certainty | Presentation-only |
+| Evidence/lineage unavailable | Disclose limitation; restrict action if required | Presentation-only |
+| Review | Show rationale, evidence, alternatives, risk, confidence | Frozen Recommendation guarantee |
+| Decline/postpone | Neutral customer choice; exact persistence/disposition deferred | Presentation-only |
+| Consequential next action | Require owner validation and human authority | Frozen invariant |
 
-**Current implementation:** No Recommendation screen or fixture exists. Product Hub's current
-static/derived cards are not a substitute for capability-first explainable Recommendations.
+Business Insight remains conceptual inside Business Brain Decision. No Recommendation lifecycle is
+standardized here.
 
-## 10. Product Activation Presentation State Machine
+### 5.6 Product Hub and OS handoff
 
-**Owner boundary:** Core Product Hub composes owner projections and handoff. Commercial and
-operational lifecycle concepts remain distinct. The unresolved successor to legacy `OSEnablement`
-is not defined here.
-
-```mermaid
-stateDiagram-v2
-    [*] --> LoadingProjections
-    LoadingProjections --> Unavailable: product unavailable/future
-    LoadingProjections --> Available: product can be considered
-    LoadingProjections --> Partial: one owner projection failed
-    LoadingProjections --> Unauthorized: product/action not visible
-    LoadingProjections --> Failed: composition failed
-    Available --> AccessRequired: no approved access
-    Available --> SetupRequired: access exists, OS not ready
-    Available --> Ready: access and OS readiness projections permit launch
-    AccessRequired --> AccessPending: allowed commercial action begins
-    AccessPending --> SetupRequired: access projection confirms
-    AccessPending --> AccessRequired: rejected/failed
-    SetupRequired --> HandoffPending: start setup
-    HandoffPending --> HandoffRejected: target rejects context
-    HandoffRejected --> SetupRequired: return/retry
-    HandoffPending --> InOwnerSetup: target accepts
-    InOwnerSetup --> SetupRequired: save/exit incomplete
-    InOwnerSetup --> Ready: owner reports ready
-    Ready --> LaunchPending: launch
-    LaunchPending --> InOperatingSystem: target accepts
-    LaunchPending --> Ready: launch failure
-    Partial --> LoadingProjections: retry
-    Failed --> LoadingProjections: retry
-```
-
-| State | User-visible behavior | Guard/evidence |
+| Presentation concern | Required behavior | Classification |
 |---|---|---|
-| Loading Projections | Per-owner loading, not one fabricated global state | Product/access/readiness reads |
-| Unavailable | Coming later/unavailable explanation | Product catalog projection |
-| Available | Product information and next allowed action | Availability alone grants nothing |
-| Access Required/Pending | Billing/access route and outcome | Core commercial owner projection |
-| Setup Required | Setup action without claiming operational readiness | Access plus OS owner readiness projection |
-| Handoff Pending/Rejected | Cross-app progress or safe return | Accepted current frontend handoff boundary |
-| In Owner Setup | Commerce owns UI and writes | Target app accepted context |
-| Ready | Launch action if user is authorized | Owner readiness plus access/permission projections |
-| Launch Pending/In OS | Target navigation and accepted operational context | Target owner result |
-| Partial/Failed/Unauthorized | Minimized state, retry, or no action | Composition/access result |
+| Product unavailable | Explain owner-projected availability | Owner projection |
+| Commercial action unavailable | Separate permission/entitlement/subscription reasons | Owner projection |
+| Setup required | Handoff to OS-owned setup | Architectural invariant |
+| OS not ready | Present OS owner result; never infer from Core readiness | Owner projection |
+| Launch allowed | Requires readiness, access, and actor permission | Architectural invariant |
+| Handoff failure | Preserve Core context and safe return | Presentation-only |
 
-**Current implementation:** Product Hub currently derives subscription/setup booleans and builds a
-Commerce handoff. Core Dashboard layout incorrectly requires Commerce in `completedOS` before
-entry. Current `osEnablements` records are legacy compatibility state and remain non-canonical.
+No canonical `OSEnablement` or merged activation state machine is authorized.
 
-## 11. Commerce Setup Presentation State Machine
+## 6. Current Implementation Evidence
 
-**Owner boundary:** Commerce owns setup UI, operational configuration, validation, persistence, and
-readiness. Core supplies approved read-only context/handoff only.
+Current frontend labels and browser data under `apps/core-platform/` and `apps/commerce/` are an
+implementation snapshot only. In particular, current onboarding completion, `osEnablements`,
+legacy BusinessUnit-as-Business presentation, and Commerce setup labels must not be promoted into
+v1.1 lifecycle authority.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Hydrating
-    Hydrating --> MissingContext: no accepted Core handoff
-    Hydrating --> AuthenticationRequired: handoff exists but actor session absent
-    Hydrating --> LoadingSetup: context accepted
-    Hydrating --> Failed: browser read failed
-    MissingContext --> [*]: return Product Hub or Login
-    AuthenticationRequired --> [*]: Core Login
-    LoadingSetup --> Drafting: new or incomplete setup
-    LoadingSetup --> Ready: setup already complete
-    LoadingSetup --> Failed: read failed
-    Drafting --> InvalidStep: continue with invalid input
-    InvalidStep --> Drafting: edit
-    Drafting --> Saving: save/exit or step checkpoint
-    Saving --> Drafting: saved and continue
-    Saving --> Failed: write failed
-    Drafting --> Reviewing: final step
-    Reviewing --> Drafting: edit earlier step
-    Reviewing --> Completing: finish
-    Completing --> Ready: owner setup reports complete
-    Completing --> Failed: completion failed
-    Failed --> LoadingSetup: retry read
-    Failed --> Drafting: retained safe draft
-    Ready --> CommerceDashboard
-    CommerceDashboard --> [*]
-```
+## 7. Required State Coverage Per Future Surface
 
-| State | User-visible behavior | Guard/evidence |
-|---|---|---|
-| Hydrating | Progress without rendering another context | Commerce AppProvider hydration |
-| Missing Context | Explain Product Hub entry requirement | No valid handoff compatibility context |
-| Authentication Required | Safe Core Login action | Handoff exists; current actor absent |
-| Loading Setup | Load existing Commerce setup | Commerce owner store/service |
-| Drafting | Eight setup steps and live preview | Local Commerce draft |
-| Invalid Step | Accessible field errors; stay on step | Commerce presentation validation |
-| Saving | Disable conflicting actions, announce progress | Commerce setup service write |
-| Reviewing | Summary and edit links | Required draft sections present |
-| Completing | Finish operation pending | Commerce owner service |
-| Ready | Commerce Dashboard action | Commerce setup projection reports complete |
-| Failed | Known outcome, retained safe draft, retry | Read/write/completion failure |
+Every future specification must explicitly address:
 
-**Current implementation:** All eight steps and missing-context recovery exist. Hydration has a
-spinner; setup uses current browser services. Copy is mostly hard-coded English, route-level role
-guards are absent, and production persistence/authorization are intentionally not defined.
+- initial and incremental loading;
+- success/ready presentation;
+- empty/no-data;
+- local validation and owner validation;
+- unauthenticated and unauthorized;
+- stale/conflict;
+- dependency and generic error;
+- interruption, timeout where applicable, and resume;
+- offline/degraded behavior or an explicit N/A rationale;
+- recovery and safe return; and
+- English/LTR, Arabic/RTL, keyboard, focus, screen-reader, and responsive behavior.
 
-## 12. State Coverage Matrix
+## 8. Deferred Decisions
 
-| Machine | Current coverage | Primary missing UX |
-|---|---|---|
-| Authentication | Partial to strong | Unified session/resume state, complete localization, non-silent hydration/error |
-| Workspace Creation | Partial | Visible failure/retry and Business Architect exit |
-| Business Interview | Missing | Entire guided/resumable presentation and fixture seam |
-| Business Analysis | Missing | Entire deterministic progress/recovery presentation |
-| Business Blueprint | Missing | Entire composed read-only presentation |
-| Recommendations | Missing | Entire explainable optional recommendation presentation |
-| Product Activation | Partial | Correct Platform-first gate, distinct projection states, permission-aware actions |
-| Commerce Setup | Strong frontend mock | Localization, permission presentation, stronger failure/resume evidence |
+Exact Discovery, Candidate, Guided Activation, Blueprint, Insight, Recommendation, Product Hub,
+and OS setup lifecycle states remain deferred to an approved owning-domain source or feature
+specification. This document does not create an RFC or answer them.
 
-## 13. Relationships
+## 9. Relationships
 
-- [User Journeys](./05-USER-JOURNEYS.md)
 - [User Flows](./06-USER-FLOWS.md)
-- [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md)
-- [Design System Interaction Patterns](../04-design-system/05-INTERACTION-PATTERNS.md)
-- [Core Platform Architecture](../02-core-platform/README.md)
+- [Interaction Patterns](../04-design-system/05-INTERACTION-PATTERNS.md)
+- [Screen Map](./02-SCREEN-MAP.md)
+- [Core Platform Architecture v1.1](../99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md)
+- [Business Brain Compatibility](../03-business-brain/13-BUSINESS-BRAIN-FOUNDATION-COMPATIBILITY-v1.0.md)
 
-## 14. Open Questions
+## 10. Open Questions
 
-- Which owner-approved permission catalog gates each action represented above?
-- Which canonical Business entry/selection state precedes Business Interview?
-- What approved product decision defines user-visible restart/discard behavior for an interview
-  draft?
+Only the deferred exact lifecycles and owner contracts described above remain open. They are not
+resolved through UI labels.
 
-## 15. Verified Against
+## 11. Verified Against
 
-- current route, layout, shell, auth, onboarding, setup, Product Hub, POS, and feature-state source
-  under `apps/core-platform` and `apps/commerce`;
-- current mock storage, repositories, services, and Features 052–055 test evidence;
-- [Platform Experience](./01-PLATFORM-EXPERIENCE.md), [Screen Map](./02-SCREEN-MAP.md),
-  [User Journeys](./05-USER-JOURNEYS.md), and [User Flows](./06-USER-FLOWS.md);
-- Core Platform, Business Brain, and Commerce OS architecture/freeze documents; and
-- Accepted ADR-016, ADR-023, Product Decisions, the Constitution, and repository AGENTS guidance.
+- `docs/99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md` sections 4–6, 10–11
+- `docs/99-architecture-freeze/CORE-PLATFORM-v1.0-FREEZE.md` guarantee register
+- `docs/00-governance/ADR/ADR-016-business-architect-governed-pipeline.md`
+- `docs/00-governance/ADR/ADR-043-foundation-discovery-and-business-architect-composition.md`
+- `docs/00-governance/glossary/GLOSSARY.md`
 

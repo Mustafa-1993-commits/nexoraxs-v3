@@ -1,15 +1,16 @@
 # Localization and Locale Experience Specification
 
-- **Status:** Target frontend specification; persistence precedence remains a Governance dependency
+- **Version:** 1.0 reconciliation candidate
+- **Status:** Canonical localization UX authority candidate; implementation not authorized
 - **Launch languages:** English and Arabic
 - **Extensibility:** Any configured language; no hard-coded language-count ceiling
 - **Owner:** Product Experience and Localization, within Core Platform coordination and each owning application's UI
-- **Snapshot date:** 2026-07-19
+- **Architecture:** Core Platform Architecture v1.1 Freeze and Accepted ADR-041
 
 ## 1. Purpose
 
-This document defines the production target for locale-aware NexoraXS frontend experiences. It
-requires a reusable Locale Engine that can support an open-ended set of configured languages,
+This document defines the product-experience authority for locale-aware NexoraXS experiences. It
+requires a locale-independent presentation boundary that can support an open-ended set of configured languages,
 while English and Arabic are the only launch languages currently required.
 
 “Unlimited languages” means the architecture and product UI impose no fixed two-language union,
@@ -424,15 +425,17 @@ Required evidence for each affected frontend slice:
 - Which translation-resource governance process and release owner approves a new customer-visible
   locale?
 
-These questions do not block frontend extraction of hard-coded strings, a registry-based engine,
-launch-language resource completeness, or RTL/LTR remediation. They do block claims about final
-account/Workspace preference persistence and precedence.
+These questions do not change the architectural obligation to avoid hard-coded user-facing text,
+support an open-ended locale registry, complete launch-language resources, and provide RTL/LTR
+parity. They do block claims about final account/Workspace preference persistence and precedence.
+This document does not authorize implementation of those obligations.
 
 ## 21. Verified Against
 
 - repository AGENTS instructions and `.specify/memory/constitution.md`;
-- [Product Decisions](../00-governance/PRODUCT-DECISIONS.md), Core Platform, Global Platform,
-  Architecture Freeze, and applicable localization ADR/proposal status;
+- [Core Platform Architecture v1.1](../99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md),
+  [ADR-041](../00-governance/ADR/ADR-041-global-localization-internationalized-representation.md),
+  [Product Decisions](../00-governance/PRODUCT-DECISIONS.md), and applicable Global Platform sources;
 - [Platform Experience](./01-PLATFORM-EXPERIENCE.md), [Screen Map](./02-SCREEN-MAP.md),
   [Information Architecture](./04-INFORMATION-ARCHITECTURE.md), and
   [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md);

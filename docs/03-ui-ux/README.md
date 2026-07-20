@@ -1,197 +1,156 @@
-# NexoraXS UI/UX Documentation
+# NexoraXS UI/UX Authority
 
-- **Status:** Canonical UI/UX workspace index
-- **Owner:** Product and Design
-- **Authority:** Product-experience and UX authority subordinate to frozen architecture, Governance, and approved product decisions
-- **Scope:** Product experience, information architecture, journeys, flows, user-visible states, wireframes, accessibility application guidance, localization UX, and UI copy
+| Field | Value |
+|---|---|
+| Version | 1.1 reconciliation candidate index |
+| Status | UI/UX authority candidate; final approval pending |
+| Owner | Product and Design Governance |
+| Controlling architecture | Core Platform Architecture v1.1 Freeze |
 
 ## 1. Purpose
 
-`docs/03-ui-ux/` is the single canonical workspace for NexoraXS product-experience and UX
-documentation. It defines how customers enter, understand, navigate, and use approved Core
-Platform and Commerce experiences.
+`docs/03-ui-ux/` is the single active workspace for NexoraXS product experience, information
+architecture, journeys, presentation flows/states, screen evidence, wireframe governance,
+accessibility, localization, UI copy, gaps, and design intake.
 
-Architecture defines ownership, boundaries, canonical facts, lifecycles, and allowed
-dependencies. UI/UX defines the customer experience within those constraints. UI/UX documents
-reference architecture; they do not replace it.
+Architecture defines canonical ownership and boundaries. UI/UX defines customer experience inside
+those boundaries. The Design System defines reusable presentation semantics. Feature specifications
+define bounded requirements. Implementation evidence shows what exists; it does not create target
+authority.
 
 ## 2. Scope
 
-This workspace owns:
+This package owns:
 
-- the canonical Platform customer experience;
-- verified and planned screen/route classification;
-- current-to-target frontend experience findings;
-- information architecture and navigation rules;
-- target user journeys, user flows, and user-visible state models reconciled with current evidence;
-- approved wireframe references;
-- application-level accessibility and localization guidance; and
-- interface terminology and copy guidance.
+- public and authenticated experience progression;
+- semantic navigation and context continuity;
+- customer journeys and presentation flows;
+- classification of domain, Session, and presentation states;
+- current screen/route evidence and target semantic destinations;
+- wireframe-governance, accessibility, localization, and UI-copy authority; and
+- UX gap and feature-intake evidence.
 
-Reusable design foundations, token semantics, component taxonomy, page templates, and interaction
-patterns belong to the separate [Design System](../04-design-system/README.md).
+It does not own architecture, canonical domain state, routes, APIs, persistence, permissions,
+feature approval, or implementation.
 
-## 3. Out of Scope
+## 3. Authority Model
 
-This workspace does not:
+### 3.1 Controlling inputs
 
-- amend an Architecture Freeze, Accepted ADR, Genesis, or owning-domain baseline;
-- create an architecture owner, domain concept, backend contract, schema, API, or permission model;
-- make a planned or placeholder artifact implementation-ready;
-- transfer Core Platform or Commerce responsibilities;
-- duplicate reusable Design System documentation; or
-- replace an approved feature specification, plan, tasks, or implementation evidence.
+1. [Core Platform Architecture v1.1 Freeze](../99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md)
+2. Accepted ADRs, especially [ADR-015](../00-governance/ADR/ADR-015-infer-before-asking-conversational-configuration.md),
+   [ADR-016](../00-governance/ADR/ADR-016-business-architect-governed-pipeline.md),
+   [ADR-042](../00-governance/ADR/ADR-042-pre-registration-business-discovery.md), and
+   [ADR-043](../00-governance/ADR/ADR-043-foundation-discovery-and-business-architect-composition.md)
+3. [Foundation Journey Successor Addendum](../01-genesis/21-FOUNDATION-JOURNEY-SUCCESSOR-ADDENDUM-v1.0.md)
+4. [Business Brain Foundation Compatibility](../03-business-brain/13-BUSINESS-BRAIN-FOUNDATION-COMPATIBILITY-v1.0.md)
+5. [Canonical Glossary](../00-governance/glossary/GLOSSARY.md)
 
-## 4. Authority
+The active Genesis tree is `docs/01-genesis/`. `docs/genesis/` is historical/non-authoritative and
+has an explicit [authority marker](../genesis/README.md).
 
-Repository authority remains:
+### 3.2 Canonical UI/UX authority candidates
 
-1. [Architecture Freezes](../99-architecture-freeze/);
-2. [Governance and Accepted ADRs](../00-governance/ADR/README.md), including the
-   [Product Decision Register](../00-governance/PRODUCT-DECISIONS.md) for confirmed product-level
-   decisions only;
-3. [Genesis](../01-genesis/01-VISION.md);
-4. approved architecture baselines, including
-   [Core Platform](../02-core-platform/README.md) and Commerce OS;
-5. the [Constitution](../../.specify/memory/constitution.md) and
-   [Execution policy](../11-execution/01-DEVELOPMENT-LIFECYCLE.md);
-6. this UI/UX workspace for the concerns explicitly assigned to it; and
-7. approved feature specifications and their implementation evidence.
+These documents are reconciled candidates awaiting independent review and approval:
 
-Within this workspace:
+| Order | Document | Authority concern |
+|---|---|---|
+| 1 | [Platform Experience](./01-PLATFORM-EXPERIENCE.md) | Experience principles and architecture-aligned progression |
+| 2 | [Information Architecture](./04-INFORMATION-ARCHITECTURE.md) | Semantic destinations, context, navigation, and safe return |
+| 3 | [User Journeys](./05-USER-JOURNEYS.md) | Actor goals, control, recovery, and outcomes |
+| 4 | [User Flows](./06-USER-FLOWS.md) | Presentation interactions using semantic nodes |
+| 5 | [Presentation State Authority](./07-STATE-MACHINES.md) | Separation of domain, Session, presentation, loading, error, and recovery states |
+| 6 | [Wireframe Authority Boundary](./08-WIREFRAMES.md) | What future wireframes may and may not decide |
+| 7 | [Accessibility Authority](./09-ACCESSIBILITY.md) | WCAG 2.2 AA cross-experience outcomes |
+| 8 | [Localization](./10-LOCALIZATION.md) | Locale independence, English/Arabic launch parity, LTR/RTL |
+| 9 | [UI Copy Guidelines](./11-UI-COPY-GUIDELINES.md) | Accurate customer language and canonical terminology |
 
-- [Platform Experience](./01-PLATFORM-EXPERIENCE.md) is authoritative for the canonical customer
-  journey and stage-level product experience.
-- [Screen Map](./02-SCREEN-MAP.md) is authoritative for the dated current-route inventory and
-  current/planned screen classification.
-- [Frontend Experience Gap Analysis](./03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md) is an evidence-based
-  current-to-target analysis, not architecture authority.
-- [Information Architecture](./04-INFORMATION-ARCHITECTURE.md) is authoritative for navigation
-  structure within approved product and architecture boundaries.
-- [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md) is the dated route/screen completion
-  assessment; it does not replace the Screen Map.
-- [User Journeys](./05-USER-JOURNEYS.md), [User Flows](./06-USER-FLOWS.md), and
-  [State Machines](./07-STATE-MACHINES.md) define target presentation behavior and explicitly
-  separate it from canonical domain lifecycles.
-- [Localization](./10-LOCALIZATION.md) defines the target open-ended frontend locale experience;
-  unresolved persistence precedence remains a Governance dependency.
-- [Frontend Backlog](./14-FRONTEND-BACKLOG.md) is implementation planning only and does not
-  authorize code changes.
+No candidate is final until the reconciliation gate and independent review succeed.
 
-Any conflict with a higher authority stops work at the affected boundary and is routed through
-Governance. It is not resolved in a UX document.
+### 3.3 Design System authority
 
-## 5. Current, Planned, and Approved
+[Design System](../04-design-system/README.md) owns reusable visual/interaction foundations, token
+semantics, component roles, templates, and patterns. It does not decide journeys, routes, domain
+states, or owners. [Design Intelligence](../10-design-intelligence/08-NEXORAXS-DESIGN-LAYER.md)
+governs how material design proposals are researched and reviewed; advisory outputs are not
+automatic authority.
+
+### 3.4 Evidence only
+
+| Document | Evidence role |
+|---|---|
+| [Screen Map](./02-SCREEN-MAP.md) | Current route inventory plus separately labelled semantic destinations |
+| [Frontend Gap Analysis](./03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md) | Current-to-target findings |
+| [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md) | Dated route/surface quality snapshot |
+| [UX Gaps](./13-UX-GAPS.md) | Gap and gate register |
+
+### 3.5 Planning only
+
+[Frontend Backlog](./14-FRONTEND-BACKLOG.md) is a feature-intake register. It does not authorize a
+specification, plan, task, Feature 056, frontend, backend, or implementation.
+
+### 3.6 Indexes and decision records
+
+- [UX Flow Index](./15-UX-FLOW-INDEX.md) maps journeys, flows, states, destinations, and evidence.
+- [UI/UX Authority Reconciliation](./UI-UX-AUTHORITY-RECONCILIATION-v1.0.md) records this package’s
+  candidate disposition and gate verdict.
+- `UI-UX-AUTHORITY-REVIEW-v1.0.md` and `UI-UX-AUTHORITY-APPROVAL-v1.0.md` may exist only if their
+  prior gates authorize creation.
+
+### 3.7 Historical/supporting
+
+[UI/UX Documentation Consolidation Report](./UI-UX-DOCUMENTATION-CONSOLIDATION-REPORT.md) records
+past documentation reorganization. It is provenance, not current product authority.
+
+## 4. Reading Order
+
+1. Read the controlling Freeze, ADR-043, Journey Addendum, Business Brain compatibility, and Glossary.
+2. Read Platform Experience.
+3. Read Information Architecture.
+4. Read User Journeys, then User Flows, then Presentation State Authority.
+5. Read Accessibility, Localization, and UI Copy.
+6. Read the Design System.
+7. Use Screen Map/Status and gap documents only as evidence.
+8. Use the backlog only for future authorized intake.
+9. Read the Reconciliation Decision before treating the package as review-ready.
+
+## 5. Current, Planned, Approved, and Implemented
 
 | Label | Meaning |
 |---|---|
-| Current | Verified repository behavior or a currently governing UX document, as stated and dated by that document |
-| Planned | A documented target or reserved artifact whose implementation is not claimed |
-| Approved | Explicitly accepted through the applicable product, design, architecture, or feature governance process |
-| Placeholder | A distinct future documentation location with no approved detailed content |
+| Current evidence | Observed in repository source; not necessarily aligned or production-ready |
+| Reconciled candidate | Updated to v1.1 boundaries; awaiting independent review/approval |
+| Approved UI/UX authority | May be claimed only by a valid UI/UX approval record |
+| Planned/intake | Possible future work; not authorized |
+| Implemented | Verified code behavior; cannot by itself amend authority |
+| Historical/superseded | Preserved provenance; not active guidance |
 
-“Current,” “planned,” and “approved” are not interchangeable. A proposed route in the Screen Map
-does not exist until implementation evidence verifies it, and a placeholder does not authorize a
-feature.
+## 6. Maintenance Rules
 
-## 6. Final Document Index
+- Put all active product-experience and UX authority under `docs/03-ui-ux/`.
+- Keep reusable Design System semantics under `docs/04-design-system/`.
+- Reference architecture; never replace or reinterpret it silently.
+- Use canonical glossary terms and map any customer-facing alternative explicitly.
+- Keep route/code inventories labelled evidence-only.
+- Keep backlog/intake documents labelled planning-only.
+- Never infer an exact lifecycle from a presentation label.
+- Never allow a UI document to create a canonical owner, contract, schema, service, permission, or
+  implementation authorization.
+- Update affected UX, Design System, specification, evidence, and index links together after an
+  approved change.
+- Preserve historical documents and add successor/authority notices instead of concealing evolution.
 
-| Order | Document | Status | Canonical responsibility |
-|---:|---|---|---|
-| 01 | [Platform Experience](./01-PLATFORM-EXPERIENCE.md) | Current | End-to-end customer journey and stage behavior |
-| 02 | [Screen Map](./02-SCREEN-MAP.md) | Current snapshot | Verified routes/screens and target classification |
-| 03 | [Frontend Experience Gap Analysis](./03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md) | Current analysis | Traceable target-versus-current UX findings |
-| 04 | [Information Architecture](./04-INFORMATION-ARCHITECTURE.md) | Current | Navigation zones, trees, entry/exit, search, command, and safe-return rules |
-| 05 | [User Journeys](./05-USER-JOURNEYS.md) | Current target | Role- and outcome-specific end-to-end journeys reconciled with current evidence |
-| 06 | [User Flows](./06-USER-FLOWS.md) | Current target | Screen/action/data-source/state flows inside the journeys |
-| 07 | [State Machines](./07-STATE-MACHINES.md) | Current target | User-visible presentation states mapped to owner-approved facts |
-| 08 | [Wireframes](./08-WIREFRAMES.md) | Placeholder | Approved low-fidelity screen and interaction references |
-| 09 | [Accessibility](./09-ACCESSIBILITY.md) | Placeholder | Application-level accessibility guidance and evidence model |
-| 10 | [Localization](./10-LOCALIZATION.md) | Target specification | Open-ended locale engine, launch languages, formatting, fallback, and RTL/LTR requirements |
-| 11 | [UI Copy Guidelines](./11-UI-COPY-GUIDELINES.md) | Placeholder | Bilingual interface terminology, tone, labels, and state messages |
-| 12 | [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md) | Current snapshot | Per-screen completion, data, responsive, localization, state, access, and action status |
-| 13 | [UX Gaps](./13-UX-GAPS.md) | Current analysis | Consolidated user-visible gaps, impact, priority, solution direction, and complexity |
-| 14 | [Frontend Backlog](./14-FRONTEND-BACKLOG.md) | Planning | Dependency-aware FE tasks and definition of done; no implementation authority |
-| 15 | [UX Flow Index](./15-UX-FLOW-INDEX.md) | Current index | Relationship and status index for journeys, flows, states, wireframes, gaps, and backlog |
-| — | [Documentation Consolidation Report](./UI-UX-DOCUMENTATION-CONSOLIDATION-REPORT.md) | Governance record | Evidence and validation for the documentation reorganization |
+## 7. Open Questions
 
-## 7. Reading Order
+The blocking Genesis provenance issue and other deferred decisions are recorded in the
+[Reconciliation Decision](./UI-UX-AUTHORITY-RECONCILIATION-v1.0.md). This index does not resolve them.
 
-For product and frontend orientation:
+## 8. Verified Against
 
-1. [Product Decision Register](../00-governance/PRODUCT-DECISIONS.md)
-2. [Platform Experience](./01-PLATFORM-EXPERIENCE.md)
-3. [Screen Map](./02-SCREEN-MAP.md)
-4. [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md)
-5. [Frontend Experience Gap Analysis](./03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md)
-6. [Information Architecture](./04-INFORMATION-ARCHITECTURE.md)
-7. [UX Flow Index](./15-UX-FLOW-INDEX.md)
-8. [User Journeys](./05-USER-JOURNEYS.md), [User Flows](./06-USER-FLOWS.md), and
-   [State Machines](./07-STATE-MACHINES.md)
-9. [Localization](./10-LOCALIZATION.md), the applicable Accessibility/UI Copy document, and the
-   applicable [Design System](../04-design-system/README.md) documents
-10. [UX Gaps](./13-UX-GAPS.md) and [Frontend Backlog](./14-FRONTEND-BACKLOG.md)
-11. the controlling feature specification, plan, tasks, and evidence
-
-## 8. Relationships
-
-### 8.1 Product Decisions
-
-The [Product Decision Register](../00-governance/PRODUCT-DECISIONS.md) remains under Governance and
-is the only register of confirmed product-level decisions. UI/UX documents consume those decisions
-without duplicating the register or full ADR content.
-
-### 8.2 Architecture and ADRs
-
-[Architecture Freezes](../99-architecture-freeze/) and Accepted ADRs define owners, context,
-lifecycles, boundaries, and constraints. UI/UX documents translate approved architecture into
-customer-facing behavior and navigation without changing it. Core Platform and Commerce retain
-separate application and domain ownership.
-
-### 8.3 Design System
-
-The [Design System](../04-design-system/README.md) owns reusable presentation semantics. UI/UX owns
-product journeys and flows. A user flow may select a reusable interaction pattern, but it does not
-redefine that pattern; a Design System pattern may describe behavior, but it does not create a
-product journey.
-
-### 8.4 Design Intelligence
-
-[Design Intelligence](../10-design-intelligence/08-NEXORAXS-DESIGN-LAYER.md) governs how design
-candidates are researched, evaluated, proposed, approved, and remembered. It does not replace this
-workspace's canonical product-experience artifacts, and this workspace does not replace its design
-governance.
-
-### 8.5 Frontend Specifications
-
-Feature specifications under `specs/` cite applicable UX and Design System sources, define bounded
-acceptance behavior, and pass Constitution Checks. Current Features 052–055 remain implementation
-and compatibility evidence; their frontend-internal contracts do not become product-experience or
-Design System authority.
-
-## 9. Maintenance Rules
-
-1. All new product-experience, navigation, journey, flow, user-visible state, wireframe,
-   accessibility-application, localization-UX, and UI-copy documentation belongs here.
-2. Reusable foundations, token semantics, component taxonomy, page templates, and interaction
-   patterns belong under `docs/04-design-system/`.
-3. Product decisions remain only in `docs/00-governance/PRODUCT-DECISIONS.md`.
-4. Architecture, ADRs, Genesis, Design Intelligence, Execution policy, audits, and specifications
-   remain in their governed folders.
-5. Distinguish current evidence, target experience, planned work, and approved decisions.
-6. Do not copy canonical documents for compatibility. Update inbound links; retain a minimal
-   relocation notice only when repository evidence requires one.
-7. A retained placeholder must have a distinct purpose and must not contain speculative design or
-   implementation details.
-8. Validate relative links, titles, ownership terminology, and `git diff --check` whenever this
-   workspace changes.
-
-## 10. Cross References
-
-- [Product Decision Register](../00-governance/PRODUCT-DECISIONS.md)
-- [Core Platform Documentation](../02-core-platform/README.md)
-- [Design System](../04-design-system/README.md)
-- [Design Intelligence](../10-design-intelligence/08-NEXORAXS-DESIGN-LAYER.md)
-- [Frontend-First Policy](../11-execution/05-FRONTEND-FIRST-POLICY.md)
-- [Documentation Policy](../11-execution/09-DOCUMENTATION-POLICY.md)
-- [Architecture Program Completion](../99-architecture-freeze/NEXORAXS-ARCHITECTURE-v1.x-COMPLETE.md)
+- all files under `docs/03-ui-ux/` and applicable files under `docs/04-design-system/`;
+- Core Platform v1.1/v1.0 and Business Brain Freezes;
+- Accepted ADRs 015, 016, 042, and 043;
+- Foundation Journey Successor Addendum, Business Brain compatibility, and canonical Glossary;
+- applicable Genesis, Governance, Design Intelligence, execution, and readiness documents; and
+- current route/screen sources under `apps/landing/`, `apps/core-platform/`, and `apps/commerce/`
+  as implementation evidence only.
