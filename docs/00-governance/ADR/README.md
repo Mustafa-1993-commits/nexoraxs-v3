@@ -127,13 +127,16 @@ ADR after approval.
 
 ## Current decision set
 
-The repository contains ADR-001 through ADR-042. ADR-042 is **Accepted** and records the
-Pre-Registration Business Discovery, Candidate Business Understanding, knowledge-to-advice pipeline,
-product-ethics guardrail, Business DNA v1 conversion, and decision-lineage foundation. Each ADR file
-is authoritative for its own current status.
+The repository contains ADR-001 through ADR-043. ADR-041 remains **Proposed**. ADR-042 is
+**Accepted** and records the Pre-Registration Business Discovery, Candidate Business Understanding,
+knowledge-to-advice pipeline, product-ethics guardrail, Business DNA v1 conversion, and
+decision-lineage foundation. ADR-043 is **Accepted** and records how ADR-042 composes with and
+narrows ADR-015, extends and partially supersedes one sequencing implication of ADR-016, and
+preserves direct-registration compatibility. Each ADR file is authoritative for its own current
+status.
 
 ## Authoritative sources
 
 - [Genesis v1.1](../../01-genesis/)
-- [Approved Core Platform Architecture Proposal v0.2](../02-CORE-PLATFORM-ARCHITECTURE-PROPOSAL.md)
+- [Approved Core Platform Architecture Proposal v0.2](../../02-core-platform/02-CORE-PLATFORM-ARCHITECTURE-PROPOSAL.md)
 - [Core Platform Wave 1](../../02-core-platform/README.md)
