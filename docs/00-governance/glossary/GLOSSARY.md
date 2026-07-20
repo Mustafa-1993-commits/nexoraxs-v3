@@ -1238,7 +1238,7 @@ created here without an approved localization source.
 - **Lifecycle:** Exact lifecycle states are not standardized by Foundation Baseline v0.1 and remain subject to an approved UX or owning-domain specification.
 - **States:** Exact lifecycle states are not standardized by Foundation Baseline v0.1 and remain subject to an approved UX or owning-domain specification.
 - **Inputs:** Business DNA version; Assessments; Needs; Opportunities; Recommendations; readiness
-- **Outputs:** Customer-facing canonical onboarding result
+- **Outputs:** Governed authenticated customer-facing projection; no canonical write or ownership output
 - **Related Concepts:** Business DNA; Business Report Preview; Report Projection; Recommendation
 - **Distinguished From:** Business DNA; Candidate Business Understanding; pre-registration Business Report Preview
 - **Examples:** A governed presentation of how the Business operates, what it needs, and possible next steps
@@ -1246,7 +1246,7 @@ created here without an approved localization source.
 - **Source Decisions:** S02-D05; PD-004; PD-014; PD-016; ADR-042
 - **Version:** 0.1
 - **Status:** Approved
-- **Deprecated Terms or Replaced By:** None
+- **Deprecated Terms or Replaced By:** “Canonical Business Blueprint” and “customer-facing canonical onboarding result” are superseded terminology; use governed authenticated customer-facing projection
 
 ### Domain: Report Projection
 
