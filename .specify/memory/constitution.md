@@ -1,63 +1,29 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.3.2 -> 2.0.0
-Bump rationale: MAJOR. The former constitution delegated superior authority to the v5.3 master
-architecture and encoded Business/BusinessUnit conflation. The frozen v1.x program, Accepted
-ADR-004, and the Core Platform Freeze require a different authority chain and distinct canonical
-organization concepts.
+Version change: 2.0.0 -> 2.0.1
+Bump rationale: PATCH. Synchronizes Spec Kit governance with the approved Core Platform
+Architecture v1.1 Freeze without changing constitutional principles, ownership, or delivery rules.
+
+Authority synchronization:
+- Core Platform Architecture v1.1 is now the active controlling Core Platform Freeze for its
+  approved scope.
+- Core Platform Architecture v1.0 and Documentation Baseline v1.0.1 remain immutable predecessor
+  evidence for guarantees and history not replaced by the v1.1 successor.
+- Accepted ADR-042 and ADR-043, the approved Foundation successor package, and the v1.1 source
+  manifest are recognized through the existing authority order.
 
 Modified principles:
-- Former Articles I-II -> I. Frozen Architecture Is Authoritative; II. Canonical Ownership and
-  the Core Platform Boundary
-- Former Articles III and X -> III. Independent Operating Systems and Contract-Based Integration
-- Former Articles IV-V -> IV. Explicit Organization Context and Tenant Isolation
-- Former Articles XIV-XV -> XI. Spec-Driven, Testable Delivery
-- Former Articles XI, XIII, and XVI -> IX. Security, Privacy, Audit, and Observability; X. Bilingual,
-  Accessible Product Quality
-- Former Article XVII -> Governance
-
-Added principles:
-- V. Capability-First, Knowledge-Driven Architecture
-- VI. Deterministic, Explainable Intelligence and Human Authority
-- VII. Commercial and Operational Lifecycle Separation
-- VIII. Contract-First, Backward-Compatible Evolution
-- XII. Documentation and Implementation Stay Synchronized
-
-Added sections:
-- Additional Constraints
-- Development Workflow and Quality Gates
-- Contradiction and deferral protocol
-- Constitution Checks for specifications, plans, and tasks
-
-Removed from constitutional authority:
-- Feature inventories, route trees, current MVP screen lists, and implementation status
-- Technology selections presented as permanent architecture
-- The Business-is-BusinessUnit rule
-- A canonical OSEnablement data shape
-These remain implementation concerns only where supported by current specs and higher authorities.
-
-Contradictions reported and aligned by explicit authority (not guessed):
-- C-CONST-01: Former constitution/AGENTS.md v5.3 authority claim conflicts with the frozen v1.x
-  authority chain. Governance/runtime guidance aligned to the user-supplied priority order.
-- C-CONST-02: Former Business/BusinessUnit synonym rule conflicts with Accepted ADR-004 and Core
-  Freeze section 5.1. Business and Business Unit are now preserved as distinct concepts; legacy
-  data migration remains a separate governed implementation decision.
-- C-CONST-03: AGENTS.md canonical OSEnablement shape conflicts with ADR-023 and the glossary's
-  preserved ambiguity. Guidance now requires distinct lifecycle concepts without approving a
-  successor aggregate or schema.
+- Principle I clarified with the active Core Platform v1.1 / predecessor v1.0 relationship.
 
 Dependent artifacts:
-- ✅ updated: .specify/templates/plan-template.md
-- ✅ updated: .specify/templates/spec-template.md
-- ✅ updated: .specify/templates/tasks-template.md
-- ✅ reviewed/no change required: .specify/templates/checklist-template.md
-- ✅ reviewed/no change required: .specify/templates/constitution-template.md
-- ✅ reviewed: .specify/templates/commands/ (no command templates present)
 - ✅ updated: AGENTS.md
+- ✅ reviewed/no change required: .specify/templates/plan-template.md
+- ✅ reviewed/no change required: .specify/templates/spec-template.md
+- ✅ reviewed/no change required: .specify/templates/tasks-template.md
 
-Follow-up TODOs: None. Unresolved architectural decisions remain in their authoritative Deferred
-Decision registers and MUST NOT be converted into constitution TODOs or guessed defaults.
+Follow-up TODOs: None. This amendment does not approve UI/UX, feature specifications, or
+implementation and does not resolve any Deferred Decision.
 -->
 
 # NexoraXS Constitution
@@ -81,6 +47,12 @@ Historical Proposals, Patches, and Reviews provide provenance but MUST NOT overr
 controlling Freeze. A detected conflict MUST stop the affected work and be reported with exact
 sources. Agents and implementers MUST NOT reconcile contradictions by inventing a new owner,
 entity, lifecycle, contract, or default.
+
+For the Core Platform scope, `docs/99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md` is the
+active controlling successor Freeze. Core Platform v1.0 and Documentation Baseline v1.0.1 remain
+immutable predecessor evidence and continue to govern historical guarantees not explicitly changed
+by the approved v1.1 delta. A later date, proposal, UI/UX artifact, or implementation file does not
+establish supersession without the required approval and successor declaration.
 
 Rationale: the architecture program completed formal review, Freeze, and readiness gates. Silent
 reinterpretation would destroy that governance and its traceability.
@@ -395,4 +367,4 @@ Constitution versions use semantic versioning. Ratification history and amendmen
 preserved. The original constitution was ratified from repository history; this amendment date is
 the date the frozen architecture authority was incorporated.
 
-**Version**: 2.0.0 | **Ratified**: 2026-05-11 | **Last Amended**: 2026-07-14
+**Version**: 2.0.1 | **Ratified**: 2026-05-11 | **Last Amended**: 2026-07-20
