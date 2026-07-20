@@ -43,7 +43,8 @@ The foundational architecture program is complete and frozen:
 
 - Governance
 - Genesis v1.1
-- Core Platform Architecture v1.0; Documentation Baseline v1.0.1
+- Core Platform Architecture v1.1 — active controlling Core Platform Freeze
+- Core Platform Architecture v1.0 and Documentation Baseline v1.0.1 — immutable predecessor evidence
 - Business Brain Architecture v1.0
 - Commerce OS Architecture v1.0
 - Marketplace Architecture v1.0
@@ -53,6 +54,41 @@ The foundational architecture program is complete and frozen:
 Do not reopen these baselines unless a real implementation blocker demonstrates an architectural
 conflict. Architecture changes require an ADR, explicit approval, Architecture Review, updated or
 successor Freeze, and readiness validation.
+
+### Core Platform v1.1 Foundation boundary
+
+The approved v1.1 Foundation delta preserves the following semantic progression without fixing UI,
+routes, APIs, schemas, or implementation details:
+
+```text
+optional public Business Discovery
+  -> temporary Candidate Business Understanding and Value Preview
+  -> authentication or compatible direct registration
+  -> authorized Workspace and Business resolution
+  -> authenticated review, correction, and explicit publication approval
+  -> first Business DNA publication
+  -> post-publication Guided Activation
+  -> Business Blueprint, Business Insight, Recommendations, and Product Hub handoff
+```
+
+Rules:
+
+- Business Discovery is method-independent; Guided Business Conversation is one permitted method,
+  not the architecture or the only entry experience.
+- Direct registration and login remain supported but converge on the authenticated candidate/review
+  boundary; account data alone MUST NOT publish Business DNA.
+- Business Architect is an authenticated, selected-Business governed pipeline and MUST NOT be
+  conflated with public Discovery or post-publication Guided Activation.
+- Business Blueprint is a governed authenticated non-writing projection.
+- Recommendations are optional and may lead to NexoraXS, Marketplace, third-party, or retain-current
+  implementation options. Product adoption is not the governing objective.
+- Product Hub composes owner projections and performs an OS handoff; it does not own OS-specific
+  setup or operational state.
+- The Core Platform v1.1 Freeze creates no UI, UX, route, API, Contract, Event, persistence, service,
+  infrastructure, migration, or implementation authorization.
+- Foundation successor feature specification and implementation remain blocked until the applicable
+  UI/UX authority reconciliation is independently reviewed and approved and a controlling feature
+  specification, plan, and tasks are authorized. A reconciliation candidate is not approval.
 
 ## 3. Canonical Organization Model
 
