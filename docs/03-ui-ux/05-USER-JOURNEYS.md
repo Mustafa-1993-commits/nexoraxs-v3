@@ -1,539 +1,314 @@
 # User Journeys
 
-- **Status:** Target UX journeys reconciled with the 2026-07-19 frontend snapshot
-- **Owner:** Product Experience with Core Platform and Commerce frontend owners
-- **Authority:** User-experience sequence only; subordinate to product decisions and frozen architecture
+| Field | Value |
+|---|---|
+| Version | 1.1 reconciliation candidate |
+| Status | Canonical UI/UX authority candidate; implementation not authorized |
+| Owner | Product Experience; destination ownership remains with Core Platform or the applicable Operating System |
+| Architecture | Core Platform Architecture v1.1 Freeze |
 
 ## 1. Purpose
 
-This document defines the customer journeys needed to complete the current frontend-first
-experience. Each journey distinguishes the target experience from today's browser mock. It does
-not define backend contracts, schemas, canonical lifecycle states, or new permissions.
-
-## 2. Scope
-
-The journeys cover public entry, Core identity and Workspace context, Business Architect,
-Business Blueprint, Recommendations, Platform Dashboard, Product Hub, Commerce handoff/setup and
-daily Commerce use. Arabic/RTL and English/LTR are launch cases; the experience is expected to
-remain locale-agnostic as specified in [Localization](./10-LOCALIZATION.md).
-
-## 3. Journey Conventions
-
-- **Required screens** may include both verified and planned screens from the
-  [Screen Map](./02-SCREEN-MAP.md). A planned screen is not an implementation claim.
-- **Required states** are user-visible presentation states. Canonical domain facts remain owned by
-  Core Platform or Commerce as established by architecture.
-- **Recovery** always returns to the last safe, authorized context. It must not reveal another
-  Workspace, Business, Business Unit, or Branch.
-- Product Hub composes approved projections and initiates handoff. It does not perform Commerce
-  setup or own Commerce operations.
-
-## 4. New User Journey
-
-**Purpose:** Move a first-time visitor from public discovery to a useful Core Platform home, with
-Business Architect and Business Blueprint preceding recommendations and product selection.
-
-**Actor:** A prospective customer who will create the initial account and Workspace; later
-authorization for Business facts remains owner-controlled.
-
-**Entry:** Public Landing page.
-
-**Exit:** Platform Dashboard in the newly created Workspace. Commerce is optional and is launched
-later through Product Hub when available, enabled, and authorized.
-
-**Main steps:**
-
-1. Review the Landing value proposition and choose registration.
-2. Register an account and verify the email address.
-3. Create the Workspace boundary and select launch locale/context defaults.
-4. Read the Business Architect introduction and begin the guided, conversational interview.
-5. Answer, clarify, pause, or supply approved supporting information.
-6. Review answers, inferred facts, assumptions, and gaps; correct them before analysis.
-7. Observe deterministic analysis progress and resolve any input issue.
-8. Review the Business Blueprint presentation.
-9. Review explainable Recommendations as a separate stage.
-10. Select an eligible plan or continue with available access.
-11. Complete Core Workspace setup and enter Platform Dashboard.
-12. Discover Commerce in Product Hub; launch its setup only if chosen and authorized.
-
-**Decision points:**
-
-- register or return to Login;
-- correct an existing account conflict;
-- resume or restart only when restart is explicitly safe;
-- answer, skip where permitted, clarify, or pause an interview prompt;
-- correct the review or confirm it for analysis;
-- act on, defer, or dismiss a Recommendation without changing the Blueprint;
-- select a plan or continue with existing/available access; and
-- start Commerce setup or remain in Core Platform.
-
-**Failure paths:** Duplicate email; invalid verification input; missing Workspace context; failed
-mock persistence; incomplete interview; unavailable analysis fixture; stale Blueprint projection;
-Recommendation source failure; no eligible plan; rejected Commerce handoff.
-
-**Recovery paths:** Return to the current auth step without losing valid input; resend verification;
-retry Workspace persistence; resume the exact safe interview point; return to Review when analysis
-needs correction; show partial Blueprint sections without fabricating facts; continue to Platform
-Dashboard when product purchase is optional; return safely to Product Hub after a failed handoff.
-
-**Required screens:** Landing, Register, Verify Email, Create Workspace, Business Architect
-Introduction, Interview, Supporting Information where applicable, Review, Analysis, Business
-Blueprint, Recommendations, Plan/Available Access, Core Workspace Setup, Platform Dashboard,
-Product Hub.
-
-**Required states:** Initial, validating, pending, recoverable failure, unauthorized/unavailable,
-resumable, confirmed, analyzing, partial/stale projection, no Recommendations, success, and safe
-handoff failure.
-
-**Current implementation:** Registration, verification, Workspace creation, OS selection, Plan
-selection, Dashboard, Product Hub, and Commerce handoff exist. Business Architect through
-Recommendations and Core Workspace Setup do not. Current `/onboarding` puts OS and Plan before the
-target analysis journey.
-
-## 5. Returning User Journey
-
-**Purpose:** Return an authenticated or known user to the most relevant safe Core destination
-without forcing completed users through onboarding again.
-
-**Actor:** Existing NexoraXS User with zero or more authorized Workspace memberships.
-
-**Entry:** Login, an authorized deep link, or a restored browser session.
-
-**Exit:** Exact resumable onboarding stage, Platform Dashboard, Product Hub, or the authorized
-source screen requested by a deep link.
-
-**Main steps:**
-
-1. Resolve session and identity presentation.
-2. Authenticate if the session is absent or expired.
-3. Resolve authorized Workspace and Business context without trusting client-provided IDs.
-4. Evaluate unfinished Core onboarding and Business Architect work separately from OS readiness.
-5. Route to the exact safe resume point or the Platform Dashboard.
-6. Restore locale, direction, theme, and safe UI context.
-7. Continue the requested task or navigate through Core.
-
-**Decision points:** Valid or expired session; one or multiple authorized Workspaces; incomplete
-Business Architect; completed Blueprint but unreviewed Recommendations; no Commerce subscription;
-Commerce setup required; unauthorized or stale deep link.
-
-**Failure paths:** Invalid credentials; stale saved Workspace/Business context; cross-scope context;
-missing mock records; unavailable deep-link target; expired interview session.
-
-**Recovery paths:** Password recovery; Workspace selector; localized context error with retry;
-return to Platform Dashboard; resume the nearest safe Core stage; never fall through into another
-tenant's context.
-
-**Required screens:** Login, Forgot/Reset Password, Workspace Selector, Resume Incomplete Interview,
-Business Blueprint or Recommendations when pending, Platform Dashboard, Product Hub, destination
-screen or safe fallback.
-
-**Required states:** Resolving session, unauthenticated, authenticating, context loading, one/many/no
-Workspaces, stale, unauthorized, resume available, ready, and recovery.
-
-**Current implementation:** Login redirects a completed browser onboarding session directly to
-`/dashboard/apps`; otherwise it redirects to `/onboarding`. Core shell context recovery exists, but
-Business Architect resume and nuanced post-login routing do not.
-
-## 6. Workspace Admin Journey
-
-**Purpose:** Let an authorized administrator manage Workspace-level membership, settings, access
-presentation, billing, and product availability without absorbing Commerce operational settings.
-
-**Actor:** Workspace member with the applicable administrative permission. The current frontend
-does not yet provide canonical role enforcement.
-
-**Entry:** Platform Dashboard, Core shell, Workspace selector, or a permitted administration deep
-link.
-
-**Exit:** Updated Core administration view, Platform Dashboard, or Product Hub.
-
-**Main steps:**
-
-1. Confirm the active Workspace and organization context.
-2. Open Team and Access, Workspace Settings, Billing, Integrations, or Product Hub.
-3. Inspect current owner projections and any unavailable/stale state.
-4. Initiate an allowed action such as inviting a member or updating a presentation preference.
-5. Review scope and consequences before confirmation.
-6. Observe pending, success, or recoverable failure feedback.
-7. Return to the originating Core page with context preserved.
-
-**Decision points:** View versus manage; Workspace versus personal preference; billing view versus
-commercial change; Product availability versus Commerce setup; invitation versus permission
-assignment; insufficient permission.
-
-**Failure paths:** Missing permission; stale member list; failed invite; invalid input; unavailable
-billing projection; cross-scope link; unsupported preference precedence.
-
-**Recovery paths:** Preserve draft input; refresh the owner projection; request access; return to a
-read-only view; cancel safely; retry only idempotent presentation actions.
-
-**Required screens:** Platform Dashboard, Workspace Selector, Team and Access, Workspace Settings,
-Billing/Subscription, Integrations, Product Hub, Notifications, Profile.
-
-**Required states:** Loading, empty membership, read-only, editable, validation, confirmation,
-pending, success, failure, unauthorized, stale, and partial projection.
-
-**Current implementation:** `/dashboard/team`, `/dashboard/settings`, `/dashboard/billing`, and
-`/dashboard/integrations` exist, but several actions are component-local or toast-only and route-
-level role enforcement is not verified.
-
-## 7. Team Member Journey
-
-**Purpose:** Give a non-administrative member a clear, least-privilege path to available Core and OS
-work without presenting actions they cannot complete.
-
-**Actor:** Workspace member whose roles, permissions, resource scope, and OS access are provided by
-the owning authorization context.
-
-**Entry:** Login, invitation acceptance when later specified, or an authorized deep link.
-
-**Exit:** Platform Dashboard, Product Hub, or an authorized operational screen.
-
-**Main steps:**
-
-1. Authenticate and resolve active membership/context.
-2. Enter Platform Dashboard even when no OS is ready.
-3. Review available products and personal notifications.
-4. Launch an authorized OS or remain in Core.
-5. Perform only actions allowed by role, permission, ownership, workflow, plan entitlement, and
-   resource scope.
-6. Return to Product Hub or Platform Dashboard through safe cross-app navigation.
-
-**Decision points:** Multiple Workspaces; available versus unavailable product; view versus mutate;
-authorized versus unauthorized resource; setup required versus ready.
-
-**Failure paths:** Revoked membership; hidden or disabled action; stale entitlement; OS unavailable;
-resource outside Business Unit/Branch scope.
-
-**Recovery paths:** Explain the unavailable action without exposing sensitive details; choose
-another Workspace; return to Product Hub; request access through an approved channel; retry a
-failed projection.
-
-**Required screens:** Login, Workspace Selector, Platform Dashboard, Product Hub, Notifications,
-Profile, and permitted Commerce screens.
-
-**Required states:** Membership resolving, no membership, available, unavailable, setup required,
-unauthorized, read-only, pending, ready, and safe return.
-
-**Current implementation:** Protected layouts verify browser session/context, but most routes do
-not enforce a role-specific frontend decision. Team roles are hard-coded presentation, not a
-canonical catalog.
-
-## 8. Business Owner Journey
-
-**Purpose:** Help the person accountable for a Business articulate its DNA, understand the
-resulting Blueprint, and decide what to do with Recommendations.
-
-**Actor:** Authorized participant for one canonical Business. Business DNA belongs to the Business,
-not Workspace or Business Unit.
-
-**Entry:** New-user onboarding, Platform Dashboard resume card, or authorized Business context.
-
-**Exit:** Confirmed Business Blueprint, reviewed Recommendations, or a safely paused interview.
-
-**Main steps:**
-
-1. Select or confirm the Business context through an approved Core experience.
-2. Read Business Architect scope, privacy, expected time, and output.
-3. Complete the guided, conversational interview with progressive prompts.
-4. Add permitted supporting information and inspect its use.
-5. Review answers, inferred Business DNA candidates, assumptions, conflicts, and gaps.
-6. Correct or confirm the review.
-7. Observe deterministic Business Analysis.
-8. Inspect the Business Blueprint: Business DNA, summary, needs, challenges, opportunities,
-   readiness, relevant capabilities, and implementation roadmap.
-9. Inspect Recommendations separately, including rationale and alternatives.
-10. Defer, dismiss, or continue toward Product Hub/plan selection without mutating the Blueprint.
-
-**Decision points:** Pause/resume; skip or clarify; correct a fact; confirm analysis input; review
-optional Blueprint sections; act on or defer a Recommendation.
-
-**Failure paths:** No selected Business; inaccessible evidence; conflicting answers; unsupported
-analysis input; analysis failure; incomplete or stale owner projection.
-
-**Recovery paths:** Return to the relevant interview prompt; preserve reviewed answers; explain
-blocked analysis; retry deterministic analysis with the same versioned input; show partial
-Blueprint with provenance; return later to Recommendations.
-
-**Required screens:** Business selection/entry when approved, Business Architect Introduction,
-Interview, Supporting Information, Review, Analysis, Business Blueprint, Recommendations,
-Platform Dashboard.
-
-**Required states:** Not started, draft, paused, resumable, incomplete, conflict, review required,
-confirmed, analyzing, blocked, failed/retryable, Blueprint ready/partial/stale, Recommendations
-none/ready/deferred.
-
-**Current implementation:** None of these Business Architect, Business Analysis, Business
-Blueprint, or Recommendations screens exists. Current browser data has only a legacy
-BusinessUnit-as-`Business` presentation and must not be treated as the canonical Business model.
-
-## 9. Product Discovery Journey
-
-**Purpose:** Let a customer discover NexoraXS capabilities after business analysis and understand
-availability, commercial state, setup readiness, and next actions without conflating them.
-
-**Actor:** Authorized Workspace/Business viewer; purchase, setup, and launch actions require their
-own permissions.
-
-**Entry:** Recommendations, Platform Dashboard, or Product Hub.
-
-**Exit:** Platform Dashboard, eligible plan/access decision, OS-owned setup, ready OS, or a deferred
-choice.
-
-**Main steps:**
-
-1. Enter Product Hub in the current Workspace and Business context.
-2. Review capability-led Recommendations when available.
-3. Inspect each product's availability and owner-provided access/readiness projection.
-4. Distinguish Product availability, Plan, OS Subscription, setup, readiness, and operational
-   access.
-5. Choose to learn more, obtain eligible access, start owner setup, launch, or defer.
-6. Follow a governed handoff to Commerce when selected.
-7. Return safely to Product Hub if setup is rejected, unavailable, or canceled.
-
-**Decision points:** Recommended versus browsed product; available versus future; access available
-versus plan required; setup required versus ready; authorized versus view-only.
-
-**Failure paths:** Missing/stale projection; no available products; handoff context rejected;
-subscription does not grant operational access; optional OS unavailable.
-
-**Recovery paths:** Explain which owner projection is unavailable; continue using Core; refresh
-the product card; return to the Recommendation; retry an accepted handoff; never perform OS setup
-inside Product Hub.
-
-**Required screens:** Business Blueprint, Recommendations, Platform Dashboard, Product Hub,
-Billing/Subscription, Commerce Setup or Commerce Dashboard.
-
-**Required states:** Loading per owner, no Recommendations, no products, available, plan required,
-subscribed, setup required, ready, paused, unauthorized, partial failure, and safe return.
-
-**Current implementation:** `/dashboard/apps` and `/dashboard` provide product cards and a governed
-frontend handoff seam. The cards use mock subscription/setup state; Business-led Recommendations
-do not exist.
-
-## 10. Commerce Activation Journey
-
-**Purpose:** Move an eligible, authorized Core user through Product Hub handoff into Commerce-owned
-setup and then to an operationally ready Commerce Dashboard.
-
-**Actor:** Workspace member with applicable Commerce acquisition/setup/access permissions and
-approved organization scope.
-
-**Entry:** Product Hub Commerce card in setup-required state.
-
-**Exit:** Commerce Dashboard in an authorized Business Unit/Branch context, or safe return to
-Product Hub.
-
-**Main steps:**
-
-1. Product Hub composes Commerce availability, subscription, and readiness projections.
-2. User selects setup; Core creates a bounded frontend handoff context.
-3. Commerce validates the presence of current handoff, identity, Workspace, subscription, and
-   compatibility organization context.
-4. Commerce presents Identity, Preset, Mode, Tax, Numbering, Templates, Categories, and Review.
-5. User saves progress or completes the Commerce-owned setup.
-6. Commerce routes to its Dashboard when ready.
-7. User can return to Product Hub without transferring operational ownership.
-
-**Decision points:** Missing context; unauthenticated; setup already complete; save and exit;
-preset/mode/tax choices; validation failure; finish setup.
-
-**Failure paths:** Direct `/setup` without handoff; stale or cross-scope context; incomplete required
-fields; mock storage failure; setup completion failure.
-
-**Recovery paths:** Return to Product Hub for a new handoff; return to Core Login; retain safe setup
-draft; retry validation; save and exit; keep Commerce operational data owned by Commerce.
-
-**Required screens:** Product Hub, Commerce Setup, Commerce Dashboard, safe-return navigation.
-
-**Required states:** Availability resolving, setup required, context missing/rejected,
-unauthenticated, loading existing setup, step valid/invalid, saving, saved, completion pending,
-ready, failure, and safe return.
-
-**Current implementation:** The complete eight-step Commerce setup and handoff adapter exist.
-Feature 054 establishes the current browser boundary. It remains a temporary frontend
-compatibility seam and does not define a backend contract.
-
-## 11. Commerce Daily Usage Journey
-
-**Purpose:** Support a Commerce actor's repeated operational loop from Dashboard through sale and
-follow-up, with scoped data and recoverable repository states.
-
-**Actor:** Authorized Commerce actor in applicable Workspace, Business Unit, Branch, and resource
-scope. Current browser UI does not enforce the final permission model.
-
-**Entry:** Commerce Dashboard after accepted handoff and completed setup.
-
-**Exit:** Completed sale, inspected operational record, updated owned data, report review, or safe
-return to Core Product Hub.
-
-**Main steps:**
-
-1. Review daily KPIs, setup reminders, recent Orders, and Inventory attention.
-2. Start POS, select Products and optional Customer, and build a cart.
-3. Validate availability, totals, and payment presentation.
-4. Complete the current frontend sale command.
-5. Review sale success, Order, Invoice, and printable document.
-6. Continue with Customers, Products, Inventory adjustment/transfer, Orders, Invoices, Returns,
-   Reports, or Commerce Settings.
-7. Handle empty and recoverable repository errors without leaking another scope.
-8. Return safely to Product Hub when leaving Commerce.
-
-**Decision points:** Empty catalog; insufficient stock; customer selection; payment presentation;
-checkout success/failure; return eligibility; transfer destination; read-only versus manage action.
-
-**Failure paths:** Repository unavailable/corrupt; storage quota; insufficient stock; partial
-browser commit; record not found; no transfer destination; print document missing.
-
-**Recovery paths:** Retry repository reads; preserve POS draft where safe; explain partial outcome;
-open the created Order/Invoice when available; return to the source list; refresh context; avoid
-repeating a non-idempotent sale blindly.
-
-**Required screens:** Commerce Dashboard, POS, Sale Success, Products, Product Editor, Inventory,
-Transfers, Customers, Orders, Invoices, document routes, Reports, Settings; Returns list/detail and
-Stock Movements remain planned.
-
-**Required states:** Loading, empty/filter-empty, ready, pending mutation, validation error,
-repository error, not found, unauthorized, success, partial outcome, printable, and recovery.
-
-**Current implementation:** Most daily routes exist and repository-backed areas have explicit
-states. Returns list/detail and Stock Movements are absent; reports/settings and some success or
-document screens have weaker failure handling.
-
-## 12. Interrupted Onboarding Journey
-
-**Purpose:** Preserve progress and return a user to the exact safe onboarding point without
-collapsing Core onboarding, Business Architect, and Commerce setup into one completion flag.
-
-**Actor:** Authenticated new or returning user with an authorized Workspace/Business context.
-
-**Entry:** Close, sign-out, navigation away, refresh, recoverable failure, or later Login during
-Workspace onboarding, Business Architect, analysis, Recommendations, or Commerce setup.
-
-**Exit:** Resumed exact stage, a safe earlier review point, Platform Dashboard, Product Hub, or
-Commerce Dashboard when already complete.
-
-**Main steps:**
-
-1. Persist the last safe completed presentation checkpoint and current authorized context.
-2. On return, resolve session and membership before reading progress.
-3. Validate that the saved context is still authorized and not superseded.
-4. Show what will resume and allow safe continuation.
-5. Resume at an incomplete interview prompt, Review, Analysis result, Blueprint,
-   Recommendations, Core setup, or Commerce setup step.
-6. If the saved point is invalid, fall back to the nearest safe owner-approved stage.
-
-**Decision points:** Resume versus discard draft where permitted; context still authorized; input
-superseded; analysis already completed; OS setup already complete.
-
-**Failure paths:** Missing browser state; stale Workspace/Business context; corrupt mock storage;
-expired session; permission revoked; version mismatch.
-
-**Recovery paths:** Reauthenticate; choose an authorized Workspace; explain lost local draft;
-return to Review; load the completed Blueprint; restart only the affected presentation draft when
-explicitly safe; return to Platform Dashboard instead of blocking all access.
-
-**Required screens:** Login, Workspace Selector, Business Architect Introduction/Interview/Review,
-Analysis, Business Blueprint, Recommendations, Core Workspace Setup, Product Hub, Commerce Setup.
-
-**Required states:** Resolving, no progress, draft, resumable, expired, superseded, unauthorized,
-corrupt/unavailable, retrying, resumed, completed.
-
-**Current implementation:** Core `/onboarding` keeps its step only in component state and uses a
-coarse browser completion record. Commerce setup reads existing mock setup and supports save/exit.
-There is no Business Architect progress model or exact cross-session resume UI.
-
-## 13. Language Switching Journey
-
-**Purpose:** Let a user change presentation locale and direction without losing task progress or
-changing user-entered Business data.
-
-**Actor:** Public visitor or authenticated user. Persistence scope/precedence must follow an
-approved owner policy when one exists.
-
-**Entry:** Landing/auth control when supplied, onboarding control, Core shell/settings, or Commerce
-shell/settings.
-
-**Exit:** Same screen, same safe context, translated UI, correct direction, and locale-formatted
-values.
-
-**Main steps:**
-
-1. Open the locale selector and see all configured supported locales.
-2. Select a locale; the launch configuration includes English and Arabic.
-3. Resolve translation namespaces and direction metadata.
-4. Update `lang`, `dir`, UI copy, plural rules, dates, numbers, currency display, and time-zone
-   presentation together.
-5. Preserve user-entered text, current form draft, selection, focus, and safe scroll position.
-6. Persist the preference at the approved scope and propagate it through accepted cross-app
-   handoff context.
-7. If a message is missing, apply the documented fallback without exposing raw keys in production.
-
-**Decision points:** Supported versus unsupported locale; authenticated versus anonymous
-preference; complete versus partial namespace; RTL versus LTR; mixed-script content.
-
-**Failure paths:** Missing translation; invalid persisted locale; namespace load failure;
-unsupported formatting data; a component assumes left/right; Core and Commerce preference drift.
-
-**Recovery paths:** Fall back to the configured language chain; preserve the task; log safe
-diagnostics; use logical layout; let the user retry the locale selection; never translate or
-rewrite user-entered Business facts automatically.
-
-**Required screens:** Every user-facing route; locale selector in approved entry points; localized
-loading, empty, error, success, confirmation, and recovery surfaces.
-
-**Required states:** Locale resolving, ready, switching, namespace loading, fallback active,
-missing-key diagnostic, direction applied, persisted, failed/retryable.
-
-**Current implementation:** Core and Commerce persist `en`/`ar` in browser session state and apply
-document direction. Core shell and selected Commerce features translate some copy. Landing,
-authentication, onboarding, and many pages remain hard-coded; no open-ended locale registry,
-namespace loader, pluralization contract, or unified formatting layer exists.
-
-## 14. Journey Coverage Summary
-
-| Journey | Current route coverage | Main blocker |
-|---|---|---|
-| New User | Partial | Business Architect through Recommendations absent and current onboarding order differs |
-| Returning User | Partial | Coarse completion redirect; exact resume routing absent |
-| Workspace Admin | Partial | Mock/local actions and no verified permission enforcement |
-| Team Member | Partial | No route-specific role/permission behavior |
-| Business Owner | Missing | Business Architect, analysis, Blueprint, and Recommendations absent |
-| Product Discovery | Partial | Product Hub exists; capability-led Recommendations absent |
-| Commerce Activation | Strong frontend mock | Temporary handoff/context and incomplete localization/permission presentation |
-| Commerce Daily Usage | Strong frontend mock | Uneven states; Returns/Movements screens absent |
-| Interrupted Onboarding | Minimal | No exact Business Architect resume; Core step is component-local |
-| Language Switching | Partial | Two-locale fragmented implementation and hard-coded copy |
-
-## 15. Relationships
-
-- [Platform Experience](./01-PLATFORM-EXPERIENCE.md)
-- [Screen Map](./02-SCREEN-MAP.md)
-- [Information Architecture](./04-INFORMATION-ARCHITECTURE.md)
-- [User Flows](./06-USER-FLOWS.md)
-- [State Machines](./07-STATE-MACHINES.md)
-- [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md)
-- [Design System Interaction Patterns](../04-design-system/05-INTERACTION-PATTERNS.md)
-
-## 16. Open Questions
-
-- Which approved Core experience creates or selects the canonical Business before Business
-  Architect starts?
-- Which role/permission catalog and invitation lifecycle should Team journeys use?
-- Which locale preference scope and precedence applies after the browser-only frontend phase?
-
-## 17. Verified Against
-
-- [Product Decisions](../00-governance/PRODUCT-DECISIONS.md), applicable Accepted ADRs, Genesis,
-  Core Platform, Business Brain, Commerce OS, and Architecture Freeze documents;
-- [Platform Experience](./01-PLATFORM-EXPERIENCE.md), [Screen Map](./02-SCREEN-MAP.md),
-  [Frontend Experience Gap Analysis](./03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md), and
-  [Information Architecture](./04-INFORMATION-ARCHITECTURE.md);
-- all current route pages and route-used shell/onboarding components in `apps/landing`,
-  `apps/core-platform`, and `apps/commerce`;
-- current frontend mock stores, repositories, adapters, and feature services in `packages/shared`,
-  `packages/contracts/src/commerce`, `packages/sdk/src/commerce`, and the app `lib`/`features`
-  folders; and
-- Features 052–055 and their existing frontend tests as implementation evidence, not future API
-  authority.
+This document defines presentation-level journeys consistent with Core Platform Architecture v1.1.
+It describes customer intent, control, continuity, and recovery. It does not define routes, domain
+states, persistence, APIs, permissions, or implementation.
+
+## 2. Journey Rules
+
+- Business Discovery is method-independent and is not restricted to a conversation, form, wizard,
+  or route.
+- Public Discovery is the primary value path, not a mandatory gate. Direct Register/Login remains
+  compatible.
+- Candidate Business Understanding is temporary, non-canonical, reviewable, correctable, and
+  unable to authorize action.
+- First Business DNA publication requires authenticated Workspace and Business ownership, material
+  review, correction opportunity, and explicit approval.
+- Guided Activation starts only after first publication and remains distinct from OS-Specific Setup.
+- Business Blueprint is a governed authenticated non-writing projection, never a source of truth.
+- Recommendations are optional, capability-first, explainable, and may be declined or postponed.
+- Every journey is resumable where authority permits and must expose safe recovery.
+
+## 3. Journey Template
+
+Each journey records actor, starting context, goal, preconditions, experience stages, decision
+points, customer control, recovery, successful outcome, non-goals, and unresolved deferrals.
+Semantic destinations are used instead of route decisions.
+
+## 4. J-01 — First-Time Visitor Through Discovery
+
+- **Actor:** Unauthenticated visitor.
+- **Starting context:** Public entry with no Workspace or Business identity.
+- **Goal:** Receive credible value before deciding whether to register.
+- **Preconditions:** None; anonymous Workspace or Business state is forbidden.
+- **Experience stages:** Entry → choose or accept a suitable knowledge-acquisition method → provide
+  or permit evidence → view inferred Candidate Business Understanding → inspect confidence and
+  provenance → correct material inaccuracies → view Value Preview → Register or Login if choosing
+  to continue.
+- **Decision points:** Continue, change method, correct, pause, discard, or authenticate.
+- **Customer control:** Evidence use, corrections, and authentication are explicit; no canonical
+  publication occurs.
+- **Recovery:** Preserve only the continuity that future approved retention policy permits; otherwise
+  explain loss safely and allow restart.
+- **Successful outcome:** Useful temporary reflection and an informed authentication choice.
+- **Non-goals:** Creating Workspace, Business, Business DNA, subscription, or OS readiness.
+- **Unresolved deferrals:** Discovery retention, candidate conversion mechanism, exact methods, and
+  exact presentation destinations.
+
+## 5. J-02 — Direct-Registering First-Time Customer
+
+- **Actor:** Visitor choosing Register or Login without public Discovery.
+- **Starting context:** Public identity entry.
+- **Goal:** Establish authenticated ownership without bypassing understanding controls.
+- **Preconditions:** Valid identity workflow.
+- **Experience stages:** Register/Login → resolve or create Workspace → resolve or create Business →
+  enter authenticated candidate-understanding work through the Business Architect pipeline → review
+  and correct → explicit approval → first Business DNA v1 publication → Guided Activation.
+- **Decision points:** Select or create authorized context, pause, correct, approve, or leave.
+- **Customer control:** Registration, account details, “Next”, or completion never imply publication.
+- **Recovery:** Return to the exact safe authenticated pipeline position represented by owner evidence.
+- **Successful outcome:** First governed Business DNA publication for the selected Business.
+- **Non-goals:** A second onboarding architecture or publication directly from account details.
+- **Unresolved deferrals:** Exact Business create/select presentation and exact resume mechanism.
+
+## 6. J-03 — Returning Authenticated Customer
+
+- **Actor:** Authenticated member.
+- **Starting context:** One or more accessible Workspaces and Businesses.
+- **Goal:** Reach the safest useful destination without losing scope.
+- **Preconditions:** Authenticated identity and server-authorized memberships.
+- **Experience stages:** Resolve Workspace → resolve Business where required → inspect independent
+  readiness/continuity signals → resume incomplete Business Architect or Guided Activation work, or
+  enter Platform Dashboard → Product Hub → installed OS when authorized and ready.
+- **Decision points:** Change context, resume work, enter Dashboard, inspect Blueprint, review a
+  Recommendation, or hand off to an OS.
+- **Customer control:** Context changes are visible and confirmation is required where unsaved work
+  or consequence exists.
+- **Recovery:** Invalid/stale deep links return to the nearest safe parent with context explanation.
+- **Successful outcome:** Correct authorized destination in preserved context.
+- **Non-goals:** Inferring authorization from a remembered client identifier.
+- **Unresolved deferrals:** Exact destination-resolution policy and route scheme.
+
+## 7. J-04 — Resume Incomplete Public Discovery
+
+- **Actor:** Returning unauthenticated visitor, or the same visitor after authentication.
+- **Starting context:** A permitted incomplete Discovery continuity reference.
+- **Goal:** Continue without repeating known facts.
+- **Preconditions:** Continuity evidence is valid under the future approved retention policy.
+- **Experience stages:** Re-enter → verify continuity availability → show current evidence and gaps →
+  continue, correct, authenticate for conversion, or discard.
+- **Decision points:** Resume, restart, change method, authenticate, or discard.
+- **Customer control:** The UI explains whether information is temporary and what authentication will
+  convert; it never presents temporary content as Business DNA.
+- **Recovery:** Expired/unavailable continuity produces a clear explanation and safe restart.
+- **Successful outcome:** Updated Candidate Business Understanding or intentional exit.
+- **Non-goals:** Defining a Discovery Session state machine.
+- **Unresolved deferrals:** Retention duration and conversion-token mechanics.
+
+## 8. J-05 — Resume Incomplete Business Architect Work
+
+- **Actor:** Authenticated member authorized for the selected Business.
+- **Starting context:** Existing governed Business Architect Session evidence.
+- **Goal:** Resume the inherited pipeline without conflating other lifecycles.
+- **Preconditions:** Workspace and Business access is revalidated.
+- **Experience stages:** Resolve context → present safe resume → continue inference/gap acquisition →
+  review and correct → explicit approval when publication-ready.
+- **Decision points:** Continue, pause, address a blocker, restart only when governed, or exit.
+- **Customer control:** The inherited Session may progress, pause, block, expire, or be superseded as
+  frozen; those are not Discovery or Guided Activation presentation states.
+- **Recovery:** Explain expired/superseded work and route to an owner-authorized recovery path.
+- **Successful outcome:** Continued governed pipeline or a safely recorded pause.
+- **Non-goals:** Defining new Session states or combining Session and presentation lifecycles.
+- **Unresolved deferrals:** Exact screen treatment and owner read contract.
+
+## 9. J-06 — Review Candidate Business Understanding
+
+- **Actor:** Authorized Business participant.
+- **Starting context:** Authenticated temporary candidate associated through the governed pipeline.
+- **Goal:** Understand and materially verify what may become canonical.
+- **Preconditions:** Valid Workspace, Business, actor, candidate, and evidence context.
+- **Experience stages:** Review Observed Facts and distinguished Inferences/Assessments → inspect
+  confidence/provenance → identify contradictions/gaps → correct or supply evidence → re-review.
+- **Decision points:** Correct, add evidence, defer, reject candidate material, or proceed to approval.
+- **Customer control:** Corrections remain distinct from explicit publication approval.
+- **Recovery:** Preserve review context where authorized; show stale/version conflict and reload.
+- **Successful outcome:** Materially reviewed candidate ready for explicit approval or further work.
+- **Non-goals:** Editing Business DNA through a projection.
+- **Unresolved deferrals:** Materiality policy and exact evidence presentation.
+
+## 10. J-07 — Approve First Business DNA Publication
+
+- **Actor:** Authenticated actor with applicable Business authority.
+- **Starting context:** Materially reviewed candidate.
+- **Goal:** Publish Business DNA v1 deliberately.
+- **Preconditions:** Workspace and Business ownership resolved; review complete enough under owner
+  policy; approval authority verified.
+- **Experience stages:** Publication summary → consequences and source disclosure → explicit approve
+  or return to correction → owner validation → success or actionable failure.
+- **Decision points:** Approve, correct, cancel, or seek authorized assistance.
+- **Customer control:** Approval is a dedicated consequential action and cannot be inferred from
+  navigation or account creation.
+- **Recovery:** Validation/permission/conflict failure preserves the candidate and returns to review.
+- **Successful outcome:** First canonical, versioned, Business-scoped Business DNA publication.
+- **Non-goals:** Specifying command, API, signature, or database behavior.
+- **Unresolved deferrals:** Exact permission and confirmation treatment.
+
+## 11. J-08 — Continue Through Guided Activation
+
+- **Actor:** Authorized participant for a Business with published Business DNA.
+- **Starting context:** First publication completed or later governed revision context.
+- **Goal:** Resolve material uncertainty and reach Core Workspace readiness.
+- **Preconditions:** Published Business DNA exists.
+- **Experience stages:** Explain remaining gaps → continue adaptive acquisition/validation → review
+  proposed corrections or additions → publish governed revisions when explicitly approved → show
+  Core readiness and next choices.
+- **Decision points:** Continue, pause, correct, approve revision, or enter an allowed Core destination.
+- **Customer control:** Guided Activation never silently writes DNA and never performs OS setup.
+- **Recovery:** Resume from owner evidence; distinguish pipeline Session lifecycle from presentation.
+- **Successful outcome:** More complete governed understanding and/or Core Workspace Ready.
+- **Non-goals:** Product Hub ownership or OS-Specific Setup.
+- **Unresolved deferrals:** Exact completion/readiness presentation and revision policy.
+
+## 12. J-09 — View Business Blueprint
+
+- **Actor:** Authorized Business viewer.
+- **Starting context:** Governed owner outputs available for projection.
+- **Goal:** Understand the Business through an accessible customer-facing synthesis.
+- **Preconditions:** Business access; projection availability.
+- **Experience stages:** Load projection → inspect Business DNA-based summary, needs, challenges,
+  opportunities, readiness indicators, capabilities, and roadmap views → inspect source/context where
+  available → navigate to correction or next destination.
+- **Decision points:** Explore, request correction through owner workflow, proceed to Product Hub, or
+  review optional Recommendations.
+- **Customer control:** The Blueprint is read-only and never presented as canonical storage.
+- **Recovery:** Partial/stale/unavailable projection is disclosed; no fabricated completeness.
+- **Successful outcome:** Understandable governed projection without ownership confusion.
+- **Non-goals:** Direct canonical edits or a new Blueprint aggregate.
+- **Unresolved deferrals:** Exact projection composition and correction entry.
+
+## 13. J-10 — Enter Product Hub
+
+- **Actor:** Authenticated member in authorized Workspace/Business context as applicable.
+- **Starting context:** Core destination, Blueprint, Dashboard, or Recommendation.
+- **Goal:** Understand available products, access, readiness, and safe next actions.
+- **Preconditions:** Core access and owner projections.
+- **Experience stages:** View composed product/access/readiness information → inspect context and
+  availability → choose owner-governed commercial action, OS setup handoff, launch, or return.
+- **Decision points:** Learn, subscribe where authorized, continue setup, launch ready OS, or defer.
+- **Customer control:** Product Hub does not imply Recommendation acceptance.
+- **Recovery:** Stale/unavailable owner projections are identified; safe retry/return remains.
+- **Successful outcome:** Correct handoff without ownership transfer.
+- **Non-goals:** Owning subscriptions, OS facts, Business DNA, or OS setup.
+- **Unresolved deferrals:** Exact entitlement/subscription successor semantics and routes.
+
+## 14. J-11 — Review Optional Recommendation
+
+- **Actor:** Authorized Business viewer or decision-maker.
+- **Starting context:** Recommendation presentation in Business context.
+- **Goal:** Assess advice without pressure or false certainty.
+- **Preconditions:** Owner-provided Recommendation evidence.
+- **Experience stages:** View need/outcome/capability → inspect reasoning, evidence, assumptions,
+  alternatives, risk, confidence, and NexoraXS disclosure → accept only an allowed next step, defer,
+  decline, or retain current tools.
+- **Decision points:** Explore capability, compare option, defer, decline, or request correction.
+- **Customer control:** No product is required; no consequential action is automatic.
+- **Recovery:** Unavailable/stale lineage is disclosed and action is withheld where required.
+- **Successful outcome:** Informed choice independent of product adoption.
+- **Non-goals:** Inventing Recommendation lifecycle states or directly configuring an OS.
+- **Unresolved deferrals:** Recommendation review/disposition and invalidation policy.
+
+## 15. J-12 — Start OS-Specific Setup
+
+- **Actor:** Authorized member selecting an available Operating System.
+- **Starting context:** Product Hub handoff with explicit Workspace, Business Unit, and other required
+  scope.
+- **Goal:** Begin OS-owned setup safely.
+- **Preconditions:** Required commercial/access state and permission; Core context revalidated by the
+  OS owner.
+- **Experience stages:** Product Hub handoff → OS accepts/rejects context → OS-owned setup → OS owner
+  reports readiness → operational entry.
+- **Decision points:** Continue setup, pause, return to Hub, or launch when ready.
+- **Customer control:** Core Workspace Ready is never presented as Operating System Ready.
+- **Recovery:** Failed handoff returns safely to Product Hub without synthesizing OS state.
+- **Successful outcome:** Owner-validated OS setup or safe return.
+- **Non-goals:** Core-owned OS setup, routes, or operational data.
+- **Unresolved deferrals:** Exact OS setup contracts and implementation.
+
+## 16. J-13 — Recover From Interruption or Validation Failure
+
+- **Actor:** Any public or authenticated participant.
+- **Starting context:** Interrupted, stale, invalid, unavailable, or permission-changed experience.
+- **Goal:** Understand what happened and continue safely.
+- **Preconditions:** None beyond the affected experience.
+- **Experience stages:** Detect → preserve safe user input where authorized → explain effect → offer
+  retry, correction, re-authentication, context change, safe return, or support.
+- **Decision points:** Retry, leave, re-authenticate, change context, or discard temporary work.
+- **Customer control:** No hidden retry, publication, purchase, or operational action.
+- **Recovery:** The recovery action itself is keyboard-accessible, localized, and idempotent at the
+  presentation level; domain behavior remains owner-defined.
+- **Successful outcome:** Safe continuation or explicit exit.
+- **Non-goals:** Defining backend retry semantics.
+- **Unresolved deferrals:** Timeout, retention, and conflict policies.
+
+## 17. J-14 — Correct Incorrect Inferred Information
+
+- **Actor:** Visitor reviewing a candidate or authenticated Business participant.
+- **Starting context:** Displayed inference or assessment considered inaccurate.
+- **Goal:** Correct the understanding without hiding provenance or mutating unrelated owners.
+- **Preconditions:** Correction path allowed for the displayed artifact.
+- **Experience stages:** Identify item → inspect supporting evidence/confidence → propose correction or
+  provide evidence → review changed interpretation → explicitly approve publication if canonical
+  change is later requested.
+- **Decision points:** Correct, challenge source, defer, or cancel.
+- **Customer control:** Correction is distinct from canonical publication and consequential action.
+- **Recovery:** Conflicts/staleness preserve both understandable context and safe return.
+- **Successful outcome:** Corrected candidate or owner-governed revision request.
+- **Non-goals:** Direct Blueprint or Insight writes.
+- **Unresolved deferrals:** Correction policy per knowledge type.
+
+## 18. J-15 — Decline or Postpone a Recommendation
+
+- **Actor:** Authorized Recommendation viewer.
+- **Starting context:** Optional Recommendation detail.
+- **Goal:** Decline or defer without losing product access or receiving deceptive pressure.
+- **Preconditions:** Recommendation presentation available.
+- **Experience stages:** Review rationale/options → choose not now, decline where owner policy permits,
+  retain current tools, or simply return → receive neutral confirmation.
+- **Decision points:** Postpone, decline, compare, or leave.
+- **Customer control:** Product Ethics Law governs; no negative consequence is invented.
+- **Recovery:** Accidental choice uses owner-approved reversible treatment if available; exact
+  Recommendation lifecycle is not inferred.
+- **Successful outcome:** Customer choice respected and clearly communicated.
+- **Non-goals:** Standardizing Recommendation disposition states.
+- **Unresolved deferrals:** Recommendation review and lifecycle policy.
+
+## 19. Cross-Journey Requirements
+
+Every journey must support English/LTR and Arabic/RTL, keyboard operation, visible focus,
+appropriate language declaration, responsive reflow, understandable loading/empty/error/recovery
+states, permission-safe failure, and non-color-only meaning. Analytics, where later authorized,
+measure presentation events without becoming canonical state or exposing sensitive evidence.
+
+## 20. Relationships
+
+- [Platform Experience](./01-PLATFORM-EXPERIENCE.md) defines the canonical experience model.
+- [User Flows](./06-USER-FLOWS.md) decomposes these journeys into semantic interactions.
+- [Presentation State Authority](./07-STATE-MACHINES.md) classifies state categories.
+- [Information Architecture](./04-INFORMATION-ARCHITECTURE.md) owns semantic destinations.
+- [Screen Map](./02-SCREEN-MAP.md) separates current implementation evidence from target authority.
+
+## 21. Open Questions
+
+Only the deferrals stated per journey remain open; they must be resolved by the owning Governance,
+UI/UX design, feature specification, or implementation milestone and must not be inferred here.
+
+## 22. Verified Against
+
+- `docs/99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md`
+- `docs/00-governance/ADR/ADR-015-infer-before-asking-conversational-configuration.md`
+- `docs/00-governance/ADR/ADR-016-business-architect-governed-pipeline.md`
+- `docs/00-governance/ADR/ADR-042-pre-registration-business-discovery.md`
+- `docs/00-governance/ADR/ADR-043-foundation-discovery-and-business-architect-composition.md`
+- `docs/01-genesis/21-FOUNDATION-JOURNEY-SUCCESSOR-ADDENDUM-v1.0.md`
+- `docs/03-business-brain/13-BUSINESS-BRAIN-FOUNDATION-COMPATIBILITY-v1.0.md`
+- `docs/00-governance/glossary/GLOSSARY.md`
 

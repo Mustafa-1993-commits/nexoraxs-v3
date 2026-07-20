@@ -1,15 +1,16 @@
 # Screen Status Matrix
 
-- **Status:** Current implementation assessment
-- **Snapshot date:** 2026-07-19
+- **Version:** 1.1 reconciliation evidence snapshot
+- **Status:** Current implementation evidence only; not target authority or implementation authorization
+- **Snapshot date:** 2026-07-20
 - **Owner:** Product Experience and the owning frontend application
 - **Scope:** `apps/landing`, `apps/core-platform`, and `apps/commerce`
 
 ## 1. Purpose
 
-This matrix records the observable completion state of every current page endpoint and every
-screen already reserved by the canonical [Screen Map](./02-SCREEN-MAP.md). It is an implementation
-snapshot, not an architecture decision or a claim of production backend readiness.
+This matrix records the observable completion state of every current page endpoint and embedded
+surface found in the inspected frontend. It is an implementation snapshot, not target authority,
+an architecture decision, a route plan, or a claim of production/backend readiness.
 
 The requested `docs/ui-ux/` location is represented by the repository's existing canonical UI/UX
 workspace, `docs/03-ui-ux/`. Creating a second UI/UX tree would conflict with the documentation
@@ -111,8 +112,8 @@ have their own route.
 | Screen | Route | Exists | Visual Completion | Mock Data | Responsive | i18n Ready | RTL Ready | Loading | Empty | Error | Success | Roles | Priority | Required Action |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Workspace creation step | `/onboarding` step 1 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | ❌ Missing | ✅ Complete | ❌ Missing | ✅ Complete | Authenticated mock actor | P0 | Needs Localization |
-| Operating System selection step | `/onboarding` step 2 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | ❌ Missing | ✅ Complete | ❌ Missing | ✅ Complete | Authenticated mock actor | P0 | Re-sequence after Business Architect |
-| Plan selection step | `/onboarding` step 3 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | ❌ Missing | ❌ Missing | ❌ Missing | ✅ Complete | Authenticated mock actor; no purchase permission guard | P0 | Re-sequence after Recommendations |
+| Operating System selection step | `/onboarding` step 2 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | ❌ Missing | ✅ Complete | ❌ Missing | ✅ Complete | Authenticated mock actor | P0 | Stale evidence; reconcile only through an approved feature |
+| Plan selection step | `/onboarding` step 3 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | ❌ Missing | ❌ Missing | ❌ Missing | ✅ Complete | Authenticated mock actor; no purchase permission guard | P0 | Stale evidence; do not infer target sequence |
 | Workspace context switcher | Core protected shell | ✅ Complete | 🟡 Partial | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | 🟡 Partial | ✅ Complete | ✅ Complete | Authenticated Workspace mock context | P1 | Complete Multi-Workspace States |
 | Core notifications dropdown | Core protected shell | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Authenticated mock recipient | P2 | Minor Polish |
 | Core profile/user menu | Core protected shell | ✅ Complete | 🟡 Partial | ✅ Complete | ✅ Complete | 🟡 Partial | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | Authenticated mock user | P2 | Needs Localization |
@@ -127,26 +128,27 @@ have their own route.
 | Commerce setup: Categories | `/setup` step 7 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | 🟡 Partial | ✅ Complete | ✅ Complete | ✅ Complete | No setup-role guard | P1 | Needs Localization |
 | Commerce setup: Review | `/setup` step 8 | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ❌ Missing | 🟡 Partial | 🟡 Partial | ✅ Complete | ✅ Complete | ✅ Complete | No setup-role guard | P1 | Needs Localization |
 
-## 5. Documented Screens Not Yet Implemented
+## 5. Approved Destinations Without Verified Implementation
 
-Every row below comes from the canonical [Screen Map](./02-SCREEN-MAP.md); none is inferred from a
-backend contract. Proposed routes remain planning identifiers until an approved frontend feature
-specification authorizes implementation.
+These are semantic outcomes from the reconciled [Screen Map](./02-SCREEN-MAP.md). They do not
+decide that each outcome is a separate screen or route.
 
-| Screen | Route | Exists | Visual Completion | Mock Data | Responsive | i18n Ready | RTL Ready | Loading | Empty | Error | Success | Roles | Priority | Required Action |
+| Semantic destination | Exact route | Exists | Visual Completion | Mock Data | Responsive | i18n Ready | RTL Ready | Loading | Empty | Error | Success | Roles | Priority | Required Action |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Business Architect Introduction | `/onboarding/business-architect` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business participant; exact permission unresolved | P0 | Create New Screen |
-| Guided Business Interview | `/onboarding/business-architect/interview` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business participant | P0 | Create New Screen |
-| Supporting Information | `/onboarding/business-architect/evidence` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business participant; evidence visibility may be narrower | P1 | Create New Screen |
-| Interview Review | `/onboarding/business-architect/review` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business participant | P0 | Create New Screen |
-| Business Analysis | `/onboarding/business-architect/analysis` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business viewer; trigger/retry permission unresolved | P0 | Create New Screen |
-| Business Blueprint | `/onboarding/business-architect/blueprint` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business viewer | P0 | Create New Screen |
-| Recommendations | `/onboarding/business-architect/recommendations` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business viewer; action permissions separate | P0 | Create New Screen |
-| Resume Incomplete Interview | Same interview route at saved safe point | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Same authorized Business context | P0 | Create New Screen |
-| Core Workspace Setup | `/onboarding/workspace-setup` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authenticated Workspace member; mutations separately permissioned | P0 | Create New Screen |
-| Audit Logs | `/dashboard/audit` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Explicit audit-view permission required | P2 | Create New Screen |
-| Stock Movements | `/inventory/movements` | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Commerce Inventory movement-view permission | P2 | Create New Screen |
-| Returns List and Detail | `/returns`; `/returns/[id]` | ❌ Missing | ❌ Missing | 🟡 Partial | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Commerce Return permission | P2 | Create New Screen |
+| Business Discovery | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Public or authorized context as applicable | P0 | UX design and feature specification required |
+| Candidate Reflection and Value Preview | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Public candidate context | P0 | UX design and feature specification required |
+| Business resolution/creation | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authenticated authorized Workspace actor | P0 | Organization UX/specification required |
+| Business Architect entry/resume | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized selected-Business participant | P0 | UX design and feature specification required |
+| Candidate Review and Correction | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized selected-Business participant | P0 | UX design and feature specification required |
+| Explicit First-Publication Approval | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business approver; exact permission deferred | P0 | UX design and feature specification required |
+| Guided Activation | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business participant | P0 | UX design and feature specification required |
+| Business Blueprint | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business viewer | P0 | Projection UX/specification required |
+| Business Insights | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business viewer | P1 | Projection UX/specification required |
+| Optional Recommendations | Deferred | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | ❌ Missing | Authorized Business viewer; action permission separate | P1 | Recommendation UX/specification required |
+| Cross-flow Recovery and Safe Return | Deferred | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | Context-specific | P0 | Define per approved feature; no new route implied |
+
+Audit Logs, Stock Movements, and full Returns destinations remain future product or OS feature
+scope; this Foundation reconciliation does not create them.
 
 ## 6. Cross-Screen Findings
 
@@ -202,4 +204,3 @@ specification authorizes implementation.
 - Which canonical Business creation or selection experience precedes Business Architect entry?
 - Which preference scope and precedence governs locale persistence after the current browser-only
   frontend stage?
-

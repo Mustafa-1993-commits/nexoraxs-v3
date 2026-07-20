@@ -36,6 +36,9 @@ This document does not:
 | [Screen Map](../03-ui-ux/02-SCREEN-MAP.md) | Identifies current/planned screens to which these patterns apply. |
 | [Frontend Experience Gap Analysis](../03-ui-ux/03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md) | Identifies incomplete state, localization, accessibility, and recovery behavior. |
 | [Information Architecture](../03-ui-ux/04-INFORMATION-ARCHITECTURE.md) | Controls navigation, search/command scope, deep links, and safe return. |
+| [Presentation State Authority](../03-ui-ux/07-STATE-MACHINES.md) | Separates domain, Session, presentation, loading, permission, error, and recovery states. |
+| [Accessibility](../03-ui-ux/09-ACCESSIBILITY.md) | Defines the WCAG 2.2 AA cross-experience outcomes these patterns must satisfy. |
+| [UI Copy Guidelines](../03-ui-ux/11-UI-COPY-GUIDELINES.md) | Defines accurate consequence, confidence, approval, correction, and recovery language. |
 | [Component Catalog](./03-COMPONENT-CATALOG.md) | Lists the components that express these patterns. |
 | [Page Templates](./04-PAGE-TEMPLATES.md) | Defines the page compositions in which the patterns operate. |
 | [Frontend-First Policy](../11-execution/05-FRONTEND-FIRST-POLICY.md) | Requires deterministic mock coverage and UI maturity before later integration. |
@@ -53,6 +56,11 @@ Every interaction:
 6. is keyboard-operable with predictable focus and assistive-technology feedback;
 7. honors reduced motion and responsive/reflow requirements; and
 8. never treats frontend state as proof of canonical success or authorization.
+
+For first Business DNA publication, an ordinary navigation action such as “Next” or “Continue” is
+never confirmation. The owner-supplied consequence requires a dedicated, explicit approval action.
+Confidence and provenance remain understandable without color, tooltip-only disclosure, or false
+certainty. Recommendation choice remains optional and does not imply product adoption.
 
 ## 6. Loading
 

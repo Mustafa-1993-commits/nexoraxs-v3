@@ -154,7 +154,21 @@ evidence. The catalog does not declare them fully compliant or automatically sha
 | Dropdown/Menu | Offer compact related actions or choices | Action, account, context, overflow | Open, current/checked, disabled, loading | Menu semantics only for true commands; keyboard and focus return | Items translated; logical alignment | Trigger, owner actions | Shared primitive/pattern candidate |
 | Tooltip/Popover | Explain a control or expose concise supporting content | Tooltip, nonmodal popover | Hidden, shown, dismissed | Not the only source of essential information; keyboard/pointer parity | Translated and expansion-safe | Trigger, overlay tokens | Shared primitive/pattern candidate |
 
-## 12. Business Architect Components
+## 12. Discovery Experience Components
+
+Business Discovery is a method-independent Core capability. The following roles may present an
+approved acquisition method without defining the capability as a chat, form, wizard, or route.
+All “states” in this catalog are presentation conditions, not domain lifecycle authority.
+
+| Component | Purpose | Variants | States | Accessibility | Localization | Dependencies | Ownership |
+|---|---|---|---|---|---|---|---|
+| Discovery Entry | Explain value, temporary status, privacy, method choice, and customer control | Public, authenticated continuation | Ready, unavailable, recovery offered | Clear heading, choice descriptions, keyboard operation | Full locale/direction parity | Discovery goal/strategy presentation | Core composition |
+| Knowledge Acquisition Surface | Host the owner-approved method appropriate to current gaps | Guided conversation, structured input, source review, future approved methods | Loading, active, insufficient evidence, error/recovery | Method-specific accessible alternative; no forced modality | Method content translated; source data preserved | Approved method and privacy policy | Core composition; method-specific internals remain bounded |
+| Candidate Reflection | Present temporary understanding for review and correction | Summary, detailed evidence view | Loading, partial, low confidence, contradiction, unavailable | Structured distinctions and non-color confidence | Explanations translated; source text retained | Candidate/provenance projection | Core non-writing composition |
+| Value Preview | Present credible value before authentication without implying canonical status | Summary, partial preview | Loading, ready, partial, unavailable | Projection status and next choices announced | Bilingual and expansion-safe | Temporary candidate projection | Core non-writing composition |
+| Confidence/Provenance Disclosure | Explain what is observed, inferred, uncertain, or contradictory | Inline, detail, source list | Known, uncertain, conflicting, unavailable | Programmatic relationships; no color-only meaning | Meaning translated without altering source | Evidence/provenance projection | Core composition |
+
+## 13. Business Architect Components
 
 These are planned Core compositions. No current route or component implements the target Business
 Architect experience.
@@ -162,41 +176,42 @@ Architect experience.
 | Component | Purpose | Variants | States | Accessibility | Localization | Dependencies | Ownership |
 |---|---|---|---|---|---|---|---|
 | Architect Introduction | Explain outcome, process, use of information, and resume | New, resumable, completed | Context loading, ready, inaccessible, error | Clear heading/order and focused primary action | Full bilingual copy; Business name as entered | Selected Business context, session summary | Core composition |
-| Conversation Prompt | Present one useful question and why it matters | Question, clarification, optional follow-up | Loading, active, answered, skipped, blocked | Announce new prompt without focus theft; semantic conversation region | Prompt/hint translated; mixed-script support | Business Architect session | Core composition |
+| Guided Conversation Prompt | Present one useful question when Guided Business Conversation is the approved method | Question, clarification, optional follow-up | Loading, active, answered, skipped where permitted, owner-reported blocker | Announce new prompt without focus theft; semantic conversation region | Prompt/hint translated; mixed-script support | Business Architect Session and approved method | Core composition; not the Discovery capability |
 | Answer Composer | Capture and validate the current response | Short, long, choice, structured composition | Draft, saving, saved, invalid, failure | Label/help/error relationships and keyboard operation | Input direction follows content; UI translated | Shared fields, session action | Core composition |
 | Evidence/Supporting Information Panel | Explain or collect permitted supporting context | Explanation, reference, approved attachment later | Empty, available, adding, rejected, unavailable | Accessible source list/input/status | Instructions translated; source names preserved | Evidence/privacy policy | Core composition |
 | Provenance/Inference Disclosure | Distinguish source answer, inference, confidence, and assumption | Inline, expandable detail | Known, uncertain, conflicting, unavailable | Programmatic labels; no color-only confidence | Explanation translated without altering source text | Provenance projection | Core composition |
-| Interview Progress and Resume | Show completed areas and next safe step | Compact indicator, resume card | Not started, in progress, paused, blocked, complete | Current/complete semantics; action named | Stage labels translated | Session summary | Core composition |
+| Pipeline Progress and Resume | Present the inherited Business Architect Session condition and next safe action | Compact indicator, resume card | Owner-reported progress, pause, block, expiry, supersession | Current condition and action named; not color-only | Labels translated | Session summary | Core composition; does not define Discovery or Guided Activation states |
 | Review Checkpoint | Confirm/correct answers and material inferences | Sectioned review, conflict review | Loading, incomplete, conflict, correction pending, confirmed | Heading structure, error summary, focus return to edits | Labels translated; values preserved | Session draft, provenance, validation | Core composition |
-| Analysis Status | Present honest deterministic analysis progress | Staged, retryable failure, correction required | Starting, active, blocked, failed, complete | Restrained live updates; reduced motion | Status/recovery translated | Owner analysis status/fixtures during frontend-first | Core composition |
+| Understanding Processing Status | Present honest owner-reported processing without creating a new engine owner | Indeterminate, owner-measured, correction required | Loading, delayed, failed/recovery, result available | Restrained live updates; reduced motion | Status/recovery translated | Business Understanding/Business Brain owner projection | Core composition |
 
-## 13. Business Blueprint Components
+## 14. Business Blueprint Components
 
-These are planned Core presentation components. The Blueprint remains a projection, not a new
-canonical aggregate.
+These are planned Core presentation components. Business Blueprint is a governed authenticated
+customer-facing, non-writing projection derived from Business DNA and governed owner outputs. It
+is not canonical storage, a source of truth, or an independent owner.
 
 | Component | Purpose | Variants | States | Accessibility | Localization | Dependencies | Ownership |
 |---|---|---|---|---|---|---|---|
 | Blueprint Header/Summary | Identify Business, version/source status, and overall result | Standard, partial/stale | Loading, ready, partial, stale, error | Page heading and source status | Summary translated; names as entered | Blueprint presentation model | Core composition |
 | Business DNA Section | Present authorized reviewed DNA facts | Section, grouped facts | Loading, ready, restricted, source unavailable | Semantic definition groups | Labels translated; facts preserved | Business DNA projection | Core composition |
-| Needs/Challenges/Opportunities | Present analyzed business findings distinctly | Separate sections, prioritized groups | Empty optional, ready, partial, error | Headings/lists and non-color priority | Explanation translated | Analysis projection | Core composition |
+| Needs/Challenges/Opportunities | Present governed owner findings distinctly | Separate sections, prioritized groups | Empty optional, ready, partial, error | Headings/lists and non-color priority | Explanation translated | Governed owner projections | Core composition |
 | Readiness Indicator | Explain current readiness and unmet conditions | Summary, detailed criteria | Unknown, in progress, ready, blocked, stale | Text criteria and status; no gauge-only meaning | Criteria/status translated | Readiness projection | Core composition |
 | Capability Map | Relate Business needs to NexoraXS Capabilities | List, relationship view, accessible table | Loading, empty, partial, ready | Nonvisual equivalent and explicit relationships | Capability labels/explanations translated | Capability and analysis projections | Core composition |
 | Implementation Roadmap | Present a customer-facing sequenced path | Phases, timeline/list | Ready, optional section unavailable, partial | Ordered structure and text status | Steps translated | Analysis presentation | Core composition |
 | Blueprint Section Navigation | Move through long-form Blueprint sections | Sticky index, in-page links, compact menu | Current section, unavailable section | Named navigation and focus target | Translated labels; RTL order | Blueprint template | Core composition over shared navigation pattern |
 
-## 14. Recommendation Components
+## 15. Recommendation Components
 
 | Component | Purpose | Variants | States | Accessibility | Localization | Dependencies | Ownership |
 |---|---|---|---|---|---|---|---|
-| Recommendation Card | Summarize advice, reason, benefit, risk, and confidence | Standard, priority, deferred | Loading, ready, stale, disposition pending, error | Structured title/reason/actions; no color-only confidence | Full rationale/action translation | Recommendation projection | Core composition |
+| Recommendation Card | Summarize optional advice, reason, benefit, risk, and confidence | Standard, priority presentation | Loading, ready, stale, action unavailable, error | Structured title/reason/actions; no color-only confidence | Full rationale/action translation | Recommendation projection | Core composition; no lifecycle inferred |
 | Explanation Panel | Expose evidence, assumptions, alternatives, and uncertainty | Inline disclosure, detail panel | Loading, complete, partial evidence, unavailable | Disclosure semantics and source relationships | Translation preserves source meaning | Recommendation evidence | Core composition |
 | Capability/Implementation Option | Distinguish needed capability from optional product/plan implementation | Capability-only, product option, plan option | Eligible, unavailable, setup/access required | Relationship and optionality explicit | Labels translated; product names stable | Capability mapping and owner projections | Core composition |
 | Recommendation Comparison | Compare relevant options without coercion | Side-by-side, stacked | Ready, unavailable option, partial | Comparable headings/table; keyboard operation | Comparable translated structure | Recommendation/option projections | Core composition |
-| Disposition Controls | Accept, defer, reject, or revisit advice | Inline actions, dialog for explanation when required | Ready, pending, success, failure | Explicit labels and status; no forced default | Actions and consequences translated | Recommendation owner action | Core composition |
+| Customer Choice Controls | Explore, defer, decline, retain current tools, or return when owner policy permits | Inline actions, dialog when consequence requires it | Available, pending owner response, success/failure presentation | Explicit labels and status; no forced default | Actions and consequences translated | Recommendation owner action/policy | Core composition; exact disposition lifecycle deferred |
 | Recommendation Empty/Unavailable | Explain why no advice is present and allow safe continuation | No result, more information needed, unavailable | Empty, blocked, error/retry | Clear status and next action | Respectful translated copy | Recommendation status | Core composition over shared state pattern |
 
-## 15. Product Hub Components
+## 16. Product Hub Components
 
 | Component | Purpose | Variants | States | Accessibility | Localization | Dependencies | Ownership |
 |---|---|---|---|---|---|---|---|
@@ -206,7 +221,7 @@ canonical aggregate.
 | Setup/Launch/Recovery Action | Route to the correct owner state | Setup, resume, launch, recover | Resolving, available, rejected, expired, failure | Destination/consequence clear; focus at arrival | Recovery copy translated | Navigation handoff/guard | Core initiates; OS validates |
 | Product Hub Empty/Partial State | Keep Core usable when options/projections are absent | No relevant product, partial owner failure, unavailable | Empty, partial, stale, error/retry | Source failure understandable | Translated source-safe explanation | Product Hub projection status | Core composition |
 
-## 16. Commerce Components
+## 17. Commerce Components
 
 Commerce components stay in Commerce when they know Commerce terminology, operational scope,
 validation, or workflows. They may compose shared primitives without moving business behavior into

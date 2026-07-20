@@ -1,171 +1,88 @@
 # Frontend Experience Gap Analysis
 
-**Status:** Current frontend compared with the canonical product experience
-**Snapshot date:** 2026-07-19
-**Scope:** Documentation and planning only; no frontend or backend implementation
+| Field | Value |
+|---|---|
+| Version | 1.1 reconciliation evidence snapshot |
+| Status | Evidence only; not target authority or implementation authorization |
+| Snapshot | 2026-07-20 |
+| Scope | `apps/landing/`, `apps/core-platform/`, and `apps/commerce/` |
 
 ## 1. Purpose
 
-This report compares the target experience in
-[Platform Experience](./01-PLATFORM-EXPERIENCE.md) with the verified current frontend. It uses
-current route/source evidence, Features 052–055, the implementation audit, and the architecture
-audit. It does not treat temporary browser compatibility state as production capability.
+Compare verified frontend evidence with the reconciled UI/UX target. Current code proves only what
+exists now; the v1.1 Freeze and reconciled authority define what downstream design must preserve.
+No row is an implementation task, route decision, API proposal, or completion claim.
 
-Most importantly, this report does **not** identify Core Platform/Commerce separation as missing.
-Feature 054 established and verified the current frontend owner boundary: Core consumes a
-read-only Commerce projection and initiates an explicit handoff; Commerce owns operational writes;
-the apps have no direct source imports. Remaining handoff concerns are compatibility and later
-production-hardening concerns, not a reason to merge the applications or reopen their ownership.
+## 2. Status Vocabulary
 
-## 2. Status and priority
+- **Aligned evidence:** Present behavior supports the approved boundary for its current mock scope.
+- **Partial evidence:** Some presentation exists but the target outcome is incomplete.
+- **Conflicting evidence:** Current presentation communicates an incompatible sequence or meaning.
+- **Missing:** No supporting frontend surface was verified.
+- **Deferred:** Target detail belongs to a later approved milestone.
 
-The status labels are the same as the [Screen Map](./02-SCREEN-MAP.md): **Existing and aligned**,
-**Existing but needs reconciliation**, **Existing but incomplete**, **Planned**, **Deferred**, and
-**Out of scope**.
+## 3. Traceable Gap Matrix
 
-| Priority | Meaning |
-|---|---|
-| P0 | Blocks the canonical onboarding/Platform-entry product journey |
-| P1 | Required for the first useful Core + Commerce MVP experience |
-| P2 | Important completion, administration, or quality work |
-| P3 | Later enhancement or deferred scope |
+| Journey stage / destination | Current implementation and path | Status | UX gap | Architecture / localization / accessibility gap | Required future artifact | Priority |
+|---|---|---|---|---|---|---|
+| Public Entry | Landing page at `apps/landing/src/app/page.tsx` | Partial evidence | Product entry exists but no value-before-registration Discovery path | Discovery choice absent; strings not fully localized; RTL/accessibility parity unverified | Wireframes + Foundation successor feature spec | P0 |
+| Business Discovery | None verified | Missing | No method-independent public or authenticated acquisition experience | Must not be reduced to chatbot/form; privacy, confidence, provenance, Arabic/English and accessible method switching need specification | UX design + feature spec | P0 |
+| Candidate Reflection | None verified | Missing | Temporary understanding cannot be reviewed/corrected | Candidate/canonical distinction and provenance absent; accessible uncertainty presentation missing | UX design + feature spec | P0 |
+| Value Preview | None verified | Missing | No credible pre-registration customer value | Must remain non-canonical and non-authorizing; bilingual/accessible projection design absent | UX design + feature spec | P0 |
+| Register/Login | `apps/core-platform/app/register/page.tsx`, `login/page.tsx` | Partial aligned evidence | Direct entry exists but cannot converge on v1.1 publication path | Current browser mock/redirect does not prove production identity, scope, locale, or accessible recovery | Identity + Foundation feature specs | P0 |
+| Email recovery/verification | `forgot-password`, `reset-password`, `verify-email`, `verify` routes | Partial evidence | Duplicate recovery presentation and incomplete state/localization coverage | Exact identity behavior deferred; many hard-coded strings | Identity UX/specification | P1 |
+| Workspace resolution | `welcome`, `/onboarding` step, ContextSwitcher | Partial/conflicting evidence | Creation exists but selection/creation and context recovery are incomplete | Workspace is mixed with company/group copy; current onboarding immediately selects OS/plan; permission and a11y evidence incomplete | Core organization UX/spec | P0 |
+| Business resolution | Legacy BusinessUnit-as-Business presentation in shared mock context | Conflicting evidence | No canonical Business create/select destination verified | Must not promote legacy model; selected Business is required before authenticated pipeline | Organization reconciliation spec | P0 |
+| Business Architect entry/resume | None verified | Missing | No governed selected-Business pipeline UI | Inherited Session lifecycle absent; must not be conflated with Discovery or Guided Activation | UX design + feature spec | P0 |
+| Candidate review/correction | None verified | Missing | No material review, provenance, correction, or contradiction treatment | Explicit review/correction boundary absent; bilingual accessible comparison needed | UX design + feature spec | P0 |
+| Publication approval | None verified | Missing | No dedicated explicit first-publication action | Current “Next”/completion patterns cannot authorize DNA; permission/error/focus treatment absent | UX design + feature spec | P0 |
+| Guided Activation | None verified | Missing | No post-publication adaptive continuation | Must begin after publication and remain distinct from OS setup; new states deferred | UX design + feature spec | P0 |
+| Business Blueprint | None verified | Missing | No customer-facing governed projection | Must be non-writing/non-canonical; section/lineage/partial/a11y design absent | Projection UX + feature spec | P0 |
+| Business Insight | None verified | Missing | No governed Insight presentation | Must remain conceptual inside Business Brain Decision; confidence/chart alternatives absent | Projection UX + feature spec | P1 |
+| Optional Recommendations | None verified | Missing | No capability-first, explainable customer-choice surface | No-product/retain-current-tools outcome and evidence/alternatives absent; lifecycle remains deferred | Recommendation UX/spec | P1 |
+| Platform Dashboard | `apps/core-platform/app/dashboard/page.tsx` and layout | Conflicting/partial evidence | UI exists but current guard can require Commerce mock completion | Delays Core value and collapses readiness; page localization/responsive coverage partial | Core shell reconciliation spec | P0 |
+| Product Hub | `apps/core-platform/app/dashboard/apps/page.tsx` | Partial aligned evidence | Composition/handoff exists but lifecycle/context are compatibility data | Must separate availability, subscription, setup, readiness, permission; strings/a11y incomplete | Product Hub feature spec | P1 |
+| Workspace admin | Settings/team pages and shell menus | Partial evidence | Missing complete permission, empty, error, invitation, profile, notification states | Hard-coded roles are not authority; localization/a11y incomplete | Core admin specs | P1 |
+| OS handoff | Core/Commerce handoff seams from Feature 054 | Aligned evidence for boundary; partial for target | Explicit handoff exists, production trust/readiness not established | Core/Commerce ownership correctly separated; current browser context is not contract/authorization | Later OS/Core feature specs | P1 |
+| Commerce setup | `apps/commerce/app/setup/page.tsx` | Aligned owner evidence; partial quality | Owner is correct; locale, permissions, and production states incomplete | Must stay OS-owned; Arabic/RTL and error/resume evidence uneven | Commerce feature spec | P1 |
+| Commerce operations | Products, Inventory, Transfers, Customers, Orders, Invoices, POS, Reports, Settings routes | Substantial current evidence | Uneven responsive, locale, role, error, empty, document, and Returns/Movements coverage | Browser repositories are temporary; no backend/API semantics inferred; a11y coverage varies | Separate Commerce specs | P1–P2 |
+| Locale change | Core locale controls and partial Commerce messages | Partial evidence | Many hard-coded strings; cross-app behavior uneven | English/Arabic parity incomplete; preference precedence deferred | Localization design/spec | P0 |
+| Cross-flow recovery | Scattered current states | Partial evidence | No consistent safe interruption/resume/permission/stale model | Recovery must not invent domain states or retry consequential actions silently | Per-feature UX/spec | P0 |
 
-## 3. Suggested frontend slices
+## 4. Confirmed Architecture-Aligned Evidence
 
-These are planning groupings, not approved specifications or backend contracts.
+- Core Platform and Commerce are separate applications; Feature 054 evidence shows Core read-only
+  composition/handoff and Commerce-owned operational writes. This is not a gap.
+- Direct Register/Login routes exist, preserving an allowed architecture entry.
+- Platform Dashboard and Product Hub surfaces exist as current Core candidates, though their guards
+  and meaning require reconciliation.
+- Commerce owns its setup and daily operational surfaces.
+- Current frontend accessibility/localization seams provide evidence, not full authority or parity.
 
-**Phase 1 update:** The dependency-aware [Frontend Backlog](./14-FRONTEND-BACKLOG.md) supersedes
-this coarse slice list for execution planning. The FEX identifiers below remain useful provenance
-for the original gap grouping.
+## 5. Stale Assumptions Removed
 
-| Slice | Outcome | Earliest safe point | Explicit exclusions |
-|---|---|---|---|
-| FEX-01 — Business Architect entry and guided interview foundation | Workspace completion leads to a Core-owned introduction, conversational one-question-at-a-time interview, save/exit, and safe resume presentation | After Product decides where selected canonical Business creation/selection appears; the spec must forbid mapping legacy `BusinessUnit` to canonical Business | No backend/API/schema, published Business DNA, deterministic Brain result, recommendation, plan, or Commerce change |
-| FEX-02 — Review and deterministic analysis experience | Review/correction checkpoint and honest staged analysis/loading/failure/retry presentation over deterministic frontend fixtures | After FEX-01 interaction and draft state are UI-mature | No AI-only analysis, canonical Rule/Decision contract, or background-job design |
-| FEX-03 — Business Blueprint vertical slice | Customer-facing Business Blueprint with required sections, source/status disclosure, bilingual/RTL, and accessible long-form presentation | After FEX-02 establishes reviewed inputs and completed deterministic fixture output | No Recommendation lifecycle, product purchase, export/share/history, backend contract, or new aggregate |
-| FEX-04 — Recommendations and plan/access continuation | Separate explainable Recommendations stage followed by plan selection or available-access branch | After Blueprint validation and an approved owner projection for the plan/access branch | No legacy `OSEnablement` promotion, canonical commercial lifecycle invention, or forced recommendation |
-| FEX-05 — Core Workspace setup and Platform Dashboard entry | Core setup finishes into Platform Dashboard without requiring Commerce completion; resume/next-action cards surface Blueprint, Recommendations, and Product Hub | After FEX-04; guard changes require characterization of existing routes and compatibility behavior | No Commerce setup in Core, no Core operational writes, no route rewrite |
-| FEX-06 — Product Hub journey reconciliation | Business-context Product Hub uses the established read-only projection/handoff seam with complete partial/error/recovery UX | After FEX-05 and current Feature 054 characterization remains protected | No production handoff contract, no Core Commerce writes, no app merge |
-| FEX-07 — Authentication and account-entry completion | Landing registration CTA, login/register/verify/recovery resume routing, bilingual states, and accessibility become coherent | Can proceed in parallel where it does not redefine onboarding or identity mechanisms | No production identity provider or backend recovery contract |
-| FEX-08 — Core administration completion | Workspace selector/settings, team/access, billing/subscription, notifications, profile, localization, and Audit screen planning/UX completion | After the relevant product/permission/lifecycle scope is approved | No canonical role catalog, permission enforcement claim, billing engine, or Audit runtime |
-| FEX-09 — Commerce experience completion | Preserve current Commerce routes and owner seams while completing screen states, translations, RTL, accessibility, Returns/Movements information architecture, and recovery | Existing Commerce vertical slices can proceed incrementally behind Features 052–055 seams | No backend contracts, canonical lifecycle invention, or Core/Commerce boundary change |
+- The target no longer begins Landing → Register → Workspace → Business Architect.
+- “Guided interview” is not the definition of Business Discovery.
+- Product/plan selection does not automatically follow Recommendations and is not a Foundation
+  successor sequence requirement.
+- Exact proposed onboarding URLs are not target authority.
+- A Business Blueprint is not a canonical store.
+- Business Analysis is not authorized as a new separate engine/service UI owner.
+- FE backlog readiness statements do not authorize specification or implementation.
 
-## 4. Canonical journey gap matrix
+## 6. Blocking Interpretation
 
-| Journey stage | Screen | Current implementation | Current source path | Status | UX gap | Architecture gap | Localization gap | Accessibility gap | Recommended action | Priority | Suggested implementation slice |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Landing | Landing | Public single-page marketing experience; all current “Get Started” CTAs target Core `/login` | `apps/landing/src/app/page.tsx`; `apps/landing/src/sections/navbar/navbar.tsx`; `hero/hero.tsx`; `cta/cta.tsx` | Existing but needs reconciliation | New-user primary path adds an unnecessary login step before Register | No ownership gap; public entry correctly hands to Core, but current product copy and entry do not express the Business Architect/Blueprint journey | Current Landing content is English-only | Semantic/motion foundations exist, but Arabic/RTL and translated mobile-menu behavior are not evidenced | Route primary new-user CTA to registration in the approved frontend slice and update entry copy without changing app boundaries | P1 | FEX-07 |
-| Register | Register | Two-step email then identity/password form; creates a browser-mock user and routes to `/verify` | `apps/core-platform/app/register/page.tsx` | Existing but needs reconciliation | Missing target resume messaging and complete failure/unavailable states | Browser mock is intentionally not production identity; no backend gap is in current slice | Hard-coded English strings | Labels/password affordances exist; bilingual, direction, comprehensive error focus, and assistive validation evidence are incomplete | Preserve route/visible pattern, add target state model and bilingual/a11y acceptance under a later approved spec | P1 | FEX-07 |
-| Verify Email | Verify Email | `/verify` re-exports `/verify-email`; six-digit mock auto-continues when complete | `apps/core-platform/app/verify/page.tsx`; `apps/core-platform/app/verify-email/page.tsx` | Existing but needs reconciliation | Alias is undocumented in-product; invalid/expired/service-failure semantics are not realistically represented | No production verification mechanism, as expected in frontend-first; must not be inferred from mock behavior | Hard-coded English strings | OTP labels/paste/focus support exist; grouped semantics, error announcement, RTL validation, and timeout-independent recovery need full evidence | Keep `/verify-email` canonical in experience docs, preserve alias for compatibility, and mature states without defining backend verification | P1 | FEX-07 |
-| Create Workspace | Welcome and Workspace step | `/welcome` introduces setup; `/onboarding` creates Workspace then immediately selects OS and plan | `apps/core-platform/app/welcome/page.tsx`; `apps/core-platform/app/onboarding/page.tsx` | Existing but needs reconciliation | Workspace creation is coupled to software selection and copy describes Workspace as company/group | Current UI lacks canonical Business and uses the legacy organization model (audit GAP-001); target must not silently map BusinessUnit to Business | Onboarding includes an EN/AR toggle, but most screen strings remain English | Stepper/form foundations exist; complete Arabic/RTL, errors, async failure, and focus-transition evidence are incomplete | Retain `/onboarding` for incremental compatibility, end Workspace creation at Business Architect entry, and move OS/plan choice later | P0 | FEX-01 (with characterization tasks) |
-| Business Architect | Introduction | No route or page exists | No matching page under `apps/core-platform/app/` | Planned | No explanation of interview purpose, outcome, privacy/use, time, or resume | Requires selected canonical Business per ADR-016; current implementation cannot supply it canonically (GAP-001) | Not implemented; Arabic/English required in first slice | Not implemented; keyboard, focus, readable flow, reduced motion, and screen-reader requirements begin in first slice | Create the smallest Core-owned introduction/resume entry after the Business identity UX decision; use frontend-only deterministic state and make no canonical claim | P0 | FEX-01 |
-| Business Architect | Guided Interview | No route or conversational UI exists | No matching page under `apps/core-platform/app/` | Planned | Main onboarding experience is absent; current onboarding is a three-step static form | Canonical Business Architect/DNA runtime is absent (audit GAP-007), but UI validation can precede backend under Frontend First | Not implemented; prompt resources and mixed-script answers must be designed for both directions | Not implemented; conversation announcements, focus, skip/clarify, progress, and save/recovery semantics required | Implement one-question-at-a-time interview, save/exit, and resume presentation behind a frontend-internal mock seam; do not publish DNA | P0 | FEX-01 |
-| Business Architect | Evidence/supporting information | No screen exists | No matching page under `apps/core-platform/app/` | Planned | No way to explain, inspect, or add supporting context | Evidence/provenance ownership is documented, but physical upload/storage policy is not selected; no backend/file contract may be invented | Not implemented | Not implemented; file/control semantics require specific a11y work if files enter scope | In first slice, support explanation and non-file context only unless a separate approved storage/privacy scope exists | P1 | FEX-01 or later bounded task |
-| Business Architect | Review Answers | No review checkpoint UI exists | No matching page under `apps/core-platform/app/` | Planned | Customers cannot confirm/correct inferred facts or material assumptions | Review checkpoint is canonical, but materiality threshold remains unresolved; no draft may be treated as published DNA | Not implemented | Not implemented; structured error summary, edit return focus, and change indication required | Add a review/correction screen over FEX-01 draft fixtures and keep publication/analysis actions distinct | P0 | FEX-02 |
-| Business analysis | Analysis | No analysis route or status presentation exists | No matching page under `apps/core-platform/app/` | Planned | No honest progress, blocked, retry, or validation-required experience | Deterministic Business Brain, Knowledge, Rules, Capabilities, and Decisions are absent (GAP-007/DR-06); frontend must use governed deterministic fixtures, not invent architecture | Not implemented | Not implemented; progress announcement/reduced-motion and retry focus required | Validate analysis state UX with pinned deterministic fixture outcomes before any backend integration | P0 | FEX-02 |
-| Business Blueprint | Blueprint | No screen or component exists; no current source contains a Business Blueprint product surface | No matching page under `apps/core-platform/app/` | Planned | Main customer-facing onboarding output is absent | Must be a Core projection over owner facts, not a new aggregate or renamed Platform Blueprint | Not implemented; long-form bilingual/RTL composition required | Not implemented; headings, landmarks, accessible indicators/visuals, print/zoom behavior required | Deliver the required Blueprint sections as an independently valuable view-only frontend slice after reviewed analysis UX | P0 | FEX-03 |
-| Recommendations | Recommendations | No Core Recommendation page/runtime exists; current OS/plan cards appear directly in onboarding/Product Hub | `apps/core-platform/app/onboarding/page.tsx`; `apps/core-platform/app/dashboard/apps/page.tsx` | Planned | Software options precede the required Blueprint and separate explainable advice | Recommendation Engine/Decision runtime absent (GAP-007); current hard-coded cards are not canonical recommendations | Existing card strings mostly English; no bilingual explanation model | Current cards have interaction foundations, but explanation, comparison, disposition, and non-color-only confidence evidence are absent | Add a distinct capability-first explanation/disposition stage after Blueprint; keep product options secondary | P0 | FEX-04 |
-| Plan/access | Plan Selection or Continue | Current onboarding forces one mock OS and one Starter/Pro/Business plan; no available-access continuation | `apps/core-platform/app/onboarding/page.tsx`; `apps/core-platform/app/dashboard/billing/page.tsx` | Existing but needs reconciliation | No defer/continue branch, explanation from recommendation, or reliable eligibility/recovery states | Hard-coded plan catalog and collapsed `OSEnablement`/completion semantics conflict with unresolved lifecycle (GAP-004, GAP-008, GAP-019) | Plan content is English-only; locale/currency presentation is partial | Card selection exists; comparison semantics, plan recommendation signal, RTL, and error/pending accessibility need evidence | Move the choice after Recommendations and block canonical implementation until approved owner projection defines the branch | P0 | FEX-04 |
-| Core setup | Workspace Setup | Current settings are split across onboarding and `/dashboard/settings`; no distinct post-recommendation Core setup stage | `apps/core-platform/app/onboarding/page.tsx`; `apps/core-platform/app/dashboard/settings/page.tsx` | Planned | No coherent final Core setup/resume/completion experience | Must stay distinct from Commerce setup and not define unresolved localization preference precedence | Locale toggle exists, but strings and persistence semantics are incomplete | Settings form needs full validation/error/focus/bilingual evidence | Compose only approved Core context/preferences, then enter Dashboard; defer optional unresolved settings | P0 | FEX-05 |
-| Platform entry | Platform Dashboard | `/dashboard` exists, but the dashboard layout redirects unless `completedOS` contains Commerce | `apps/core-platform/app/dashboard/page.tsx`; `apps/core-platform/app/dashboard/layout.tsx` | Existing but needs reconciliation | Customer cannot reliably reach Platform Dashboard before Commerce completion | Current guard collapses Core and Commerce readiness, contrary to ADR-018 and PD-002; this is a lifecycle/guard gap, not an app-separation gap | Dashboard contains many hard-coded English strings | Core 050/054 shell evidence is strong; target cards/states still need bilingual and complete partial/unauthorized recovery evidence | Characterize current redirect behavior, then make Core readiness—not Commerce completion—the product entry condition under an approved spec | P0 | FEX-05 |
-| Product discovery | Product Hub | `/dashboard/apps` exists with application cards, billing links, setup/launch links, and read-only Commerce summaries | `apps/core-platform/app/dashboard/apps/page.tsx`; `apps/core-platform/lib/commerce/CommerceProjectionPort.ts`; `createCoreCommerceIntegration.ts` | Existing but needs reconciliation | Missing preceding Blueprint/Recommendations and full partial/stale/recovery experience | Feature 054 already established the correct frontend ownership direction; remaining canonical lifecycle/Business context and production handoff gaps are documented (GAP-018) | Many strings remain English-only | Core 050/054 shell/handoff tests pass, but future Business-context recommendation and partial-projection states need new evidence | Preserve route and Feature 054 seam; feed it from the target journey and complete state/localization/a11y behavior | P0 | FEX-06 |
-| OS handoff | Commerce launch | Core builds setup/dashboard navigation; Commerce ingress accepts frontend compatibility handoff; Feature 054 verifies separate-origin flow and zero fallback identity writes | `apps/core-platform/lib/commerce/CommerceHandoffAdapter.ts`; `packages/sdk/src/commerce/integration/LegacyCommerceHandoffIngress.ts`; `apps/commerce/app/(commerce)/layout.tsx`; `apps/commerce/app/setup/page.tsx` | Existing and aligned | Recovery copy and target states for unavailable/rejected/stale context remain thin | Core/Commerce separation is implemented. Current handoff is explicitly frontend-internal, not the signed production contract in ADR-037; backend hardening remains later | Destination and recovery copy include hard-coded English | Feature 054 bilingual/a11y/handoff evidence passes for the protected seam; future target states still need validation | Keep the boundary unchanged; add only target navigation, recovery, focus, and translated-state behavior in frontend scope | P1 | FEX-06 |
-| Commerce setup | Setup | Broad `/setup` flow exists and is Commerce-owned | `apps/commerce/app/setup/page.tsx` | Existing but needs reconciliation | Current multi-step setup is extensive but follows the legacy BusinessUnit/Branch compatibility model and current product sequence | Feature 054 removed Core-identity fallback writes. Canonical organization write protocol and Business/Business Unit migration remain unresolved; no Core ownership gap should be reintroduced | Large amounts of setup copy are English-only despite locale controls | Stepper/forms exist; full localized validation, error recovery, focus, zoom, and a11y evidence is incomplete | Preserve Commerce ownership and route; reconcile entry/state/copy after Product Hub journey without changing canonical organization semantics | P1 | FEX-09 |
-| Commerce operations | Commerce Dashboard | Operational dashboard exists after Commerce setup | `apps/commerce/app/(commerce)/dashboard/page.tsx` | Existing and aligned | It cannot yet be reached through the complete target Platform/Blueprint journey | Owner boundary is aligned; browser persistence remains temporary frontend-first implementation | Substantial hard-coded English content | Existing regression/a11y coverage is meaningful but not full-page bilingual completeness | Preserve and connect through FEX-06/FEX-09; do not redesign or merge with Platform Dashboard | P1 | FEX-09 |
+Missing implementation does not block approval of a precise UI/UX authority package. It blocks
+implementation readiness until wireframes, feature specifications, plans, tasks, and Constitution
+Checks exist. The separate Genesis hygiene issue is assessed in the reconciliation decision record.
 
-## 5. Supporting platform and Commerce surface gaps
+## 7. Relationships and Verified Against
 
-| Journey stage | Screen | Current implementation | Current source path | Status | UX gap | Architecture gap | Localization gap | Accessibility gap | Recommended action | Priority | Suggested implementation slice |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Account recovery | Forgot/Reset Password | `/forgot-password` includes request/code/password steps; `/reset-password` duplicates the final form | `apps/core-platform/app/forgot-password/page.tsx`; `apps/core-platform/app/reset-password/page.tsx` | Existing but needs reconciliation | Two reset paths lack a documented product distinction and full expired/unavailable states | No backend mechanism should be inferred; identity ownership remains Core | English-only | Some keyboard/code handling exists; error summary, live status, RTL and full recovery evidence incomplete | Reconcile route purpose and states while preserving compatibility | P2 | FEX-07 |
-| Workspace context | Workspace Selector | Core shell menu shows only current Workspace; Commerce switcher shows legacy Business/Branch context | `apps/core-platform/components/shell/ContextSwitcher.tsx`; `apps/commerce/components/shell/ContextSwitcher.tsx` | Existing but incomplete | No complete multi-Workspace selection/recovery screen | Current Commerce labels are protected legacy compatibility, not canonical Business hierarchy (GAP-001) | Some dictionary use; full strings/options not complete | Menu focus/Escape semantics exist; multi-context errors and screen-reader context announcement need full evidence | Complete Core selector as a Core context surface; preserve Commerce operational selector and legacy warning until migration | P1 | FEX-08/FEX-09 |
-| Workspace administration | Workspace Settings | Tabbed settings page with local state/toast save | `apps/core-platform/app/dashboard/settings/page.tsx` | Existing but incomplete | No durable pending/error/recovery or permission-specific behavior | Presentation-only saves do not establish a settings contract (GAP-021); preference precedence unresolved | Locale toggle exists; most content English-only | Labels are present, but responsive two-column layout, error association, and RTL need evidence | Mature the frontend state model after the relevant setting scopes are approved | P2 | FEX-08 |
-| Platform administration | Users | Team table and component-local invite modal | `apps/core-platform/app/dashboard/team/page.tsx`; `components/dashboard/InviteUserModal.tsx` | Existing but incomplete | Invitation lifecycle, empty/error/unauthorized, member detail, and recovery are incomplete | UI does not enforce membership/permissions or append Audit (GAP-005/GAP-020); no backend claim allowed | English-only role/member copy | Modal/table foundations exist; permission errors, focus restoration, responsive table, and RTL need full evidence | Treat current members/roles as mock presentation and spec a frontend membership journey separately | P2 | FEX-08 |
-| Platform administration | Roles | Hard-coded role/permission matrix in a modal | `apps/core-platform/app/dashboard/team/page.tsx` | Existing but incomplete | No scoped assignment workflow or authoritative explanations | Core Permission Model explicitly leaves canonical role names/catalog deferred; current values must not become decisions | English-only | Modal focus/semantic matrix needs detailed evidence | Retain as mock reference; defer standalone implementation until product/permission catalog approval | P3 | FEX-08 (deferred task) |
-| Commercial administration | Billing/Subscription | Combined `/dashboard/billing` presentation | `apps/core-platform/app/dashboard/billing/page.tsx` | Existing but incomplete | Missing owner-grade stale/error/permission and lifecycle distinctions | Mock plans/subscriptions and `OSEnablement` cannot define canonical lifecycle (GAP-004/GAP-008/GAP-019) | English-only, currency assumptions | Card/table basics exist; comparison/status/error and RTL evidence incomplete | Keep combined route; separate concepts in presentation after owner projection decision | P1 | FEX-08 after FEX-04 |
-| Platform services | Integrations | Static catalog and “coming soon” toast behavior | `apps/core-platform/app/dashboard/integrations/page.tsx` | Existing but incomplete | No connected/degraded/recovery lifecycle | Executable integration ownership/contracts are not in current frontend scope (GAP-021) | English-only | Cards/buttons exist; status/error/keyboard and RTL completeness not evidenced | Keep as informational until an approved integration specification exists | P3 | FEX-08 |
-| Platform services | Notifications | Shell dropdown exists | `apps/core-platform/components/dashboard/NotificationsDropdown.tsx` | Existing but incomplete | No full history, preferences, source recovery, or direct route | Canonical Notification runtime absent (GAP-032); dropdown must not imply delivery authority | Partial dictionary usage; content coverage not complete | Dropdown semantics require full focus/unread announcement validation | Add full screen only when notification product scope is approved; mature dropdown states incrementally | P2 | FEX-08 |
-| Account | Profile | User menu exists; no profile route | `apps/core-platform/components/dashboard/UserMenuDropdown.tsx` | Existing but incomplete | No full identity/preferences screen | Must distinguish User preference from Workspace settings; no backend identity change contract | Partial | Menu behavior exists; profile form/accessibility not implemented | Plan a Core profile surface after identity/preferences scope is approved | P2 | FEX-08 |
-| Cross-cutting | Localization | EN/AR toggles set document direction; a flat shared mock dictionary and selected Commerce feature dictionaries exist; many page strings remain hard-coded | Core/Commerce `LocaleToggle.tsx`; `packages/shared/src/mock-db/schema.ts`; `apps/commerce/features/*/i18n/`; page sources | Existing but needs reconciliation | Inconsistent translation coverage and locale-aware representation | Proposed ADR-041 is not Accepted; current session keys are compatibility state, not canonical preference | Audit GAP-015 records incomplete bilingual coverage | Selected Feature 050–055 RTL/a11y tests pass, but repository-wide route evidence is incomplete | Make translation-path and RTL/LTR completion part of every slice; do not create a standalone cosmetic phase | P0 cross-cutting | All slices |
-| Governance visibility | Audit Logs | No page/runtime | No matching Core route | Planned | No customer/admin view of consequential action history | Canonical append-only Audit is documented but absent (GAP-005/GAP-014); frontend alone cannot claim compliance | Not implemented | Not implemented | Defer the screen until an approved read projection exists; include audit requirements in every consequential feature | P2 | FEX-08 later |
-| Commerce catalog | Products | List/create/edit routes use Feature 052 repository hooks and compatibility facade | `apps/commerce/app/(commerce)/products/`; `apps/commerce/features/products/` | Existing and aligned | Remaining global state/copy polish, not a missing primary journey | Feature 052 explicitly avoids canonical lifecycle/ownership/backend decisions | Product feature dictionaries exist, but page coverage is not complete | Feature 052 bilingual/RTL/keyboard/axe evidence passes for affected journey | Preserve; improve only in bounded owner-safe slices | P1 | FEX-09 |
-| Commerce inventory | Inventory | Repository-backed read projection plus owner service for stock adjustment | `apps/commerce/app/(commerce)/inventory/page.tsx`; `apps/commerce/features/inventory/` | Existing and aligned | Needs complete localized filters, partial/stale data, and permission recovery | Current browser scope is defense-in-depth, not production authorization; no owner-boundary redesign required | Mixed dictionary and hard-coded English | Feature 053/054 evidence covers affected states, but full route strings/RTL remain incomplete | Preserve owner seam and complete state/localization/a11y coverage incrementally | P1 | FEX-09 |
-| Commerce inventory | Stock Movements | No page exists; movement records are current compatibility data/effects | No current page; related code in `apps/commerce/features/inventory/` and SDK operation stores | Planned | No browse/filter/detail UX | Inventory owns movement facts; exact read model/lifecycle is not specified by this task | Not implemented | Not implemented | Plan only after owner-approved movement query/view scope | P2 | FEX-09 later |
-| Commerce inventory | Transfers | Creation/history page exists and owner service is established | `apps/commerce/app/(commerce)/inventory/transfers/page.tsx`; `apps/commerce/features/transfers/` | Existing and aligned | Partial failure/recovery and explanation need stronger product treatment | Feature 054 owner seam exists; canonical compensation/transaction policy remains deferred | Mixed translations; many English strings | Existing tests cover key route; full failure/RTL/assistive evidence incomplete | Preserve behavior and improve visible recovery under a bounded slice | P1 | FEX-09 |
-| Commerce customers | Customers | List/profile/create/update use Feature 053 repository and hooks | `apps/commerce/app/(commerce)/customers/`; `apps/commerce/features/customers/` | Existing and aligned | Full unauthorized/partial/history recovery and copy consistency remain | Frontend-internal records are not future DTOs; no backend contract should be introduced | Customer messages exist but not all route content is translated | Feature 053 accessibility/localization evidence passes affected states; full route audit remains | Preserve and complete translation/state coverage incrementally | P1 | FEX-09 |
-| Commerce sales | Orders | List/detail reads plus Feature 055 order command boundary through POS | `apps/commerce/app/(commerce)/orders/`; `apps/commerce/features/orders/` | Existing and aligned | Current partial-write recovery is not fully customer-facing | Feature 055 preserves browser behavior but does not define final lifecycle/transaction/backend contract | Mixed hard-coded English and feature messages | Feature 055 critical paths pass; full details/filters/RTL need completion | Preserve command/read boundaries; document and expose safe current recovery only | P1 | FEX-09 |
-| Commerce documents | Invoices | List/detail/document routes with read hooks and owner service seams | `apps/commerce/app/(commerce)/invoices/`; `apps/commerce/features/invoices/` | Existing and aligned | Printable and related-data failure states need completion | Current Invoice snapshot is compatibility data; tax/payment/document lifecycle remains unresolved | Mixed hard-coded English and feature messages | Existing tests cover affected paths; printable RTL and full assistive detail need evidence | Preserve routes and complete presentation states without contract invention | P1 | FEX-09 |
-| Commerce returns | Returns | Return initiation is embedded in Order detail; only printable return document has a route | `apps/commerce/app/(commerce)/orders/[id]/page.tsx`; `apps/commerce/app/(commerce)/returns/[id]/document/page.tsx`; `apps/commerce/features/returns/` | Existing but incomplete | No Returns list or non-print detail/recovery surface | Return owner service exists, but final cross-owner effects/transaction policy remain deferred | Mostly English | Existing route evidence is narrow; list/detail/failed return a11y is absent | Decide Returns information architecture in a separate Commerce UX slice, preserving owner ports | P2 | FEX-09 |
-| Commerce sales | POS | Full cart/checkout/success UI with Feature 055 draft/command seams | `apps/commerce/app/(commerce)/pos/`; `apps/commerce/features/pos/` | Existing and aligned | Current failure/partial-commit recovery requires clearer user guidance | Feature 055 establishes frontend owner direction; no final Payment/Tax/backend/idempotency contract exists | Significant hard-coded English remains | Feature 055 keyboard/focus/axe/RTL evidence passes critical flow, not every string/state | Preserve, then complete localized failure/recovery presentation in a bounded slice | P1 | FEX-09 |
-| Commerce analytics | Reports | Sales/payment/best-seller reports derive current browser data | `apps/commerce/app/(commerce)/reports/page.tsx`; `apps/commerce/features/reporting/` | Existing but needs reconciliation | No durable source/staleness/authorization/export model | Production data, scale, Audit, and owner read contract remain later; current UI is a mock projection | Predominantly English | Charts/tables need accessible summaries, RTL, keyboard/filter, and empty/error evidence | Improve presentation only after defining owner read projection needs; do not infer API | P2 | FEX-09 |
-| Commerce administration | Commerce Settings | Settings, Branch management, documents, and setup links exist | `apps/commerce/app/(commerce)/settings/page.tsx`; `settings/documents/page.tsx` | Existing and aligned | Pending/error/unauthorized and bilingual coverage incomplete | Correct owner; Core-coordinated storage projection remains an explicit seam; canonical organization write protocol unresolved | Predominantly English | Forms/modals exist; validation, focus return, responsive/RTL evidence incomplete | Preserve Commerce ownership and complete states/accessibility incrementally | P1 | FEX-09 |
-
-## 6. Confirmed findings
-
-1. **The current frontend is a usable incremental base.** It has separate Landing, Core, and
-   Commerce apps; stable route components; page-facing facades/hooks; deterministic browser
-   adapters; architecture enforcement; and substantial Feature 052–055 evidence.
-2. **The missing product center is Core onboarding intelligence.** There is no Business Architect,
-   Business Blueprint, deterministic analysis, or Recommendations screen. Current Core onboarding
-   instead chooses an OS and plan immediately after Workspace creation.
-3. **Platform entry is currently delayed by Commerce completion.** The Core dashboard layout checks
-   `onboardingState.completedOS.includes("commerce")`, so the established separate applications
-   are still coupled at the route-guard experience level.
-4. **Product Hub is present and owner-aligned.** Its data and lifecycle presentation need
-   reconciliation, but Feature 054 already corrected the frontend write direction and cross-app
-   boundary. A new separation feature or rewrite is not justified.
-5. **Localization is foundational but incomplete.** EN/AR direction toggles and selected
-   translation/test evidence exist, while many Core and Commerce route strings remain hard-coded
-   English. Localization must be part of each slice.
-6. **Backend absence is expected at this stage.** Current contracts/SDK types are explicitly
-   frontend-internal compatibility seams. This experience work must not turn them into backend or
-   public API decisions.
-
-## 7. Open Questions
-
-1. Where in the target flow does the customer create or select the canonical Business required by
-   Business Architect: a distinct screen or a bounded step in the Introduction?
-2. Which approved commercial/access owner projection drives the plan-selection versus
-   available-access branch without relying on legacy `OSEnablement`?
-3. What is the minimum first-slice evidence model for Business Architect supporting information,
-   given that file upload/storage/privacy are not part of this task?
-4. Should the first complete Returns surface be a list plus detail, or remain an Order-centered
-   workflow with a searchable history view?
-
-## 8. Recommended first frontend implementation slice
-
-The first unblocked vertical slice is **FE-002 — Platform-first entry and safe destination
-resolution** from the [Frontend Backlog](./14-FRONTEND-BACKLOG.md). It gives immediate Core value by
-allowing authorized users into Platform Dashboard before Commerce readiness and removes the coarse
-completed-versus-onboarding redirect without adding a backend contract or reopening ownership.
-
-**FE-001 — Locale Engine and translation foundation** should begin in the same foundation tranche,
-but it is a cross-cutting enabler rather than the first independent customer outcome.
-
-Business Architect remains the first major new product experience. Its implementation starts at
-FE-006, the earliest safe point after FE-005 resolves the required canonical Business entry/
-selection experience. Until that approved input exists, starting the interview would risk
-repeating the legacy `BusinessUnit`-as-Business mapping. The planned Business Architect slice still
-must preserve current routes, use deterministic replaceable frontend fixtures, ship with
-English/LTR and Arabic/RTL, and avoid backend/API/schema or Commerce changes.
-
-## 9. Verified Against
-
-This analysis was verified against:
-
-- every current Landing, Core Platform, and Commerce page route listed in
-  [Screen Map](./02-SCREEN-MAP.md);
-- current sources under `apps/core-platform/`, `apps/commerce/`, `packages/contracts/`, and
-  `packages/sdk/`;
-- `specs/052-frontend-repository-foundation/`,
-  `specs/053-commerce-repository-expansion/`, `specs/054-architecture-hardening/`, and
-  `specs/055-commerce-order-command-boundary/`, including their implementation evidence;
-- `docs/08-implementation-audit/FRONTEND-CODE-RECONCILIATION-AUDIT-v1.0.md`;
-- `docs/11-execution/05-FRONTEND-FIRST-POLICY.md`, `06-MOCK-DATA-STANDARD.md`,
-  `07-REFACTORING-STANDARD.md`, and `12-ENGINEERING-ROADMAP.md`;
-- `docs/90-architecture-audit/00-EXECUTIVE-SUMMARY.md`, `04-IMPLEMENTATION-VERIFICATION.md`,
-  `05-GAP-ANALYSIS.md`, and `15-EXECUTION-SCOPE-DECISION.md`;
-- `docs/00-governance/PRODUCT-DECISIONS.md`, applicable Accepted ADRs, and the architecture
-  freezes; and
-- [Platform Experience](./01-PLATFORM-EXPERIENCE.md) and
-  [Screen Map](./02-SCREEN-MAP.md).
+- [Screen Map](./02-SCREEN-MAP.md)
+- [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md)
+- [UX Gaps](./13-UX-GAPS.md)
+- [Frontend Backlog](./14-FRONTEND-BACKLOG.md)
+- `docs/99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md`
+- `docs/00-governance/ADR/ADR-043-foundation-discovery-and-business-architect-composition.md`
+- `apps/landing/`, `apps/core-platform/`, `apps/commerce/`, `packages/contracts/`, and
+  `packages/sdk/` (current implementation evidence only)

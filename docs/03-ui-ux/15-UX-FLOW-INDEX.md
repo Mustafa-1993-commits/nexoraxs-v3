@@ -1,96 +1,62 @@
 # UX Flow Index
 
-- **Status:** Current documentation index; journeys, flows, and presentation states completed for Phase 1
-- **Owner:** Product Experience
-- **Authority:** Index only; linked documents retain their stated authority and status
+| Field | Value |
+|---|---|
+| Version | 1.1 reconciliation candidate |
+| Status | Traceability index only |
+| Owner | Product Experience |
 
-## Purpose
+## 1. Purpose
 
-This index provides one entry point for the artifacts that describe how a documented customer
-outcome moves from a high-level journey into screen decisions, user-visible states, and
-wireframes. It prevents those artifacts from becoming disconnected or duplicating reusable Design
-System behavior.
+Map each approved experience concern from architecture to journey, semantic flow, presentation
+state authority, destination, cross-cutting authority, and current evidence. This index creates no
+new flow or implementation scope.
 
-## Scope
+## 2. Traceability Matrix
 
-The index covers the relationship, status, owner, and required inputs for NexoraXS user journeys,
-user flows, user-visible state machines, wireframes, screen completion evidence, UX gaps, and
-frontend execution planning.
+| Concern | Architecture | Journey | Flow | State authority | Destination/evidence | Cross-cutting authority |
+|---|---|---|---|---|---|---|
+| Public value and Discovery | Freeze 5.1–5.3; ADR-042/043 | J-01, J-04 | F-01 | Discovery matrix | UXD-01–03; missing evidence | Accessibility, Localization, Copy |
+| Direct registration | Freeze 5.5; ADR-043 | J-02 | F-02 | Candidate/publication matrix | UXD-04–10; partial auth evidence | Identity patterns, Accessibility, Copy |
+| Candidate conversion | Freeze 5.4–5.5 | J-01, J-06–07 | F-03 | Candidate/publication matrix | UXD-03, 06–10; missing | Provenance, confirmation, recovery |
+| Business Architect resume | Freeze 5.6; ADR-016/043 | J-05 | F-04 | Inherited Session authority | UXD-08–10; missing | Accessible progress/recovery |
+| Guided Activation | Freeze 5.7 | J-08 | F-05 | Guided Activation matrix | UXD-11; missing | Localization, recovery |
+| Business Blueprint | Freeze 5.8 | J-09 | F-05 | Blueprint matrix | UXD-12; missing | Blueprint template, Copy, Accessibility |
+| Business Insight | Freeze 5.9; BB compatibility | J-09, J-11 | F-06 | Insight/Recommendation matrix | UXD-13; missing | Confidence/provenance components |
+| Recommendations | Freeze 5.10; ADR-013/014 | J-11, J-15 | F-06 | Insight/Recommendation matrix | UXD-14; missing | Ethics copy, explanation patterns |
+| Returning entry | Freeze 5.5–5.7 | J-03, J-05, J-13 | F-08 | Owner state + recovery | UXD-06–08, 15–16; partial | IA safe return, permission patterns |
+| Product Hub/OS handoff | Freeze 6.4–6.5; ADR-018–020 | J-10, J-12 | F-07 | Hub/OS matrix | UXD-16, 18–19; partial mock | Hub/Commerce templates |
+| Correction/recovery | Freeze 5.4–5.10 | J-13–15 | F-10 | Cross-category recovery | UXD-20; uneven | Interaction Patterns, Accessibility, Copy |
+| Locale/direction | ADR-041; Freeze preserved guarantees | Cross-journey | F-09 | Presentation-only | Partial current evidence | Localization and Accessibility |
 
-## Out of Scope
+## 3. Authority Boundaries
 
-This index does not define a new journey, screen, route, lifecycle, interaction pattern, backend
-operation, feature, or implementation task. It does not approve planned implementation.
+- Architecture and ADRs control owners, sequencing invariants, and prohibited interpretations.
+- [Platform Experience](./01-PLATFORM-EXPERIENCE.md) controls customer-experience principles.
+- [Information Architecture](./04-INFORMATION-ARCHITECTURE.md) controls semantic navigation.
+- [User Journeys](./05-USER-JOURNEYS.md) controls customer goals and recovery outcomes.
+- [User Flows](./06-USER-FLOWS.md) controls presentation-level interaction sequences.
+- [Presentation State Authority](./07-STATE-MACHINES.md) controls state classification, not domain
+  lifecycles.
+- [Design System](../04-design-system/README.md) controls reusable semantics.
+- [Screen Map](./02-SCREEN-MAP.md), [Status Matrix](./12-SCREEN-STATUS-MATRIX.md), and gap reports
+  are evidence.
+- [Frontend Backlog](./14-FRONTEND-BACKLOG.md) is planning only.
 
-## Artifact Relationship
+## 4. Deferred Traceability
 
-```text
-Product Decisions and Architecture
-  -> Platform Experience
-    -> Screen Map and Information Architecture
-      -> User Journey
-        -> User Flow
-          -> User-visible State Model
-            -> Wireframe
-              -> Approved Feature Specification and Validation Evidence
+Exact routes, wireframes, permissions, retention, candidate conversion, owner data/contracts,
+Recommendation lifecycle, OS setup details, and implementation remain deferred. Future artifacts
+must add links here without converting the index into authority for those decisions.
 
-Current Route Evidence
-  -> Screen Status Matrix
-    -> UX Gaps
-      -> Frontend Backlog
-        -> Approved Feature Specification and Validation Evidence
-```
+## 5. Open Questions
 
-Reusable component, page-template, and interaction behavior comes from the
-[Design System](../04-design-system/README.md). The UX flow artifacts select and apply those
-patterns to an approved product outcome; they do not redefine the reusable patterns.
+No separate open question is created here. Refer to each controlling document and the
+[Reconciliation Decision](./UI-UX-AUTHORITY-RECONCILIATION-v1.0.md).
 
-## Documentation Index
+## 6. Verified Against and Cross References
 
-| Artifact | Status | Distinct responsibility | Required prior sources |
-|---|---|---|---|
-| [Platform Experience](./01-PLATFORM-EXPERIENCE.md) | Current | Canonical stage-level customer experience | Product decisions and architecture |
-| [Screen Map](./02-SCREEN-MAP.md) | Current snapshot | Verified routes/screens and planned-screen classification | Repository evidence and Platform Experience |
-| [Information Architecture](./04-INFORMATION-ARCHITECTURE.md) | Current | Navigation placement, entry, exit, scope, and safe return | Platform Experience and Screen Map |
-| [User Journeys](./05-USER-JOURNEYS.md) | Current target | One actor/outcome across product stages and owners | Platform Experience, Product Decisions, architecture, and current evidence |
-| [User Flows](./06-USER-FLOWS.md) | Current target | Screen, action, data-source, decision, guard, and recovery sequence | User Journeys and current/planned screens |
-| [State Machines](./07-STATE-MACHINES.md) | Current target | User-visible presentation states mapped to owner-approved facts | User Flows and owner lifecycle sources |
-| [Wireframes](./08-WIREFRAMES.md) | Placeholder | Low-fidelity information hierarchy and interaction reference | Approved flow, states, and page-template selection |
-| [Screen Status Matrix](./12-SCREEN-STATUS-MATRIX.md) | Current snapshot | Per-screen completion and state evidence | Repository route/source/test evidence |
-| [UX Gaps](./13-UX-GAPS.md) | Current analysis | Missing UX outcomes, impact, priority, and complexity | Screen Matrix and target flows |
-| [Frontend Backlog](./14-FRONTEND-BACKLOG.md) | Planning | Dependency-aware future frontend tasks | UX Gaps, authority, and Spec Kit gates |
-
-## Traceability Rule
-
-Every future detailed entry must identify:
-
-- stable artifact identifier and status;
-- actor, goal, owning product, and applicable context;
-- controlling product decision, architecture source, and feature specification;
-- upstream journey/flow/state artifact and downstream wireframe or test evidence;
-- Arabic/RTL and English/LTR implications;
-- accessibility and recovery requirements; and
-- current implementation evidence separately from planned behavior.
-
-## Maintenance Rules
-
-1. Add an index entry only when the detailed artifact has a distinct approved scope.
-2. Keep planned and current behavior visibly separate.
-3. Do not restate reusable interaction rules; link to the applicable Design System pattern.
-4. Do not describe canonical domain transitions as UI-owned states.
-5. Update this index whenever a linked artifact becomes proposed, approved, superseded, or
-   deprecated.
-
-## Open Questions
-
-- Which approved frontend slice will supply the first completed wireframe package and validation
-  trace?
-
-## Cross References
-
-- [UI/UX Documentation](./README.md)
-- [Product Decision Register](../00-governance/PRODUCT-DECISIONS.md)
-- [Frontend Experience Gap Analysis](./03-FRONTEND-EXPERIENCE-GAP-ANALYSIS.md)
-- [Design System](../04-design-system/README.md)
-- [Frontend-First Policy](../11-execution/05-FRONTEND-FIRST-POLICY.md)
-- [Documentation Policy](../11-execution/09-DOCUMENTATION-POLICY.md)
+- [UI/UX Authority index](./README.md)
+- [Core Platform Architecture v1.1](../99-architecture-freeze/CORE-PLATFORM-v1.1-FREEZE.md)
+- [ADR-043](../00-governance/ADR/ADR-043-foundation-discovery-and-business-architect-composition.md)
+- [Foundation Journey Successor Addendum](../01-genesis/21-FOUNDATION-JOURNEY-SUCCESSOR-ADDENDUM-v1.0.md)

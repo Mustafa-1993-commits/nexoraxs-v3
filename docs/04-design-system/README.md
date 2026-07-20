@@ -1,7 +1,7 @@
 # NexoraXS Design System
 
 - **Status:** Canonical Design System documentation index
-- **Date:** 2026-07-19
+- **Version:** 1.1 UI/UX reconciliation alignment
 - **Owner:** Design System, with Core Platform and Commerce retaining product-surface ownership
 - **Authority:** Canonical reusable presentation semantics, subordinate to architecture, product decisions, and Design Intelligence governance
 
@@ -122,7 +122,20 @@ not define concrete values. A future approved token baseline must name its imple
 consumer impact, compatibility, and validation evidence. Current theme files remain implementation
 evidence until that approval occurs.
 
-## 6. Reading Order
+## 6. UI/UX-to-Design-System Traceability
+
+| UI/UX need | Design System authority | Boundary |
+|---|---|---|
+| Method-independent Discovery and candidate reflection | Foundations, Catalog sections 12–13, Templates 6.12–6.13 | Reusable semantics do not select a method, route, or lifecycle |
+| Explicit review/correction/publication approval | Catalog review/confirmation roles; Interaction confirmation/validation patterns | Owner supplies authority, consequence, and result |
+| Business Blueprint | Catalog section 14; Template 6.14 | Non-writing projection; source owners remain canonical |
+| Insight/Recommendation confidence and provenance | Foundations; Catalog sections 14–15; Interaction disclosure/error patterns | No separate Insight owner or Recommendation lifecycle |
+| Product Hub and OS handoff | Catalog section 16; Product Hub/Commerce templates | Core composes; OS owns setup and operation |
+| Loading, empty, error, permission, recovery | Catalog feedback; Interaction Patterns | Presentation behavior does not create domain state |
+| Accessibility | Foundations plus UI/UX Accessibility authority | WCAG 2.2 AA target; feature evidence still required |
+| Localization and direction | Foundations/tokens/components/templates/patterns plus UI/UX Localization | English/Arabic parity; no fixed locale ceiling or hard-coded copy |
+
+## 7. Reading Order
 
 1. Read [Product Experience](../03-ui-ux/README.md) and
    [Information Architecture](../03-ui-ux/04-INFORMATION-ARCHITECTURE.md) for the
@@ -136,7 +149,7 @@ evidence until that approval occurs.
 7. Before implementation, follow Design Intelligence, Design Memory, the applicable feature
    specification, and the Constitution Checks.
 
-## 7. Maintenance Rules
+## 8. Maintenance Rules
 
 - Keep semantic responsibilities separate from implementation values.
 - Record whether a component or pattern is **documented**, **current implementation evidence**,
@@ -151,7 +164,7 @@ evidence until that approval occurs.
 - Add exact implementation values only in an approved, separately scoped token baseline; this
   documentation package intentionally contains none.
 
-## 8. Open Questions
+## 9. Open Questions
 
 1. Which current app-local primitives have proven identical interaction semantics across Core and
    Commerce and therefore qualify for a future shared-admission proposal?
@@ -162,7 +175,7 @@ evidence until that approval occurs.
 4. Which design-system owner and review cadence will be named for component lifecycle and
    deprecation decisions?
 
-## 9. Verified Against
+## 10. Verified Against
 
 This index was verified against:
 
@@ -177,7 +190,7 @@ This index was verified against:
 - current exports and theme sources under `packages/ui/`; and
 - relevant repository findings in `docs/90-architecture-audit/`.
 
-## 10. Cross References
+## 11. Cross References
 
 - [Product Experience index](../03-ui-ux/README.md)
 - [Platform Experience](../03-ui-ux/01-PLATFORM-EXPERIENCE.md)
